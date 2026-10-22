@@ -1,0 +1,69 @@
+#start-menu {
+  position: fixed; left: 8px; bottom: calc(var(--taskbar-h) + 8px); z-index: 9998;
+  width: min(320px, calc(100vw - 16px)); max-height: min(480px, calc(100vh - var(--taskbar-h) - 24px));
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  background: var(--task-bg); color: var(--task-fg); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, .1); border-radius: 12px; box-shadow: var(--shadow-active);
+  animation: win-open .12s ease-out;
+}
+#start-menu[hidden] { display: none; }
+#start-menu input {
+  padding: 8px 10px; border: 1px solid rgba(255, 255, 255, .15); border-radius: 8px;
+  background: rgba(255, 255, 255, .08); color: inherit; font: inherit; font-size: 14px;
+}
+#start-menu input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#start-menu ul { flex: 1; margin: 0; padding: 0; list-style: none; overflow: auto; }
+#start-menu li button {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px;
+  border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; font-size: 14px; text-align: left;
+}
+#start-menu li button img { width: 32px; height: 32px; }
+#start-menu li button:hover, #start-menu li button:focus-visible { background: rgba(255, 255, 255, .12); outline: none; }
+#start-menu .empty { padding: 12px; font-size: 13px; opacity: .7; }
+#start-menu footer { display: flex; gap: 6px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .1); }
+#start-menu footer button {
+  flex: 1; padding: 7px; border: 0; border-radius: 6px; background: rgba(255, 255, 255, .08); color: inherit; font: inherit; font-size: 13px;
+}
+#start-menu footer button:hover { background: rgba(255, 255, 255, .16); }
+#start-menu footer button:focus-visible { outline: 2px solid var(--accent); }
+
+#context-menu {
+  position: fixed; z-index: 10000; min-width: 210px; margin: 0; padding: 4px; list-style: none;
+  background: var(--menu-bg, #f6f8f9); color: var(--win-fg); font-family: var(--font);
+  border: 1px solid var(--win-border); border-radius: 8px; box-shadow: var(--shadow-active);
+}
+#context-menu .sep { height: 1px; margin: 4px 6px; background: rgba(0, 0, 0, .12); }
+#context-menu button {
+  display: block; width: 100%; padding: 7px 12px; border: 0; border-radius: 5px;
+  background: none; color: inherit; font: inherit; font-size: 13px; text-align: left;
+}
+#context-menu button:hover:not(:disabled), #context-menu button:focus-visible { background: color-mix(in srgb, var(--accent) 30%, var(--menu-bg, #f6f8f9)); outline: none; }
+#context-menu button:disabled { opacity: .45; }
+
+#toasts {
+  position: fixed; right: 12px; bottom: calc(var(--taskbar-h) + 12px); z-index: 9997;
+  display: flex; flex-direction: column; gap: 8px; width: min(300px, calc(100vw - 24px)); pointer-events: none;
+}
+#notification-center { position: fixed; right: 8px; bottom: calc(var(--taskbar-h) + 8px); z-index: 9998; width: min(340px, calc(100vw - 16px)); max-height: min(480px, calc(100vh - var(--taskbar-h) - 16px)); overflow: auto; padding: 12px; background: var(--task-bg); color: var(--task-fg); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; box-shadow: var(--shadow-active); }
+#notification-center[hidden] { display: none; }
+#notification-center header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.12); }
+#notification-center header button { border: 0; border-radius: 5px; padding: 5px 8px; background: rgba(255,255,255,.1); color: inherit; cursor: pointer; }
+#notification-center article { display: grid; gap: 2px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+#notification-center article strong { font-size: 12px; }
+#notification-center article span, #notification-center article time, #notification-center p { margin: 0; font-size: 12px; opacity: .8; }
+.toast {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; text-align: left; pointer-events: auto;
+  border: 0; border-left: 4px solid var(--accent); border-radius: 8px;
+  background: var(--task-bg); color: var(--task-fg); font: inherit; font-size: 13px;
+  box-shadow: var(--shadow-active); animation: win-open .15s ease-out;
+}
+.toast strong { font-size: 12px; opacity: .75; }
+@media (prefers-reduced-motion: reduce) { .toast, #start-menu { animation: none; } }
+
+#switcher {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10001;
+  display: flex; gap: 6px; max-width: 90vw; padding: 10px; border-radius: 12px;
+  background: var(--task-bg); color: var(--task-fg); box-shadow: var(--shadow-active); backdrop-filter: blur(12px);
+}
+#switcher span { padding: 10px 16px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; border-radius: 8px; border-bottom: 3px solid transparent; }
+#switcher span.sel { background: rgba(255, 255, 255, .16); border-bottom-color: var(--accent); }

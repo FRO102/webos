@@ -1,0 +1,26 @@
+:root {
+  --taskbar-h: 48px;
+  --radius: 10px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --accent: #3cb6a4;
+  --desk-1: #10202b;
+  --desk-2: #27485a;
+  --task-bg: rgba(14, 24, 32, .92);
+  --task-fg: #e8eef2;
+  --win-bg: #eef1f3;
+  --win-fg: #1c2a33;
+  --win-border: rgba(0, 0, 0, .28);
+  --title-bg: #d3dce2;
+  --title-fg: #44565f;
+  --title-active-bg: #1f3d4f;
+  --shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  --shadow-active: 0 14px 40px rgba(0, 0, 0, .45);
+}
+
+:root { --title-active-bg: color-mix(in srgb, var(--accent) 40%, #10202b); }
+:root { --os-font-size: 14px; }
+:root[data-animations="off"] *, :root[data-animations="off"] *::before, :root[data-animations="off"] *::after { animation: none !important; transition: none !important; }
+:root[data-theme="dark"] {
+  --win-bg: #1b2730; --win-fg: #e6edf1; --win-border: rgba(255, 255, 255, .14);
+  --title-bg: #2a3944; --title-fg: #9fb0ba; --menu-bg: #22303a;
+}

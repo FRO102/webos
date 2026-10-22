@@ -1,0 +1,10 @@
+{
+  "id": "snake",
+  "name": "Snake",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 440, "height": 500, "minWidth": 300, "minHeight": 360 },
+  "singleInstance": true,
+  "permissions": ["notifications", "fs.read", "fs.write"]
+}

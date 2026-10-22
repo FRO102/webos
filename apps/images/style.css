@@ -1,0 +1,13 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; background: var(--os-bg, #fff); color: var(--os-fg, #1c2a33); font: 13px system-ui, sans-serif; }
+nav { display: flex; align-items: center; gap: 6px; padding: 6px; background: var(--os-surface, #eef1f3); border-bottom: 1px solid var(--os-border, #d3dce2); }
+#name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--os-muted, #44565f); }
+button, .btn { padding: 5px 10px; border: 0; border-radius: 6px; background: var(--os-btn, #d3dce2); font: inherit; color: inherit; cursor: pointer; }
+button:hover, .btn:hover { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 30%, var(--os-btn, #d3dce2)); }
+button:focus-visible, .btn:focus-within { outline: 2px solid var(--os-accent, #3cb6a4); }
+#stage { flex: 1; overflow: auto; display: flex; background: color-mix(in srgb, var(--os-bg, #fff) 85%, #000); }
+#img { margin: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
+#stage.actual #img { max-width: none; max-height: none; }
+#empty { margin: auto; color: var(--os-muted, #44565f); }
+#status { margin: 0; padding: 4px 10px; min-height: 24px; font-size: 12px; color: var(--os-muted, #44565f); background: var(--os-surface, #eef1f3); border-top: 1px solid var(--os-border, #d3dce2); }

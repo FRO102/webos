@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebOS</title>
+  <link rel="stylesheet" href="system/css/variables.css">
+  <link rel="stylesheet" href="system/css/desktop.css">
+  <link rel="stylesheet" href="system/css/window.css">
+  <link rel="stylesheet" href="system/css/taskbar.css">
+  <link rel="stylesheet" href="system/css/menus.css">
+  <link rel="stylesheet" href="system/css/boot.css">
+</head>
+<body>
+  <div id="boot" role="dialog" aria-modal="true" aria-label="Arranque do sistema"></div>
+  <main id="desktop" aria-label="Ambiente de trabalho">
+    <ul id="desktop-icons"></ul>
+  </main>
+  <div id="window-layer"></div>
+  <footer id="taskbar">
+    <button id="start-btn" aria-label="Menu Iniciar" aria-expanded="false" aria-haspopup="true" aria-controls="start-menu">◆</button>
+    <nav id="task-list" aria-label="Janelas abertas"></nav>
+    <nav id="workspaces" aria-label="Áreas de trabalho"></nav>
+    <div id="system-tray" aria-label="Estado do sistema">
+      <button id="network-status" aria-label="Rede ligada" title="Rede ligada">⌁</button>
+      <button id="sound-status" aria-label="Som ligado" title="Som ligado">◖</button>
+      <button id="battery-status" aria-label="Bateria 100%" title="Bateria 100%">▰</button>
+    </div>
+    <button id="notification-btn" aria-label="Centro de notificações" aria-expanded="false">●</button>
+    <time id="clock" role="button" tabindex="0" title="Relógio e calendário"></time>
+  </footer>
+  <script type="module" src="system/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Códigos QR</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><span class="eyebrow">FERRAMENTAS</span><h1>Gerador de códigos QR</h1></header>
+  <main>
+    <form id="form">
+      <div class="type-switch" role="group" aria-label="Tipo de conteúdo"><button type="button" data-type="text" aria-pressed="true">Texto</button><button type="button" data-type="url" aria-pressed="false">URL</button></div>
+      <label for="content">Conteúdo do código</label><textarea id="content" rows="4" maxlength="2000" placeholder="Escreve ou cola o texto"></textarea>
+      <div class="settings"><label>Tamanho<select id="size"><option value="256">256 px</option><option value="384" selected>384 px</option><option value="512">512 px</option><option value="768">768 px</option></select></label><label>Correção de erro<select id="error-level"><option value="L">Baixa</option><option value="M" selected>Média</option><option value="Q">Alta</option><option value="H">Muito alta</option></select></label></div>
+      <p id="error" role="alert"></p>
+    </form>
+    <section class="result-area"><div id="placeholder"><span>QR</span><p>O código aparece aqui</p></div><div id="qr-frame" hidden><canvas id="qr-canvas" aria-label="Código QR gerado"></canvas><span id="qr-caption"></span></div></section>
+    <div class="actions"><button id="download" disabled>Guardar PNG</button><button id="save-virtual" class="primary" disabled>Guardar no WebOS</button></div>
+    <footer><span id="status" role="status" aria-live="polite"></span><span>Geração local, sem envio dos dados.</span></footer>
+  </main>
+  <script src="../../system/sdk/os-sdk.js"></script><script src="../../system/sdk/os-dialogs.js"></script><script src="assets/qrcode.js"></script><script src="assets/qrcode_UTF8.js"></script><script src="app.js"></script>
+</body>
+</html>

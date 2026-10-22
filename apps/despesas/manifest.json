@@ -1,0 +1,10 @@
+{
+  "id": "despesas",
+  "name": "Despesas",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 860, "height": 650, "minWidth": 620, "minHeight": 480 },
+  "singleInstance": true,
+  "permissions": ["fs.read", "fs.write"]
+}

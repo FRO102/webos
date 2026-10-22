@@ -1,0 +1,10 @@
+{
+  "id": "codigos-qr",
+  "name": "Códigos QR",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 660, "height": 610, "minWidth": 480, "minHeight": 460 },
+  "singleInstance": true,
+  "permissions": ["fs.write"]
+}

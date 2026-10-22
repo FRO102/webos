@@ -1,0 +1,34 @@
+* { box-sizing: border-box; }
+body { height: 100vh; margin: 0; display: flex; flex-direction: column; overflow: hidden; color: #263f3d; background: #eef2ef; font: 13px/1.45 "Segoe UI", sans-serif; }
+button, input { color: inherit; font: inherit; }
+button { cursor: pointer; }
+.toolbar { z-index: 1; display: flex; align-items: center; gap: 16px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid #d5dfda; background: #fff; }
+.brand { display: flex; align-items: center; gap: 8px; white-space: nowrap; }.brand strong { font-size: 14px; }
+.mark { color: #df863d; font-size: 21px; }
+.tool-group, .actions { display: flex; align-items: center; gap: 5px; }
+.toolbar button { min-height: 31px; padding: 5px 8px; border: 1px solid transparent; border-radius: 4px; background: transparent; white-space: nowrap; }
+.toolbar button:disabled { cursor: default; opacity: .4; }
+.toolbar button:hover { border-color: #d3dfd9; background: #f2f6f3; }
+.toolbar .save { border-color: #146c59; background: #176c59; color: white; }
+.actions { margin-left: auto; }
+.divider { height: 22px; margin: 0 3px; border-left: 1px solid #d5dfda; }
+main { display: grid; flex: 1; min-height: 0; grid-template-columns: 210px 1fr; }
+aside { padding: 18px 14px; border-right: 1px solid #d5dfda; background: #f8faf8; }
+.eyebrow { margin: 0 0 7px; color: #84928d; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+aside input { width: 100%; border: 0; border-bottom: 1px solid #ccd8d2; padding: 7px 2px; background: transparent; font-size: 15px; font-weight: 650; }
+aside input:focus-visible { outline: 0; border-color: #20806b; }
+.help { margin: 17px 0; color: #65746e; font-size: 12px; }
+.selection-info { display: flex; align-items: flex-start; gap: 7px; margin-top: 23px; color: #52635e; font-size: 11px; }
+.dot { flex: 0 0 8px; height: 8px; margin-top: 3px; border-radius: 50%; background: #e49a50; }
+.text-button { margin-top: 24px; border: 0; padding: 4px 0; background: transparent; color: #16715d; }
+.workspace { overflow: auto; background-color: #f5f7f4; background-image: radial-gradient(#d6dfda 1px, transparent 1px); background-size: 22px 22px; }
+svg { display: block; width: 100%; min-width: 780px; height: 100%; min-height: 500px; touch-action: none; }
+.edge { fill: none; stroke: #506d69; stroke-width: 2; marker-end: url(#arrow); cursor: pointer; }
+.edge.selected { stroke: #d47736; stroke-width: 3; }.edge-label { fill: #536b64; stroke: #f5f7f4; stroke-width: 5px; paint-order: stroke; font: 11px "Segoe UI", sans-serif; text-anchor: middle; cursor: pointer; }
+.edge-hit { fill: #fff; fill-opacity: .01; stroke: none; cursor: pointer; }
+.node { cursor: grab; }.node:active { cursor: grabbing; }.node rect, .node polygon, .node ellipse { stroke-width: 2; }
+.node text { pointer-events: none; fill: #263f3d; font: 600 14px "Segoe UI", sans-serif; text-anchor: middle; dominant-baseline: middle; }
+.node.selected rect, .node.selected polygon, .node.selected ellipse { stroke: #dc833a; stroke-width: 3; }
+.start rect, .end ellipse { fill: #e1f0e6; stroke: #428669; }.process rect { fill: #fff; stroke: #6b8eaa; }.decision polygon { fill: #fff0d6; stroke: #d49c37; }
+footer { display: flex; justify-content: space-between; gap: 12px; padding: 6px 12px; border-top: 1px solid #d5dfda; background: #fff; color: #74817c; font-size: 10px; }
+@media (max-width: 850px) { .toolbar { flex-wrap: wrap; gap: 6px; padding: 6px 9px; }.brand { margin-right: auto; }.actions { margin-left: 0; }.tool-group { overflow: auto; max-width: 100%; }main { grid-template-columns: 155px 1fr; }aside { padding: 12px 9px; } }

@@ -1,0 +1,19 @@
+#boot {
+  position: fixed; inset: 0; z-index: 20000; display: grid; place-items: center;
+  background: radial-gradient(ellipse at 50% 40%, #1d3a4a, #0a141b); color: #e8eef2;
+  font-family: var(--font); transition: opacity .35s;
+}
+#boot.hide { opacity: 0; pointer-events: none; }
+.boot-center { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 16px; }
+.boot-logo { font-size: 56px; color: var(--accent); }
+.boot-bar { width: 180px; height: 4px; margin-top: 18px; border-radius: 2px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+.boot-bar i { display: block; width: 0; height: 100%; background: var(--accent); animation: boot-fill 1.4s ease-in-out forwards; }
+@keyframes boot-fill { to { width: 100%; } }
+.login-clock { font-size: 64px; font-weight: 300; line-height: 1.1; }
+.login-date { margin-bottom: 24px; opacity: .7; text-transform: capitalize; }
+.avatar { display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: var(--accent); color: #08201c; font-size: 36px; margin-bottom: 6px; }
+.login-btn { margin-top: 12px; padding: 9px 28px; border: 0; border-radius: 8px; background: var(--accent); color: #08201c; font: inherit; font-size: 15px; cursor: pointer; }
+.login-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.user-list { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.user-card { display: grid; justify-items: center; gap: 6px; min-width: 110px; padding: 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.08); color: inherit; font: inherit; cursor: pointer; }
+.user-card:hover, .user-card:focus-visible { background: rgba(255,255,255,.18); outline: 2px solid var(--accent); }

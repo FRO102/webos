@@ -1,0 +1,11 @@
+{
+  "id": "notepad",
+  "name": "Bloco de Notas",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 560, "height": 400, "minWidth": 320, "minHeight": 200 },
+  "singleInstance": false,
+  "fileTypes": [".txt", ".md", ".json", ".js", ".css", ".html", ".log"],
+  "permissions": ["fs.read", "fs.write"]
+}

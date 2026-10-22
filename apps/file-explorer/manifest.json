@@ -1,0 +1,10 @@
+{
+  "id": "file-explorer",
+  "name": "Ficheiros",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 620, "height": 420, "minWidth": 380, "minHeight": 240 },
+  "singleInstance": false,
+  "permissions": ["fs.read", "fs.write", "apps.launch"]
+}

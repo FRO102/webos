@@ -1,0 +1,10 @@
+{
+  "id": "app-store",
+  "name": "Aplicações",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 640, "height": 500, "minWidth": 460, "minHeight": 320 },
+  "singleInstance": true,
+  "permissions": []
+}

@@ -1,0 +1,10 @@
+{
+  "id": "paletas",
+  "name": "Paleta de Cores",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 760, "height": 620, "minWidth": 500, "minHeight": 460 },
+  "singleInstance": true,
+  "permissions": ["clipboard"]
+}

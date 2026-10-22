@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portefólio de Frederico Oliveira</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="portfolio-shell">
+    <aside class="command-panel" aria-label="Navegação do portefólio">
+      <div class="brand"><span class="brand-mark">FO</span><div><strong>Frederico Oliveira</strong><small>Portefólio pessoal</small></div></div>
+      <div class="profile"><div class="avatar">FO</div><div><strong>Engenharia Informática</strong><span>Leiria, Portugal</span></div></div>
+      <nav class="nav-groups">
+        <p class="nav-label">Explorar</p>
+        <button data-command="about">Sobre mim</button>
+        <button data-command="skills">Competências</button>
+        <button data-command="experience">Experiência</button>
+        <button data-command="education">Educação</button>
+        <button data-command="projects">Projetos</button>
+        <button data-command="certs">Certificações</button>
+        <button data-command="contact">Contactos</button>
+      </nav>
+      <div class="panel-actions"><button data-command="cv" class="accent-button">Descarregar CV</button><button data-command="help">Ajuda</button><button data-command="clear">Limpar terminal</button></div>
+      <div class="panel-footer"><button data-command="lang pt" class="language active">PT</button><button data-command="lang en" class="language">EN</button><span>v2.0</span></div>
+    </aside>
+    <section class="terminal" aria-label="Terminal do portefólio">
+      <header class="terminal-topbar"><div class="traffic"><i></i><i></i><i></i></div><div class="window-title">portfolio://frederico-oliveira</div><span class="online"><b></b> disponível</span></header>
+      <div class="terminal-content" id="terminal-content">
+        <div class="welcome" id="welcome"><div class="welcome-kicker">Portefólio interativo</div><h1>Olá, sou o Frederico<span>.</span></h1><p>Licenciado em Engenharia Informática, interessado em sistemas, administração e segurança.</p><div class="quick-stats"><span><b>01</b> perfil</span><span><b>09</b> competências</span><span><b>01</b> projeto</span></div></div>
+        <div id="output" class="output" role="log" aria-live="polite"></div>
+        <form id="command-form" class="command-line"><span>fro@portfolio:~$</span><input id="command-input" aria-label="Comando do portefólio" autocomplete="off" spellcheck="false" placeholder="escreve help para começar"><button type="submit" aria-label="Executar comando">↵</button></form>
+      </div>
+      <footer class="terminal-footer"><span>Comandos disponíveis: <b id="command-count">0</b></span><span>↑ ↓ histórico</span><span>WebOS sandbox</span></footer>
+    </section>
+  </main>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

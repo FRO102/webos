@@ -1,0 +1,10 @@
+{
+  "id": "clock",
+  "name": "Relógio",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 460, "height": 540, "minWidth": 340, "minHeight": 420 },
+  "singleInstance": true,
+  "permissions": ["notifications"]
+}

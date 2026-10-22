@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diagramas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="brand"><span class="mark">◇</span><strong>Diagramas</strong></div>
+    <div class="tool-group" aria-label="Adicionar forma">
+      <button data-add="inicio" title="Adicionar início">+ Início</button>
+      <button data-add="processo" title="Adicionar processo">+ Processo</button>
+      <button data-add="decisao" title="Adicionar decisão">+ Decisão</button>
+      <button data-add="fim" title="Adicionar fim">+ Fim</button>
+    </div>
+    <div class="actions"><button id="connect" title="Ligar as duas formas selecionadas">Ligar</button><button id="edit-node" title="Editar a forma selecionada">Editar forma</button><button id="edit-edge" title="Editar o rótulo da ligação" disabled>Editar ligação</button><button id="reverse-edge" title="Inverter a direção da ligação" disabled>Inverter</button><button id="delete-node" title="Apagar seleções">Apagar</button><span class="divider"></span><button id="open-file">Abrir</button><button id="save-file" class="save">Guardar</button></div>
+  </header>
+  <main>
+    <aside><p class="eyebrow">DOCUMENTO</p><input id="diagram-title" value="Diagrama sem título" aria-label="Título do diagrama"><p class="help">Arrasta as formas para organizar. Seleciona duas para ligar. Clica numa ligação para editar o seu rótulo ou direção.</p><div class="selection-info"><span class="dot"></span><span id="selection-label">Nenhuma seleção</span></div><button id="new-diagram" class="text-button">Novo diagrama</button></aside>
+    <section class="workspace" aria-label="Área do diagrama"><svg id="diagram" role="application" aria-label="Editor de diagramas" viewBox="0 0 1200 800"><defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 9 4.5 0 9z" fill="#506d69"></path></marker></defs><g id="edges"></g><g id="nodes"></g></svg></section>
+  </main>
+  <footer><span id="status" role="status" aria-live="polite">Novo diagrama</span><span>.flow · formato de texto editável</span></footer>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

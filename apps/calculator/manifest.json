@@ -1,0 +1,10 @@
+{
+  "id": "calculator",
+  "name": "Calculadora",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 300, "height": 430, "minWidth": 240, "minHeight": 360 },
+  "singleInstance": false,
+  "permissions": []
+}

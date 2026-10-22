@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Imagens</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <button id="prev" aria-label="Anterior">‹</button>
+    <button id="next" aria-label="Seguinte">›</button>
+    <span id="name"></span>
+    <button id="zoom">100%</button>
+    <label class="btn">Importar…<input type="file" id="file" accept="image/*" multiple hidden></label>
+  </nav>
+  <div id="stage"><img id="img" alt=""><p id="empty">Sem imagens nesta pasta. Usa "Importar…" para adicionar.</p></div>
+  <p id="status" role="status"></p>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

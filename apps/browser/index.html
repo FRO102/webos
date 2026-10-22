@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Navegador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <button id="back" aria-label="Recuar">←</button>
+    <button id="fwd" aria-label="Avançar">→</button>
+    <button id="reload" aria-label="Recarregar">↻</button>
+    <button id="home" aria-label="Início">⌂</button>
+    <input id="addr" aria-label="Endereço" placeholder="https://… ou file:/home/user/…" spellcheck="false">
+  </nav>
+  <iframe id="frame" title="Página"></iframe>
+  <p id="msg" role="status"></p>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

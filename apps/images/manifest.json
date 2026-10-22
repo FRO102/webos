@@ -1,0 +1,11 @@
+{
+  "id": "images",
+  "name": "Imagens",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 640, "height": 460, "minWidth": 360, "minHeight": 260 },
+  "singleInstance": false,
+  "fileTypes": [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"],
+  "permissions": ["fs.read", "fs.write"]
+}

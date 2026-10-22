@@ -1,0 +1,9 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; background: #0e1a22; color: #d6e2e8; font: 13px/1.5 ui-monospace, Consolas, monospace; }
+#out { flex: 1; overflow: auto; padding: 8px 10px 0; }
+#out div { white-space: pre-wrap; word-break: break-word; }
+.cmd { color: #8fa3ae; } .err { color: #ff8a8a; } .dir { color: #7fb4ff; }
+#line { display: flex; gap: 8px; padding: 0 10px 8px; }
+#prompt { color: var(--os-accent, #3cb6a4); white-space: nowrap; }
+#in { flex: 1; min-width: 0; border: 0; background: none; color: inherit; font: inherit; outline: none; caret-color: var(--os-accent, #3cb6a4); }

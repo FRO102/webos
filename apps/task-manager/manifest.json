@@ -1,0 +1,10 @@
+{
+  "id": "task-manager",
+  "name": "Gestor de Tarefas",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 560, "height": 400, "minWidth": 420, "minHeight": 260 },
+  "singleInstance": true,
+  "permissions": []
+}

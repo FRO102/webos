@@ -1,0 +1,11 @@
+{
+  "id": "diagramas",
+  "name": "Diagramas",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 980, "height": 700, "minWidth": 700, "minHeight": 480 },
+  "singleInstance": false,
+  "permissions": ["fs.read", "fs.write"] ,
+  "fileTypes": [".flow"]
+}

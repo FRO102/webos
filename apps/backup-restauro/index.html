@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Backup e Restauro</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><span class="eyebrow">PROTEÇÃO DE DADOS</span><h1>Backup e Restauro</h1><p>Guarda uma cópia portátil do teu ambiente WebOS.</p></header>
+  <main>
+    <section class="backup-section">
+      <div class="section-title"><div><span class="step">01</span><h2>Criar backup</h2></div><span>JSON · guardado no teu dispositivo</span></div>
+      <p>Inclui as definições do sistema, os dados privados das aplicações e os ficheiros da pasta pessoal ativa.</p>
+      <button id="export" class="primary">Exportar backup</button>
+    </section>
+    <section class="restore-section">
+      <div class="section-title"><div><span class="step">02</span><h2>Restaurar backup</h2></div><span>Requer confirmação</span></div>
+      <p>O ficheiro é validado antes de qualquer alteração. Ao restaurar, os dados privados das aplicações e a pasta pessoal atual serão substituídos.</p>
+      <div class="restore-actions"><input id="backup-file" type="file" accept="application/json,.json" aria-label="Selecionar ficheiro de backup"><button id="choose-file">Selecionar backup JSON</button><button id="restore" class="danger" disabled>Validar e restaurar</button></div>
+      <div id="preview" hidden></div>
+    </section>
+    <aside><strong>Fica fora do backup</strong><p>Perfis de utilizador, histórico de notificações, registos de diagnóstico e estado temporário de sessão.</p></aside>
+    <p id="status" data-state="info" role="status" aria-live="polite"></p>
+  </main>
+  <script src="../../system/sdk/os-sdk.js"></script><script src="../../system/sdk/os-dialogs.js"></script><script src="app.js"></script>
+</body>
+</html>

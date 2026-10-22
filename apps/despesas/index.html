@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Despesas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><p class="eyebrow">FINANÇAS PESSOAIS</p><h1>Despesas</h1></div>
+    <div class="month-control"><button id="prev-month" aria-label="Mês anterior">‹</button><strong id="month-label"></strong><button id="next-month" aria-label="Mês seguinte">›</button></div>
+    <div class="file-actions"><button id="import-csv" class="quiet">Importar CSV</button><button id="export-csv" class="quiet">Exportar CSV</button></div>
+  </header>
+  <main>
+    <section class="summary" aria-label="Resumo do mês">
+      <div><span>Saldo do mês</span><strong id="balance">0,00 €</strong><small id="balance-note">Entradas menos despesas</small></div>
+      <div class="income"><span>Entradas</span><strong id="income-total">0,00 €</strong></div>
+      <div class="expense"><span>Despesas</span><strong id="expense-total">0,00 €</strong></div>
+      <div class="budget"><label for="budget-input">Orçamento mensal</label><div class="budget-edit"><input id="budget-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00"><span>€</span></div><progress id="budget-progress" max="100" value="0"></progress><small id="budget-note">Sem limite definido</small></div>
+    </section>
+    <section class="visuals" aria-label="Gráficos do mês">
+      <article class="chart-panel"><div class="section-head"><h2>Movimento diário</h2><span id="daily-total"></span></div><canvas id="daily-chart" aria-label="Gráfico de entradas e despesas diárias"></canvas></article>
+      <article class="chart-panel category-panel"><div class="section-head"><h2>Por categoria</h2><select id="chart-kind" aria-label="Tipo de movimentos"><option value="expense">Despesas</option><option value="income">Entradas</option></select></div><canvas id="category-chart" aria-label="Gráfico por categoria"></canvas><ul id="category-legend"></ul></article>
+    </section>
+    <section class="ledger">
+      <div class="section-head"><div><p class="eyebrow">REGISTO</p><h2>Movimentos</h2></div><span id="entry-count"></span></div>
+      <form id="entry-form" class="entry-form">
+        <label>Tipo<select id="entry-kind"><option value="expense">Despesa</option><option value="income">Entrada</option></select></label>
+        <label>Descrição<input id="entry-description" required maxlength="80" placeholder="Ex.: supermercado"></label>
+        <label>Categoria<div class="category-control"><select id="entry-category"></select><button id="add-category" type="button" aria-label="Adicionar categoria" title="Adicionar categoria">+</button><button id="remove-category" type="button" aria-label="Remover categoria" title="Remover categoria">−</button></div></label>
+        <label>Data<input id="entry-date" type="date" required></label>
+        <label>Valor (€)<input id="entry-amount" type="number" min="0.01" step="0.01" required inputmode="decimal" placeholder="0,00"></label>
+        <div class="form-actions"><button id="cancel-edit" type="button" hidden>Cancelar</button><button id="submit-entry" class="primary" type="submit">Adicionar</button></div>
+      </form>
+      <div class="table-wrap"><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="amount-col">Valor</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="entry-list"></tbody></table><p id="empty-state" class="empty" hidden>Sem movimentos neste mês. Adiciona o primeiro acima.</p></div>
+    </section>
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

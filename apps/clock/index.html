@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relógio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="tabs" role="tablist" aria-label="Secções">
+    <button role="tab" id="t-clock" aria-controls="p-clock" aria-selected="true">Relógio</button>
+    <button role="tab" id="t-cal" aria-controls="p-cal" aria-selected="false" tabindex="-1">Calendário</button>
+    <button role="tab" id="t-sw" aria-controls="p-sw" aria-selected="false" tabindex="-1">Cronómetro</button>
+    <button role="tab" id="t-timer" aria-controls="p-timer" aria-selected="false" tabindex="-1">Temporizador</button>
+  </div>
+
+  <section id="p-clock" role="tabpanel" aria-labelledby="t-clock">
+    <svg id="face" viewBox="0 0 200 200" role="img" aria-label="Relógio analógico">
+      <circle cx="100" cy="100" r="96" class="rim"/>
+      <g id="ticks"></g>
+      <line id="hh" x1="100" y1="100" x2="100" y2="58" class="hand h"/>
+      <line id="mm" x1="100" y1="100" x2="100" y2="34" class="hand m"/>
+      <line id="ss" x1="100" y1="112" x2="100" y2="26" class="hand s"/>
+      <circle cx="100" cy="100" r="4" class="pin"/>
+    </svg>
+    <div id="digital" aria-hidden="true"></div>
+    <div id="longdate"></div>
+    <ul id="world" aria-label="Horas no mundo"></ul>
+  </section>
+
+  <section id="p-cal" role="tabpanel" aria-labelledby="t-cal" hidden>
+    <div class="cal-head">
+      <button id="prev" aria-label="Mês anterior">‹</button>
+      <h2 id="month" aria-live="polite"></h2>
+      <button id="today">Hoje</button>
+      <button id="next" aria-label="Mês seguinte">›</button>
+    </div>
+    <div class="dow" aria-hidden="true"><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span></div>
+    <div id="grid" role="group" aria-label="Dias do mês"></div>
+    <h3 id="dayhead"></h3>
+    <ul id="events"></ul>
+    <form id="addev" onsubmit="return false">
+      <input type="time" id="evtime" aria-label="Hora">
+      <input type="text" id="evtext" placeholder="Novo evento ou nota" aria-label="Texto do evento" maxlength="120">
+      <button id="evadd" type="button">Adicionar</button>
+    </form>
+  </section>
+
+  <section id="p-sw" role="tabpanel" aria-labelledby="t-sw" hidden>
+    <div id="swdisp" class="big">00:00.00</div>
+    <div class="row">
+      <button id="swgo" class="primary">Iniciar</button>
+      <button id="swlap" disabled>Volta</button>
+      <button id="swreset">Repor</button>
+    </div>
+    <ol id="laps"></ol>
+  </section>
+
+  <section id="p-timer" role="tabpanel" aria-labelledby="t-timer" hidden>
+    <div id="tdisp" class="big" role="timer">05:00</div>
+    <div class="row">
+      <label>Min <input type="number" id="tm" min="0" max="999" value="5"></label>
+      <label>Seg <input type="number" id="ts" min="0" max="59" value="0"></label>
+    </div>
+    <div class="row">
+      <button data-min="1">1 min</button><button data-min="5">5 min</button><button data-min="10">10 min</button><button data-min="25">25 min</button>
+    </div>
+    <div class="row">
+      <button id="tgo" class="primary">Iniciar</button>
+      <button id="treset">Repor</button>
+    </div>
+  </section>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

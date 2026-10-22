@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Conversor de Unidades</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header><div><p>FERRAMENTAS</p><h1>Conversor de unidades</h1></div><output id="live-result" aria-live="polite">1 m = 100 cm</output></header>
+  <main>
+    <nav id="categories" aria-label="Categorias de unidades"></nav>
+    <section class="converter" aria-label="Conversão">
+      <label class="unit-box"><span>De</span><input id="amount" type="number" step="any" value="1" aria-label="Valor a converter"><select id="from-unit" aria-label="Unidade de origem"></select></label>
+      <button id="swap" aria-label="Inverter unidades" title="Inverter unidades">⇄</button>
+      <label class="unit-box"><span>Para</span><output id="result">100</output><select id="to-unit" aria-label="Unidade de destino"></select></label>
+    </section>
+    <section class="secondary"><div class="section-title"><h2>Conversões rápidas</h2><button id="favorite-current" aria-label="Guardar conversão favorita" title="Guardar favorito">☆</button></div><div id="quick-results" class="quick-grid"></div></section>
+    <section class="secondary"><div class="section-title"><h2>Favoritos</h2></div><ul id="favorite-list"></ul><p id="empty-favorites">Guarda conversões para as reutilizar rapidamente.</p></section>
+    <section class="secondary history"><div class="section-title"><h2>Recentes</h2><button id="clear-history" class="text-button">Limpar</button></div><ul id="history-list"></ul><p id="empty-history">As conversões recentes aparecem aqui.</p></section>
+  </main>
+  <footer><span id="status" role="status" aria-live="polite"></span><span>Os valores são calculados localmente.</span></footer>
+  <script src="../../system/sdk/os-sdk.js"></script><script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; background: var(--os-surface, #eef1f3); color: var(--os-fg, #1c2a33); font: 13px system-ui, sans-serif; }
+header { display: flex; gap: 16px; padding: 8px 12px; }
+#score { font-weight: 700; } #hint { margin-left: auto; color: var(--os-muted, #44565f); }
+canvas { flex: 1; min-height: 0; margin: 0 12px 12px; align-self: center; aspect-ratio: 1; max-width: calc(100% - 24px); max-height: calc(100% - 52px); border-radius: 8px; outline: none; }
+canvas:focus-visible { box-shadow: 0 0 0 2px var(--os-accent, #3cb6a4); }

@@ -1,0 +1,50 @@
+#window-layer { position: fixed; inset: 0 0 var(--taskbar-h) 0; pointer-events: none; }
+.window {
+  position: absolute; display: flex; flex-direction: column; pointer-events: auto;
+  background: var(--win-bg); border: 1px solid var(--win-border); border-radius: var(--radius);
+  box-shadow: var(--shadow); overflow: hidden; animation: win-open .14s ease-out;
+}
+.window.active { box-shadow: var(--shadow-active); }
+.window.minimized { display: none; }
+.window.other-workspace { display: none; }
+.window.maximized { left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0; border: 0; }
+@keyframes win-open { from { opacity: 0; transform: scale(.96); } }
+@media (prefers-reduced-motion: reduce) { .window { animation: none; } }
+
+.win-title {
+  display: flex; align-items: center; justify-content: space-between; flex: none;
+  height: 36px; padding-left: 12px; font-size: 13px; font-weight: 600;
+  background: var(--title-bg); color: var(--title-fg); user-select: none; touch-action: none;
+}
+.window.active .win-title { background: var(--title-active-bg); color: #fff; }
+.win-btns { display: flex; height: 100%; }
+.win-btns button { width: 44px; border: 0; background: none; color: inherit; font-size: 14px; cursor: default; }
+.win-btns button:hover { background: rgba(255, 255, 255, .18); }
+.win-btns button[data-act="close"]:hover { background: #d64545; color: #fff; }
+.win-btns button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.win-body { flex: 1; overflow: auto; padding: 16px; font-size: 14px; line-height: 1.5; }
+
+.rz { position: absolute; z-index: 2; touch-action: none; }
+.rz-n, .rz-s { left: 8px; right: 8px; height: 5px; cursor: ns-resize; }
+.rz-e, .rz-w { top: 8px; bottom: 8px; width: 5px; cursor: ew-resize; }
+.rz-n { top: 0; } .rz-s { bottom: 0; } .rz-e { right: 0; } .rz-w { left: 0; }
+.rz-ne, .rz-nw, .rz-se, .rz-sw { width: 10px; height: 10px; }
+.rz-ne { top: 0; right: 0; cursor: nesw-resize; } .rz-sw { bottom: 0; left: 0; cursor: nesw-resize; }
+.rz-nw { top: 0; left: 0; cursor: nwse-resize; } .rz-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.window.maximized .rz { display: none; }
+
+.win-body.flush { padding: 0; overflow: hidden; }
+.win-body iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--win-bg); }
+
+.window.closing { opacity: 0; transform: scale(.96); transition: opacity .12s, transform .12s; pointer-events: none; }
+@media (pointer: coarse) {
+  .rz-n, .rz-s { height: 12px; } .rz-e, .rz-w { width: 12px; }
+  .rz-ne, .rz-nw, .rz-se, .rz-sw { width: 22px; height: 22px; }
+  .win-btns button { width: 52px; }
+}
+
+#snap-preview {
+  position: fixed; z-index: 9000; pointer-events: none; border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent); border: 2px solid var(--accent);
+  transition: left .1s, top .1s, width .1s, height .1s;
+}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ficheiros</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav>
+    <button id="up" aria-label="Pasta acima">↑</button>
+    <input id="addr" aria-label="Caminho" spellcheck="false">
+    <button id="mkdir">Nova pasta</button>
+    <button id="trash-open">Lixeira</button>
+    <button id="restore">Restaurar</button>
+    <button id="empty-trash">Esvaziar</button>
+    <button id="upload">Importar</button>
+    <button id="download">Exportar</button>
+    <button id="rename">Mover/Renomear</button>
+    <button id="del">Apagar</button>
+  </nav>
+  <div id="wrap">
+    <table>
+      <thead><tr><th>Nome</th><th>Tamanho</th><th>Modificado</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <p id="status" role="status"></p>
+  <input id="file-input" type="file" hidden>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
