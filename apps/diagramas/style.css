@@ -29,6 +29,9 @@ svg { display: block; width: 100%; min-width: 780px; height: 100%; min-height: 5
 .node { cursor: grab; }.node:active { cursor: grabbing; }.node rect, .node polygon, .node ellipse { stroke-width: 2; }
 .node text { pointer-events: none; fill: #263f3d; font: 600 14px "Segoe UI", sans-serif; text-anchor: middle; dominant-baseline: middle; }
 .node.selected rect, .node.selected polygon, .node.selected ellipse { stroke: #dc833a; stroke-width: 3; }
+.node.connect-target { cursor: crosshair; }
+.node.connect-source rect, .node.connect-source polygon, .node.connect-source ellipse { stroke: #137b67; stroke-width: 4; filter: drop-shadow(0 0 5px #65b9a0); }
+.toolbar #connect[aria-pressed="true"] { border-color: #137b67; background: #e1f0e6; color: #105b4d; }
 .start rect, .end ellipse { fill: #e1f0e6; stroke: #428669; }.process rect { fill: #fff; stroke: #6b8eaa; }.decision polygon { fill: #fff0d6; stroke: #d49c37; }
 footer { display: flex; justify-content: space-between; gap: 12px; padding: 6px 12px; border-top: 1px solid #d5dfda; background: #fff; color: #74817c; font-size: 10px; }
 @media (max-width: 850px) { .toolbar { flex-wrap: wrap; gap: 6px; padding: 6px 9px; }.brand { margin-right: auto; }.actions { margin-left: 0; }.tool-group { overflow: auto; max-width: 100%; }main { grid-template-columns: 155px 1fr; }aside { padding: 12px 9px; } }

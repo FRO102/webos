@@ -10,12 +10,14 @@ import { initSwitcher } from './switcher.js';
 import { runBoot } from './boot.js';
 import { logger } from './logger.js';
 import { initUsers } from './users.js';
+import { initLocalization } from './i18n.js';
 
 async function init() {
   logger.info('Inicialização do WebOS iniciada');
   await initFS();
   await initUsers();
   await initSettings();
+  initLocalization();
   await initNotifications();
   const apps = await loadRegistry();
   initTaskbar();

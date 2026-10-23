@@ -2,6 +2,8 @@ import { bus } from './event-bus.js';
 import { focusWindow, minimizeWindow, toggleMaximize, closeWindow, getWindows, getActiveId, getWorkspace, getWorkspaceCount, switchWorkspace } from './window-manager.js';
 import { showContextMenu } from './context-menu.js';
 import { launchApp } from './app-loader.js';
+import { localeFor } from './i18n.js';
+import { getSettings } from './settings.js';
 
 export function initTaskbar() {
   const list = document.getElementById('task-list');
@@ -63,11 +65,13 @@ export function initTaskbar() {
 
   const tick = () => {
     const d = new Date();
-    clock.textContent = d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) + '\n' +
-      d.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const locale = localeFor(getSettings().language);
+    clock.textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) + '\n' +
+      d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
   tick();
   setInterval(tick, 15000);
+  bus.on('locale:changed', tick);
   clock.addEventListener('click', () => launchApp('clock')); // o relógio da barra abre a app
   clock.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); launchApp('clock'); } });
   sound?.addEventListener('click', () => {

@@ -8,4 +8,19 @@ button:disabled { opacity: .45; cursor: default; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--os-accent, #3cb6a4); }
 #addr { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--os-border, #c4cdd3); border-radius: 6px; background: var(--os-field, #fff); color: inherit; font: inherit; }
 #frame { flex: 1; width: 100%; border: 0; background: #fff; }
+#frame[hidden], #home-page[hidden] { display: none; }
+#home-page { flex: 1; overflow: auto; padding: 30px clamp(18px, 5vw, 58px); background: radial-gradient(ellipse at top right, #deeee7 0, transparent 46%), #f7f9f7; }
+.home-heading { max-width: 760px; margin: 0 auto 24px; }
+.eyebrow { color: #688079; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.home-heading h1 { margin: 8px 0 4px; color: #213b34; font-size: 25px; }
+.home-heading p, .home-note { color: #60716a; }
+.site-list { display: grid; max-width: 760px; margin: auto; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.site-item { display: flex; min-width: 0; align-items: center; gap: 12px; padding: 12px; border: 1px solid #d6e0da; border-radius: 6px; background: #fff; text-align: left; cursor: pointer; }
+.site-item:hover, .site-item:focus-visible { border-color: #67a28e; background: #f1f8f4; }
+.site-mark { display: grid; flex: 0 0 38px; width: 38px; aspect-ratio: 1; place-items: center; border-radius: 5px; background: #e1f0e6; color: #226b53; font-size: 18px; font-weight: 700; }
+.site-copy { display: grid; min-width: 0; gap: 3px; }
+.site-copy strong { overflow: hidden; color: #263f3d; text-overflow: ellipsis; }
+.site-copy small { color: #71817b; }
+.site-open { margin-left: auto; color: #71817b; }
+.home-note { max-width: 760px; margin: 20px auto 0; font-size: 12px; }
 #msg { margin: 0; padding: 4px 10px; min-height: 24px; font-size: 12px; color: var(--os-muted, #44565f); background: var(--os-surface, #eef1f3); border-top: 1px solid var(--os-border, #d3dce2); }

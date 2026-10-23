@@ -10,6 +10,7 @@ function render() {
   $('animations').checked = st.animations;
   $('sounds').checked = st.sounds;
   $('language').value = st.language;
+  $('language-status').textContent = st.language === 'en' ? 'English' : 'Português';
   $('custom').value = st.accent;
   $('accents').replaceChildren(...ACCENTS.map(c => {
     const b = document.createElement('button');
@@ -47,3 +48,4 @@ $('test').onclick = () => os.notify('Esta é uma notificação de teste.');
 $('reset').onclick = () => set(DEFAULTS);
 
 os.settings.get().then(s => { st = s; render(); }).catch(e => { $('status').textContent = e.message; });
+os.i18n.onChange(({ language }) => { if (st) { st.language = language; render(); } });

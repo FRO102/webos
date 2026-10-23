@@ -57,6 +57,7 @@ export async function initSettings() {
   state = { ...defaults, ...(saved && typeof saved === 'object' ? saved : {}) };
   if (!Number.isFinite(state.fontSize)) state.fontSize = defaults.fontSize;
   state.fontSize = Math.min(20, Math.max(12, state.fontSize));
+  if (!['pt-PT', 'en'].includes(state.language)) state.language = defaults.language;
   if (!(await kv.get('system:settings'))) await kv.set('system:settings', state);
   apply();
 }

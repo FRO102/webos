@@ -45,8 +45,8 @@ function tickClock() {
   $('#mm').setAttribute('transform', `rotate(${m * 6} 100 100)`);
   $('#ss').setAttribute('transform', `rotate(${s * 6} 100 100)`);
   $('#digital').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(s)}`;
-  $('#longdate').textContent = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  ZONES.forEach(([, tz], i) => { worldTimes[i].textContent = d.toLocaleTimeString('pt-PT', { timeZone: tz, hour: '2-digit', minute: '2-digit' }); });
+  $('#longdate').textContent = d.toLocaleDateString(os.i18n.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  ZONES.forEach(([, tz], i) => { worldTimes[i].textContent = d.toLocaleTimeString(os.i18n.locale, { timeZone: tz, hour: '2-digit', minute: '2-digit' }); });
 }
 tickClock();
 setInterval(tickClock, 1000);
@@ -60,7 +60,7 @@ const save = () => os.storage.set('events', events);
 
 function render(focus) {
   const y = view.getFullYear(), m = view.getMonth(), todayK = key(new Date());
-  $('#month').textContent = cap(view.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' }));
+  $('#month').textContent = cap(view.toLocaleDateString(os.i18n.locale, { month: 'long', year: 'numeric' }));
   const offset = (new Date(y, m, 1).getDay() + 6) % 7; // semana começa à segunda
   const grid = $('#grid');
   grid.replaceChildren();
@@ -69,7 +69,7 @@ function render(focus) {
     const b = document.createElement('button');
     b.textContent = d.getDate();
     b.className = [d.getMonth() !== m && 'out', k === todayK && 'today', k === selected && 'sel', n && 'has'].filter(Boolean).join(' ');
-    b.setAttribute('aria-label', d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' }) + (n ? `, ${n} evento${n > 1 ? 's' : ''}` : ''));
+    b.setAttribute('aria-label', d.toLocaleDateString(os.i18n.locale, { weekday: 'long', day: 'numeric', month: 'long' }) + (n ? `, ${n} ${os.i18n.language === 'en' ? (n === 1 ? 'event' : 'events') : `evento${n > 1 ? 's' : ''}`}` : ''));
     b.setAttribute('aria-pressed', String(k === selected));
     b.onclick = () => {
       selected = k;
@@ -84,7 +84,7 @@ function render(focus) {
 
 function renderDay() {
   const [y, m, d] = selected.split('-').map(Number);
-  $('#dayhead').textContent = new Date(y, m - 1, d).toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  $('#dayhead').textContent = new Date(y, m - 1, d).toLocaleDateString(os.i18n.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const ul = $('#events');
   ul.replaceChildren();
   const list = events[selected] ?? [];
@@ -119,6 +119,7 @@ $('#today').onclick = () => { view = new Date(); view.setDate(1); selected = key
 
 render();
 os.storage.get('events').then(e => { events = e ?? {}; render(); }).catch(() => {});
+os.i18n.onChange(() => { tickClock(); render(); });
 
 /* ---------- cronómetro ---------- */
 let swStart = 0, swAcc = 0, swInt = null, laps = [];

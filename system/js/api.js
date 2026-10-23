@@ -6,6 +6,7 @@ import { closeWindow, focusWindow, setTitle, resizeWindow, getWindows } from './
 import { logger } from './logger.js';
 import { listApps, openApp } from './shell-registry.js';
 import { getCurrentUser } from './users.js';
+import { localeData } from './i18n.js';
 
 const clients = new Map(); // contentWindow -> { appId, winId, manifest }
 const apiError = error => {
@@ -48,6 +49,7 @@ const methods = {
     return true;
   } },
   'theme.get':       { fn: () => ({ accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() }) },
+  'locale.get':      { fn: () => localeData() },
 };
 
 Object.assign(methods, {
@@ -75,6 +77,7 @@ window.addEventListener('message', async e => {
 
 const R = 'fs.read', W = 'fs.write';
 Object.assign(methods, {
+  'fs.home':   { perm: R, fn: () => fs.ensureUserHome(getCurrentUser()?.id) },
   'fs.list':   { perm: R, fn: (c, { path }) => fs.list(scopedPath(path)) },
   'fs.read':   { perm: R, fn: (c, { path }) => fs.read(scopedPath(path)) },
   'fs.stat':   { perm: R, fn: (c, { path }) => fs.stat(scopedPath(path)) },
@@ -125,6 +128,9 @@ Object.assign(methods, {
 bus.on('settings:changed', () => {
   const data = themeVars();
   for (const win of clients.keys()) win.postMessage({ event: 'theme:changed', data }, '*');
+});
+bus.on('locale:changed', data => {
+  for (const win of clients.keys()) win.postMessage({ event: 'locale:changed', data }, '*');
 });
 bus.on('window:opened', () => bus.emit('shell:changed'));
 bus.on('window:closed', () => bus.emit('shell:changed'));

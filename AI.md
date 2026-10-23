@@ -31,11 +31,11 @@ O carregador está em `system/js/app-loader.js`.
 1. Primeiro tenta obter a listagem HTTP de `apps/`.
 2. Extrai nomes de pastas válidos, no formato `a-z`, `0-9` e hífen.
 3. Carrega `apps/<id>/manifest.json` para cada pasta.
-4. Se a listagem não estiver disponível, usa `apps/registry.json` como fallback.
+4. Sem listagem de diretórios, informa que o servidor precisa de expor `apps/`; não existe fallback de registo manual.
 5. Manifests inválidos são ignorados e registados na consola.
 6. As apps válidas aparecem no Menu Iniciar, na Loja e podem ser abertas pelo shell.
 
-Com Five Server, Python HTTP Server ou PHP, a descoberta automática funciona. Em servidores que não permitem directory listing, é necessário adicionar o ID a `apps/registry.json`.
+Usa um servidor que exponha listagens de diretórios, como Five Server ou Python HTTP Server. Em servidores que não permitem directory listing, configura essa opção no servidor: não há registo manual alternativo.
 
 ## Manifest obrigatório
 
@@ -75,13 +75,7 @@ Regras:
 - A permissão tem de estar na lista suportada pelo shell.
 - Os scripts da app são scripts clássicos, não módulos ES.
 
-O formato de fallback de `apps/registry.json` é apenas uma lista de IDs:
-
-```json
-{ "apps": ["calculator", "to-do"] }
-```
-
-O manifest continua a ser a fonte de verdade de cada app.
+O manifest de cada pasta é a fonte de verdade da app. Não existe catálogo separado para manter.
 
 Permissões suportadas atualmente:
 
@@ -496,10 +490,9 @@ O runtime deve degradar graciosamente quando uma capacidade opcional não existi
 5. Declarar apenas as permissões necessárias.
 6. Usar `os.storage` para dados privados.
 7. Usar `os.fs` apenas com permissões e caminhos permitidos.
-8. Se o servidor listar `apps/`, não editar o shell nem o registro.
-9. Se o servidor não listar `apps/`, adicionar o ID a `apps/registry.json`.
-10. Reiniciar/recarregar o WebOS.
-11. Executar a validação de manifestos e o smoke test.
+8. Confirmar que o servidor lista `apps/`.
+9. Reiniciar/recarregar o WebOS.
+10. Executar a validação de manifestos e o smoke test.
 
 ## Validação local
 
@@ -508,6 +501,7 @@ A partir da raiz do projeto:
 ```powershell
 node .\tests\validate-manifests.mjs
 node .\tests\smoke.mjs
+node .\tests\i18n.mjs
 ```
 
 Validar sintaxe de todos os scripts:
@@ -518,11 +512,12 @@ Get-ChildItem -Path . -Recurse -Filter *.js | ForEach-Object { node --check $_.F
 
 Executar com servidor local, por exemplo Five Server, Python ou PHP. Não testar a aplicação principal abrindo `index.html` diretamente com `file://`.
 
-Em CI, executar pelo menos estes dois comandos e falhar o job quando qualquer um terminar com código diferente de zero:
+Em CI, executar os três testes e falhar o job quando qualquer um terminar com código diferente de zero:
 
 ```powershell
 node .\tests\validate-manifests.mjs
 node .\tests\smoke.mjs
+node .\tests\i18n.mjs
 ```
 
 Ainda não existe uma configuração CI oficial nem uma suíte de testes de browser.

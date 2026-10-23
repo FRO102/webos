@@ -1,4 +1,6 @@
 import { getUsers, selectUser, clearSessionUser } from './users.js';
+import { localeFor } from './i18n.js';
+import { getSettings } from './settings.js';
 
 const flag = (k, v) => {
   try {
@@ -28,8 +30,9 @@ function login(el) {
     const clock = el.querySelector('.login-clock'), date = el.querySelector('.login-date');
     const tick = () => {
       const d = new Date();
-      clock.textContent = d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-      date.textContent = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' });
+      const locale = localeFor(getSettings().language);
+      clock.textContent = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+      date.textContent = d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
     };
     tick();
     const t = setInterval(tick, 15000);

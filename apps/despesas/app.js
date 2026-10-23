@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
 const DEFAULT_CATEGORIES = { expense: ['Casa', 'Alimentação', 'Transportes', 'Saúde', 'Lazer', 'Compras', 'Serviços', 'Outros'], income: ['Salário', 'Freelance', 'Investimentos', 'Reembolso', 'Outros'] };
 const COLORS = ['#16836a', '#e0a23a', '#d66a55', '#5685a0', '#8d72a8', '#82a64c', '#c27891', '#667c78'];
-const money = value => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+const money = value => new Intl.NumberFormat(os.i18n.locale, { style: 'currency', currency: 'EUR' }).format(value);
 const monthKey = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 const today = new Date();
 let view = new Date(today.getFullYear(), today.getMonth(), 1), entries = [], budgets = {}, categories = structuredClone(DEFAULT_CATEGORIES), editingId = null;
@@ -16,7 +16,7 @@ function updateCategories() {
 }
 function render() {
   const key = monthKey(view), items = selectedEntries();
-  $('month-label').textContent = view.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+  $('month-label').textContent = view.toLocaleDateString(os.i18n.locale, { month: 'long', year: 'numeric' });
   const income = items.filter(item => item.kind === 'income').reduce((sum, item) => sum + item.amount, 0);
   const expense = items.filter(item => item.kind === 'expense').reduce((sum, item) => sum + item.amount, 0);
   $('balance').textContent = money(income - expense); $('balance').className = income >= expense ? 'positive' : 'negative';
@@ -28,7 +28,7 @@ function render() {
   $('empty-state').hidden = items.length > 0;
   $('entry-list').replaceChildren(...items.map(item => {
     const row = document.createElement('tr');
-    const values = [new Date(`${item.date}T12:00:00`).toLocaleDateString('pt-PT'), item.description, item.category];
+    const values = [new Date(`${item.date}T12:00:00`).toLocaleDateString(os.i18n.locale), item.description, item.category];
     values.forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.append(cell); });
     const amount = document.createElement('td'); amount.textContent = `${item.kind === 'income' ? '+' : '−'} ${money(item.amount)}`; amount.className = item.kind === 'income' ? 'positive' : 'negative'; row.append(amount);
     const action = document.createElement('td'), actions = document.createElement('div'), edit = document.createElement('button'), remove = document.createElement('button');
@@ -193,3 +193,4 @@ $('export-csv').onclick = exportCsv; $('import-csv').onclick = importCsv;
 window.addEventListener('resize', render);
 updateCategories();
 os.storage.get('finance-data').then(data => { entries = data?.entries ?? []; budgets = data?.budgets ?? {}; categories = { expense: [...new Set([...DEFAULT_CATEGORIES.expense, ...(data?.categories?.expense ?? [])])], income: [...new Set([...DEFAULT_CATEGORIES.income, ...(data?.categories?.income ?? [])])] }; updateCategories(); render(); }).catch(() => { render(); say('Não foi possível carregar os dados guardados.'); });
+os.i18n.onChange(render);

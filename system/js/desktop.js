@@ -1,6 +1,6 @@
 import { launchApp } from './app-loader.js';
 import { showContextMenu } from './context-menu.js';
-import { closeAll } from './window-manager.js';
+import { getCurrentUser } from './users.js';
 
 export function initDesktop(apps) {
   const ul = document.getElementById('desktop-icons');
@@ -11,7 +11,6 @@ export function initDesktop(apps) {
     if (!additive) ul.querySelectorAll('.selected').forEach(x => x.classList.remove('selected'));
     el?.classList.toggle('selected', additive ? !el.classList.contains('selected') : true);
   };
-  const selectedCount = () => ul.querySelectorAll('.selected').length;
   const createIcon = ({ label, icon, open, contextLabel = 'Abrir' }) => {
     const li = document.createElement('li');
     li.dataset.key = label;
@@ -50,7 +49,7 @@ export function initDesktop(apps) {
     ul.append(li);
   };
   createIcon({ label: 'Lixeira', icon: '🗑', open: () => launchApp('file-explorer', { path: '/.Trash' }), contextLabel: 'Abrir lixeira' });
-  createIcon({ label: 'Pasta pessoal', icon: '⌂', open: () => launchApp('file-explorer', { path: '/home/user' }) });
+  createIcon({ label: 'Pasta pessoal', icon: '⌂', open: () => launchApp('file-explorer', { path: `/home/${getCurrentUser()?.id || 'user'}` }) });
   const appStore = apps.find(({ manifest: m }) => m.id === 'app-store');
   if (appStore) {
     const { manifest: m, base } = appStore;
@@ -105,13 +104,14 @@ export function initDesktop(apps) {
   desktop.addEventListener('click', () => select(null));
   desktop.addEventListener('contextmenu', e => {
     e.preventDefault(); select(null);
+    const desktopPath = `/home/${getCurrentUser()?.id || 'user'}/Desktop`;
     showContextMenu(e.clientX, e.clientY, [
-      ...(selectedCount() > 1 ? [{ label: `Abrir ${selectedCount()} itens`, action: () => {} }] : apps.map(({ manifest: m }) => ({ label: `Abrir ${m.name}`, action: () => launchApp(m.id) }))),
+      { label: 'Novo ficheiro', action: () => launchApp('file-explorer', { path: desktopPath, action: 'new-file' }) },
+      { label: 'Nova pasta', action: () => launchApp('file-explorer', { path: desktopPath, action: 'new-folder' }) },
       { separator: true },
-      { label: 'Abrir Lixeira', action: () => launchApp('file-explorer', { path: '/.Trash' }) },
       { label: 'Atualizar desktop', action: () => location.reload() },
-      { separator: true },
-      { label: 'Fechar todas as janelas', action: closeAll },
+      { label: 'Abrir Pasta pessoal', action: () => launchApp('file-explorer', { path: `/home/${getCurrentUser()?.id || 'user'}` }) },
+      { label: 'Abrir Lixeira', action: () => launchApp('file-explorer', { path: '/.Trash' }) },
     ]);
   });
 }

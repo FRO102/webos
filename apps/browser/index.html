@@ -14,7 +14,29 @@
     <button id="home" aria-label="Início">⌂</button>
     <input id="addr" aria-label="Endereço" placeholder="https://… ou file:/home/user/…" spellcheck="false">
   </nav>
-  <iframe id="frame" title="Página"></iframe>
+  <main id="home-page">
+    <header class="home-heading">
+      <span class="eyebrow">WEBOS · PÁGINA INICIAL</span>
+      <h1>Explorar na Web</h1>
+      <p>Atalhos para páginas com versões preparadas para abrir dentro de frames.</p>
+    </header>
+    <section class="site-list" aria-label="Sites incorporáveis">
+      <button class="site-item map" data-url="https://www.openstreetmap.org/export/embed.html?bbox=-9.25%2C38.70%2C-9.10%2C38.78&amp;layer=mapnik">
+        <span class="site-mark" aria-hidden="true">M</span><span class="site-copy"><strong>Lisboa</strong><small>Mapa · OpenStreetMap</small></span><span class="site-open" aria-hidden="true">↗</span>
+      </button>
+      <button class="site-item directory" data-url="https://free-for.dev/#/">
+        <span class="site-mark" aria-hidden="true">{ }</span><span class="site-copy"><strong>Free for Developers</strong><small>Serviços gratuitos para programadores</small></span><span class="site-open" aria-hidden="true">↗</span>
+      </button>
+      <button class="site-item stats" data-url="https://www.worldometers.info/">
+        <span class="site-mark" aria-hidden="true">#</span><span class="site-copy"><strong>Worldometer</strong><small>Estatísticas mundiais em tempo real</small></span><span class="site-open" aria-hidden="true">↗</span>
+      </button>
+      <button class="site-item planning" data-url="https://web.goodplan.app/">
+        <span class="site-mark" aria-hidden="true">G</span><span class="site-copy"><strong>GoodPlan</strong><small>Planeamento e notas</small></span><span class="site-open" aria-hidden="true">↗</span>
+      </button>
+    </section>
+    <p class="home-note">A disponibilidade e algumas funções dependem do site. Podes também introduzir qualquer endereço na barra acima.</p>
+  </main>
+  <iframe id="frame" title="Página" hidden></iframe>
   <p id="msg" role="status"></p>
   <script src="../../system/sdk/os-sdk.js"></script>
   <script src="app.js"></script>

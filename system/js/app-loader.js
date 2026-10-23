@@ -1,7 +1,9 @@
-import { createWindow, focusWindow } from './window-manager.js';
+import { createWindow, focusWindow, setTitle } from './window-manager.js';
 import { registerClient } from './api.js';
 import { bus } from './event-bus.js';
 import { registerApps, registerOpener } from './shell-registry.js';
+import { parseAppDirectoryListing } from './app-discovery.js';
+import { translate } from './i18n.js';
 
 const apps = new Map();      // appId -> { manifest, base }
 const running = new Map();   // winId -> appId
@@ -18,7 +20,10 @@ export async function loadRegistry() {
       const response = await fetch(base + 'manifest.json');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const manifest = await response.json();
-      if (!manifest.id || !manifest.name || !manifest.entry) throw new Error('campos obrigatórios em falta');
+      if (manifest.id !== id || !manifest.name || !manifest.version || !manifest.icon || !manifest.entry) throw new Error('campos obrigatórios em falta ou id diferente do nome da pasta');
+      for (const path of [manifest.icon, manifest.entry]) {
+        if (path.startsWith('/') || path.split(/[\\/]/).includes('..')) throw new Error('caminho de ficheiro inválido');
+      }
       if (!Array.isArray(manifest.permissions) || manifest.permissions.some(p => !permissions.has(p))) throw new Error('permissões inválidas');
       apps.set(manifest.id, { manifest, base });
     } catch (error) { console.warn(`App "${id}" ignorada: manifest inválido ou em falta.`, error); }
@@ -29,23 +34,19 @@ export async function loadRegistry() {
   return loaded;
 }
 
-async function discoverAppIds() {
-  try {
-    const response = await fetch('apps/');
-    if (response.ok) {
-      const html = await response.text();
-      const ids = [...html.matchAll(/href=["']([^"']+\/+)["']/gi)]
-        .map(match => decodeURIComponent(match[1].split('/').filter(Boolean).pop()))
-        .filter(id => /^[a-z0-9][a-z0-9-]*$/i.test(id) && id !== 'registry');
-      if (ids.length) return [...new Set(ids)];
-    }
-  } catch (error) { console.info('Descoberta automática indisponível; a usar registry.json.', error); }
+bus.on('locale:changed', () => {
+  for (const [winId, appId] of running) {
+    const manifest = apps.get(appId)?.manifest;
+    if (manifest) setTitle(winId, translate(manifest.name));
+  }
+});
 
-  const response = await fetch('apps/registry.json');
-  if (!response.ok) throw new Error(`Não foi possível carregar o registo de aplicações (${response.status}).`);
-  const reg = await response.json();
-  if (!Array.isArray(reg.apps)) throw new Error('O registo de aplicações é inválido.');
-  return reg.apps;
+async function discoverAppIds() {
+  const response = await fetch('apps/');
+  if (!response.ok) throw new Error(`Não foi possível listar as aplicações (${response.status}). O servidor tem de permitir a listagem da pasta apps/.`);
+  const ids = parseAppDirectoryListing(await response.text());
+  if (!ids.length) throw new Error('Não foram encontradas pastas de aplicações. O servidor tem de permitir a listagem da pasta apps/.');
+  return ids;
 }
 
 export function launchApp(appId, args = null) {
@@ -58,13 +59,13 @@ export function launchApp(appId, args = null) {
   }
 
   const frame = document.createElement('iframe');
-  frame.sandbox = 'allow-scripts allow-forms allow-modals allow-popups'; // sem allow-same-origin: isolamento total
+  frame.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-downloads'; // sem allow-same-origin: isolamento total
   frame.title = m.name;
   frame.src = base + m.entry;
 
   const w = m.window ?? {};
   const win = createWindow({
-    title: m.name, width: w.width, height: w.height,
+    title: translate(m.name), width: w.width, height: w.height,
     minWidth: w.minWidth, minHeight: w.minHeight, content: frame, flush: true,
   });
   registerClient(frame, { appId, winId: win.id, manifest: m, args });

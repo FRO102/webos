@@ -28,16 +28,67 @@
   addEventListener('keydown', e => { if (e.altKey && (e.code === 'KeyQ' || e.code.startsWith('Arrow'))) { e.preventDefault(); call('shell.key', { type: 'down', code: e.code, shift: e.shiftKey }).catch(() => {}); } });
   addEventListener('keyup', e => { if (e.key === 'Alt') call('shell.key', { type: 'up' }).catch(() => {}); });
 
+  let localeData = { language: 'pt-PT', locale: 'pt-PT', translations: {} };
+  const sourceText = new WeakMap(), sourceAttributes = new WeakMap();
+  const translateValue = value => {
+    if (localeData.language !== 'en') return value;
+    const exact = localeData.translations[value];
+    if (exact) return exact;
+    const color = value.match(/^Cor (#(?:[\da-f]{3}|[\da-f]{6}))$/i);
+    if (color) return `Color ${color[1]}`;
+    const count = value.match(/^(\d+) (item|itens|forma|formas|aplicação|aplicações|ficheiro|ficheiros|registo|registos|janela aberta|janelas abertas)$/i);
+    if (count) {
+      const labels = { item: 'item', itens: 'items', forma: 'shape', formas: 'shapes', aplicação: 'application', aplicações: 'applications', ficheiro: 'file', ficheiros: 'files', registo: 'record', registos: 'records', 'janela aberta': 'open window', 'janelas abertas': 'open windows' };
+      return `${count[1]} ${labels[count[2].toLowerCase()]}`;
+    }
+    const workspace = value.match(/^Área (\d+)$/);
+    if (workspace) return `Workspace ${workspace[1]}`;
+    return value;
+  };
+  const translateText = text => {
+    const current = text.nodeValue;
+    const state = sourceText.get(text);
+    const original = state && current === state.rendered ? state.source : current;
+    const value = original.trim();
+    if (!value) return;
+    const translated = translateValue(value);
+    const result = original.replace(value, translated);
+    sourceText.set(text, { source: original, rendered: result });
+    if (text.nodeValue !== result) text.nodeValue = result;
+  };
+  const translateDOM = root => {
+    const language = localeData.language, translations = localeData.translations;
+    if (!root || !translations) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let text;
+    while ((text = walker.nextNode())) translateText(text);
+    for (const element of [root, ...root.querySelectorAll('*')]) {
+      for (const attribute of ['aria-label', 'aria-placeholder', 'placeholder', 'title']) {
+        const current = element.getAttribute(attribute);
+        if (!current) continue;
+        const attributes = sourceAttributes.get(element) ?? {};
+        const state = attributes[attribute];
+        const source = state && current === state.rendered ? state.source : current;
+        const translated = translateValue(source);
+        attributes[attribute] = { source, rendered: translated };
+        sourceAttributes.set(element, attributes);
+        if (current !== translated) element.setAttribute(attribute, translated);
+      }
+    }
+    document.documentElement.lang = language === 'en' ? 'en' : 'pt-PT';
+  };
+  const applyLocale = data => { localeData = data; translateDOM(document.body); };
+
   window.os = {
     errors: {
       is: (error, code) => error?.code === code,
-      message: (error, fallback = 'Ocorreu um erro. Tenta novamente.') => error?.message || fallback,
+      message: (error, fallback = 'Ocorreu um erro. Tenta novamente.') => translateValue(error?.message || fallback),
     },
     ui: {
       status: (target, message, state = 'info') => {
         const element = typeof target === 'string' ? document.getElementById(target) : target;
         if (!element) return;
-        element.textContent = String(message ?? ''); element.dataset.state = state;
+        element.textContent = translateValue(String(message ?? '')); element.dataset.state = state;
         element.setAttribute('role', state === 'error' ? 'alert' : 'status');
         element.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
       },
@@ -64,6 +115,7 @@
     },
     shell: { windows: () => call('shell.windows'), apps: () => call('shell.apps'), open: appId => call('shell.open', { appId }), focus: id => call('shell.focus', { id }), close: id => call('shell.close', { id }) },
     fs: { // requer "fs.read" / "fs.write" no manifest
+      home: () => call('fs.home'),
       list: path => call('fs.list', { path }),
       read: path => call('fs.read', { path }),
       stat: path => call('fs.stat', { path }),
@@ -95,8 +147,28 @@
       get: () => call('settings.get'),
       set: patch => call('settings.set', { patch }),
     },
+    i18n: {
+      get language() { return localeData.language; },
+      get locale() { return localeData.locale; },
+      t: text => translateValue(String(text)),
+      date: (value, options = {}) => new Intl.DateTimeFormat(localeData.locale, options).format(value instanceof Date ? value : new Date(value)),
+      number: (value, options = {}) => new Intl.NumberFormat(localeData.locale, options).format(value),
+      onChange: fn => os.on('locale:changed', fn),
+      apply: root => translateDOM(root ?? document.body),
+    },
     on: (event, fn) => { (listeners.get(event) ?? listeners.set(event, new Set()).get(event)).add(fn); }, // 'fs:changed'
   };
+
+  os.on('locale:changed', applyLocale);
+  const localeObserver = new MutationObserver(records => {
+    for (const record of records) for (const node of record.addedNodes) if (node.nodeType === Node.ELEMENT_NODE) translateDOM(node);
+    for (const record of records) if (record.type === 'characterData') translateText(record.target);
+  });
+  localeObserver.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  call('locale.get').then(data => {
+    applyLocale(data);
+    listeners.get('locale:changed')?.forEach(fn => fn(data));
+  }).catch(() => {});
 
   // aplica o tema do sistema como variáveis CSS (--os-bg, --os-fg, --os-accent, ...)
   const applyTheme = t => {

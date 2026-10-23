@@ -22,11 +22,13 @@ python -m http.server 8000
 
 Também podes usar Five Server no VS Code. Abre depois o endereço correspondente, por exemplo `http://localhost:8000`.
 
-O carregador tenta descobrir as apps através da listagem HTTP de `apps/`. Se o servidor não disponibilizar essa listagem, adiciona os IDs a [`apps/registry.json`](apps/registry.json), que funciona como fallback.
+O carregador descobre automaticamente cada app pela listagem HTTP de `apps/` e lê o respetivo `manifest.json`. Para adicionar uma app, basta criar a pasta `apps/<id>/` com o código e o manifest. O servidor tem de expor listagem de diretórios em `apps/`; sem essa capacidade, um browser não consegue enumerar as pastas num site estático.
 
 ## Aplicações incluídas
 
 O projeto inclui apps de sistema e ferramentas como Calculadora, Calendário, Relógio, Ficheiros, Bloco de Notas, Imagens, Leitor Multimédia, Snake, Despesas, Diagramas, Conversor de Unidades, Códigos QR, Paleta de Cores e Backup e Restauro. Os manifests e respetivos pontos de entrada estão nas pastas de [`apps/`](apps/).
+
+O sistema suporta Português (`pt-PT`) e Inglês (`en`). A seleção é guardada nas Definições, atualiza o shell e é propagada às apps abertas; textos sem tradução mantêm o original. As apps podem usar `os.i18n` para traduções próprias e formatação regional.
 
 ## Testes e validação
 
@@ -35,6 +37,7 @@ Executa na raiz do projeto:
 ```powershell
 node .\tests\validate-manifests.mjs
 node .\tests\smoke.mjs
+node .\tests\i18n.mjs
 ```
 
 Para verificar a sintaxe de todos os scripts JavaScript:
@@ -58,9 +61,9 @@ Get-ChildItem -Path . -Recurse -Filter *.js | ForEach-Object { node --check $_.F
 1. Cria `apps/<id>/` com `manifest.json`, `index.html`, `app.js`, `style.css` e um ícone SVG.
 2. Inclui `../../system/sdk/os-sdk.js` antes do JavaScript da app; usa scripts clássicos, não ES Modules.
 3. Declara no manifest apenas as permissões necessárias e mantém os ficheiros próprios dentro da pasta da app.
-4. Se o servidor não listar automaticamente as pastas de `apps/`, acrescenta o ID a `apps/registry.json`.
+4. Confirma que o servidor permite listar o conteúdo de `apps/`; não é necessário registar a app noutro ficheiro.
 5. Consulta [`docs/app-development.md`](docs/app-development.md) para o formato do manifest, APIs, dados e filesystem virtual.
-6. Executa os dois testes acima e testa a app pelo shell, não apenas abrindo o HTML isoladamente.
+6. Executa os três testes acima e testa a app pelo shell, não apenas abrindo o HTML isoladamente.
 
 As apps usam `os.storage` para dados privados, `os.settings` para preferências globais e `os.fs` para documentos do utilizador. A app Backup e Restauro pode exportar e restaurar os dados suportados do perfil ativo.
 

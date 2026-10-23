@@ -2,8 +2,8 @@
 
 1. Cria `apps/<id>/` com `manifest.json`, `index.html` e um ícone SVG.
 2. No `index.html`, carrega o SDK com um script normal: `<script src="../../system/sdk/os-sdk.js"></script>`.
-3. Inicia o WebOS com um servidor que exponha a listagem de diretórios (Five Server, Python HTTP Server ou PHP): a pasta é descoberta automaticamente e não é necessário editar o shell.
-4. Mantém `apps/registry.json` atualizado como fallback para servidores que não permitem listar `apps/`.
+3. Inicia o WebOS com um servidor que exponha a listagem de diretórios em `apps/` (por exemplo, Five Server ou Python HTTP Server): a pasta é descoberta automaticamente e não é necessário editar o shell nem qualquer índice de apps.
+4. Se o servidor não expuser essa listagem, configura-o para a permitir. Um browser não consegue descobrir nomes de pastas num servidor estático que os oculte.
 
 Regras:
 - O `id` do manifest deve ser igual ao nome da pasta e conter apenas letras, números e hífen.
@@ -25,6 +25,15 @@ Regras:
 - `os.args()` — argumentos de arranque, ex.: `{ path }` quando a app é aberta a partir de um ficheiro
 - `os.openFile(path)` — abre o ficheiro na app registada para a extensão (`fileTypes` no manifest); permissão `apps.launch`
 - `os.on('fs:changed', fn)` — recebido por apps com `fs.read`
+- `os.i18n.language` / `os.i18n.locale` — idioma ativo (`pt-PT` ou `en`) e localidade de formatação (`pt-PT` ou `en-GB`).
+- `os.i18n.t(text)` — traduz texto conhecido pelo catálogo do sistema, mantendo o original como fallback.
+- `os.i18n.date(value, options)` e `os.i18n.number(value, options)` — formatam datas e números na localidade ativa.
+- `os.i18n.onChange(fn)` — recebe `{ language, locale, translations }` quando o idioma muda enquanto a app está aberta.
+- `os.i18n.apply(root)` — aplica ao DOM indicado as traduções do catálogo comum e atualiza `lang`; o SDK também traduz automaticamente novos nós adicionados.
+
+As apps devem manter as strings de origem em Português no HTML e usar `os.i18n.t()` para texto dinâmico conhecido. Para datas e números, usar `os.i18n.date()` e `os.i18n.number()` em vez de fixar `pt-PT`. O catálogo comum cobre as strings traduzidas pelo sistema, mas ainda não é uma tradução integral de todas as apps; texto sem entrada no catálogo permanece na língua de origem. Conteúdo escrito pelo utilizador, caminhos, IDs e dados persistidos não devem ser traduzidos.
+
+Ao adicionar rótulos novos à interface, incluir a tradução inglesa no catálogo `system/js/i18n.js` e cobrir o comportamento em Português e Inglês. Executar também `node .\tests\i18n.mjs`, além dos testes de smoke e manifests.
 
 ## Propriedade e persistência dos dados
 

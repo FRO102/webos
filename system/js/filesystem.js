@@ -130,6 +130,14 @@ export async function move(from, to) {
   changed(from);
 }
 
+export async function ensureUserHome(userId) {
+  const home = `/home/${String(userId || 'user').replace(/[^a-z0-9-]/gi, '') || 'user'}`;
+  for (const path of [home, 'Desktop', 'Documentos', 'Imagens', 'Música', 'Vídeos', 'Downloads'].map(name => name.startsWith('/') ? name : `${home}/${name}`)) {
+    if (!(await get(path))) await mkdir(path);
+  }
+  return home;
+}
+
 export async function initFS() {
   if (await get('/')) {
     for (const d of ['/.Trash', '/home', '/home/user', '/home/user/Documentos', '/home/user/Imagens', '/home/user/Música', '/home/user/Vídeos', '/home/user/Downloads']) if (!(await get(d))) await mkdir(d);

@@ -1,11 +1,12 @@
 const $ = id => document.getElementById(id);
 const rows = $('rows'), addr = $('addr'), status = $('status');
 const fileInput = $('file-input');
-let cwd = '/home/user', entries = [], sel = null;
+let home = '/home/user', cwd = home, entries = [], sel = null;
 
 const say = msg => { status.textContent = msg; };
 const join = (dir, name) => (dir === '/' ? '' : dir) + '/' + name;
 const size = n => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
+const validName = name => name && name !== '.' && name !== '..' && name.length <= 255 && !/[\\/\u0000-\u001f]/.test(name);
 
 async function go(p) {
   try { entries = await os.fs.list(p); cwd = p; sel = null; render(); }
@@ -14,13 +15,22 @@ async function go(p) {
 
 function render() {
   addr.value = cwd;
-  os.window.setTitle(`${cwd.split('/').pop() || '/'} — Ficheiros`);
+  os.window.setTitle(`${cwd.split('/').pop() || '/'} — ${os.i18n.t('Ficheiros')}`);
+  document.querySelectorAll('#places [data-place]').forEach(button => {
+    const target = button.dataset.place === 'home' ? home : button.dataset.place === 'trash' ? '/.Trash' : `${home}/${button.dataset.place}`;
+    if (target === cwd) button.setAttribute('aria-current', 'location');
+    else button.removeAttribute('aria-current');
+  });
   rows.replaceChildren();
+  if (!entries.length) {
+    const tr = document.createElement('tr'), td = document.createElement('td');
+    td.colSpan = 3; td.textContent = 'Esta pasta está vazia.'; td.className = 'empty'; tr.append(td); rows.append(tr);
+  }
   entries.forEach(en => {
     const tr = document.createElement('tr');
     tr.tabIndex = 0;
     tr.classList.toggle('sel', sel === en.path);
-    const cells = [`${en.type === 'dir' ? '📁' : '📄'} ${en.name}`, en.type === 'dir' ? '' : size(en.size), new Date(en.mtime).toLocaleString('pt-PT')];
+    const cells = [`${en.type === 'dir' ? '📁' : '📄'} ${en.name}`, en.type === 'dir' ? '' : size(en.size), os.i18n.date(en.mtime, { dateStyle: 'short', timeStyle: 'short' })];
     cells.forEach(t => { const td = document.createElement('td'); td.textContent = t; tr.append(td); });
     tr.onclick = () => select(en.path);
     tr.onfocus = () => select(en.path);
@@ -45,12 +55,29 @@ const activate = en => (en.type === 'dir' ? go(en.path) : os.openFile(en.path).c
 async function act(fn) { try { await fn(); } catch (e) { say(e.message); } }
 
 $('up').onclick = () => go(cwd.split('/').slice(0, -1).join('/') || '/');
-$('trash-open').onclick = () => go('/.Trash');
+$('refresh').onclick = () => go(cwd);
 addr.onkeydown = e => { if (e.key === 'Enter') go(addr.value.trim() || '/'); };
-$('mkdir').onclick = async () => {
+document.querySelectorAll('#places [data-place]').forEach(button => {
+  button.onclick = () => {
+    const place = button.dataset.place;
+    go(place === 'home' ? home : place === 'trash' ? '/.Trash' : `${home}/${place}`);
+  };
+});
+async function createFolder() {
   const n = await os.dialog.prompt({ title: 'Nova pasta', message: 'Nome da nova pasta:', okLabel: 'Criar' });
-  if (n?.trim()) act(() => os.fs.mkdir(join(cwd, n.trim())));
-};
+  const name = n?.trim();
+  if (name && validName(name)) await act(() => os.fs.mkdir(join(cwd, name)));
+  else if (name) say('Indica um nome de pasta válido, sem separadores de caminho.');
+}
+$('mkdir').onclick = createFolder;
+async function createFile() {
+  const value = await os.dialog.prompt({ title: 'Novo ficheiro', message: 'Nome do ficheiro:', defaultValue: 'Novo ficheiro.txt', okLabel: 'Criar' });
+  const name = value?.trim();
+  if (!name) return;
+  if (!validName(name)) return say('Indica um nome de ficheiro válido, sem separadores de caminho.');
+  await act(() => os.fs.write(join(cwd, name), '', 'text/plain'));
+}
+$('new-file').onclick = createFile;
 async function rename() {
   const en = current();
   if (!en) return say('Seleciona um item primeiro.');
@@ -95,4 +122,10 @@ $('download').onclick = async () => {
 };
 
 os.on('fs:changed', () => go(cwd));
-os.args().then(args => go(args?.path || cwd)).catch(() => go(cwd));
+Promise.all([os.fs.home(), os.args()]).then(([path, args]) => {
+  home = path;
+  go(args?.path || home);
+  if (args?.action === 'new-file') createFile();
+  if (args?.action === 'new-folder') createFolder();
+}).catch(() => go(home));
+os.i18n.onChange(() => go(cwd));

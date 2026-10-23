@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 const svg = $('diagram'), nodeLayer = $('nodes'), edgeLayer = $('edges'), ns = 'http://www.w3.org/2000/svg';
 const types = { inicio: 'start', processo: 'process', decisao: 'decision', fim: 'end' };
 const defaults = { inicio: 'Início', processo: 'Processo', decisao: 'Decisão?', fim: 'Fim' };
-let nodes = [], edges = [], selected = [], selectedEdge = null, nextId = 1, filePath = null, dirty = false;
+let nodes = [], edges = [], selected = [], selectedEdge = null, connectMode = false, connectFrom = null, nextId = 1, filePath = null, dirty = false, suppressNextClick = false;
 const say = text => { $('status').textContent = text; };
 const title = () => os.window.setTitle(`${dirty ? '• ' : ''}${filePath?.split('/').pop() || $('diagram-title').value} — Diagramas`);
 const markDirty = () => { dirty = true; title(); };
@@ -15,8 +15,14 @@ function shape(node) {
   else g.append(element('rect', { x: -70, y: -25, width: 140, height: 50, rx: 5 }));
   const text = element('text'); text.textContent = node.label; g.append(text);
   g.classList.toggle('selected', selected.includes(node.id));
-  g.addEventListener('pointerdown', event => beginDrag(event, node, g));
-  g.addEventListener('click', event => { event.stopPropagation(); selectedEdge = null; if (!event.shiftKey) selected = []; if (selected.includes(node.id)) selected = selected.filter(id => id !== node.id); else selected.push(node.id); render(); });
+  g.classList.toggle('connect-source', connectFrom === node.id);
+  g.classList.toggle('connect-target', connectMode && connectFrom !== node.id);
+  g.addEventListener('pointerdown', event => { if (!connectMode) beginDrag(event, node, g); });
+  g.addEventListener('click', event => {
+    event.stopPropagation();
+    if (connectMode) { chooseConnectionNode(node); return; }
+    selectedEdge = null; selected = event.shiftKey ? (selected.includes(node.id) ? selected.filter(id => id !== node.id) : [...selected, node.id]) : [node.id]; render();
+  });
   g.addEventListener('dblclick', event => { event.stopPropagation(); editNode(node); });
   g.addEventListener('keydown', event => { if (event.key === 'Enter') editNode(node); if (event.key === 'Delete' || event.key === 'Backspace') deleteSelected(); });
   return g;
@@ -36,17 +42,28 @@ function render() {
     return result;
   }));
   $('selection-label').textContent = selectedEdge ? `Ligação selecionada${edges.find(edge => edge.id === selectedEdge)?.label ? `: ${edges.find(edge => edge.id === selectedEdge).label}` : ''}` : selected.length ? `${selected.length} forma${selected.length > 1 ? 's' : ''} selecionada${selected.length > 1 ? 's' : ''}` : 'Nenhuma seleção';
+  $('connect').textContent = connectMode ? 'Cancelar ligação' : 'Ligar formas';
+  $('connect').setAttribute('aria-pressed', String(connectMode));
   $('edit-node').disabled = selected.length !== 1; $('edit-edge').disabled = !selectedEdge; $('reverse-edge').disabled = !selectedEdge;
 }
 function point(event) { const p = svg.createSVGPoint(); p.x = event.clientX; p.y = event.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
 function beginDrag(event, node) {
   if (event.button !== 0) return; event.stopPropagation();
-  selectedEdge = null;
-  if (!selected.includes(node.id)) { selected = event.shiftKey ? [...selected, node.id] : [node.id]; render(); }
-  const start = point(event), origins = selected.map(id => { const item = nodes.find(value => value.id === id); return [item, item.x, item.y]; });
-  svg.setPointerCapture(event.pointerId);
-  const move = ev => { const current = point(ev); origins.forEach(([item, x, y]) => { item.x = Math.max(85, x + current.x - start.x); item.y = Math.max(45, y + current.y - start.y); }); render(); };
-  const end = () => { svg.removeEventListener('pointermove', move); svg.removeEventListener('pointerup', end); svg.removeEventListener('pointercancel', end); markDirty(); };
+  const start = point(event);
+  const dragSelection = selected.includes(node.id) ? [...selected] : event.shiftKey ? [...selected, node.id] : [node.id];
+  const origins = dragSelection.map(id => { const item = nodes.find(value => value.id === id); return [item, item.x, item.y]; });
+  let moved = false;
+  const move = ev => {
+    const current = point(ev);
+    if (!moved && Math.hypot(current.x - start.x, current.y - start.y) < 4) return;
+    if (!moved) { moved = true; svg.setPointerCapture(event.pointerId); selected = dragSelection; selectedEdge = null; }
+    origins.forEach(([item, x, y]) => { item.x = Math.max(85, x + current.x - start.x); item.y = Math.max(45, y + current.y - start.y); });
+    render();
+  };
+  const end = () => {
+    svg.removeEventListener('pointermove', move); svg.removeEventListener('pointerup', end); svg.removeEventListener('pointercancel', end);
+    if (moved) { suppressNextClick = true; markDirty(); setTimeout(() => { suppressNextClick = false; }, 0); }
+  };
   svg.addEventListener('pointermove', move); svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
 }
 function addNode(type) { const node = { id: `n${nextId++}`, type, label: defaults[type], x: 260 + (nodes.length % 4) * 180, y: 150 + Math.floor(nodes.length / 4) * 120 }; nodes.push(node); selectedEdge = null; selected = [node.id]; markDirty(); render(); }
@@ -63,7 +80,32 @@ async function deleteSelected() {
   if (!(await os.dialog.confirm({ title: 'Apagar seleção', message: `Apagar ${details}? Esta ação não pode ser anulada.`, okLabel: 'Apagar', danger: true }))) return;
   nodes = nodes.filter(node => !selected.includes(node.id)); edges = edges.filter(edge => !selected.includes(edge.from) && !selected.includes(edge.to)); selected = []; markDirty(); render();
 }
-function connect() { if (selected.length !== 2 || selected[0] === selected[1]) return say('Seleciona duas formas para criar uma ligação.'); if (edges.some(edge => edge.from === selected[0] && edge.to === selected[1])) return say('Estas formas já estão ligadas.'); edges.push({ id: crypto.randomUUID(), from: selected[0], to: selected[1], label: '' }); selectedEdge = null; markDirty(); render(); say('Ligação criada.'); }
+function connect() {
+  connectMode = !connectMode;
+  connectFrom = null;
+  selectedEdge = null;
+  render();
+  say(connectMode ? 'Clique na forma de origem da ligação.' : 'Ligação cancelada.');
+}
+function chooseConnectionNode(node) {
+  if (!connectFrom) {
+    connectFrom = node.id;
+    selected = [node.id];
+    render();
+    say(`Origem: ${node.label}. Agora clique na forma de destino.`);
+    return;
+  }
+  if (connectFrom === node.id) return say('Escolha outra forma como destino.');
+  if (edges.some(edge => edge.from === connectFrom && edge.to === node.id)) return say('Estas formas já estão ligadas nessa direção. Escolha outra forma.');
+  edges.push({ id: crypto.randomUUID(), from: connectFrom, to: node.id, label: '' });
+  connectMode = false;
+  connectFrom = null;
+  selected = [];
+  selectedEdge = null;
+  markDirty();
+  render();
+  say('Ligação criada.');
+}
 async function editEdge() { const edge = edges.find(item => item.id === selectedEdge); if (!edge) return; const label = await os.dialog.prompt({ title: 'Editar ligação', message: 'Rótulo da ligação (deixa vazio para remover):', defaultValue: edge.label, okLabel: 'Guardar' }); if (label === null) return; edge.label = label.trim().slice(0, 50); markDirty(); render(); }
 function reverseEdge() { const edge = edges.find(item => item.id === selectedEdge); if (!edge) return; [edge.from, edge.to] = [edge.to, edge.from]; markDirty(); render(); }
 function serialize() { return [`# WebOS Flow 1`, `# Título: ${$('diagram-title').value.replace(/[\r\n]/g, ' ')}`, ...nodes.map(node => `${node.id} ${node.type} ${Math.round(node.x)} ${Math.round(node.y)} ${JSON.stringify(node.label)}`), ...edges.map(edge => `${edge.from} -> ${edge.to}${edge.label ? ` ${JSON.stringify(edge.label)}` : ''}`)].join('\n') + '\n'; }
@@ -111,13 +153,19 @@ async function save(saveAs = false) {
 }
 async function confirmDiscard() { return !dirty || os.dialog.confirm({ title: 'Alterações por guardar', message: 'Descartar as alterações do diagrama atual?', okLabel: 'Descartar', danger: true }); }
 async function open() { if (!(await confirmDiscard())) return; const path = await os.dialog.open({ title: 'Abrir diagrama', start: '/home/user/Documentos', filter: '.flow' }); if (!path) return; try { const source = await os.fs.read(path); parse(source); filePath = path; title(); } catch (error) { os.ui.status('status', os.errors.message(error), 'error'); } }
-$('diagram').addEventListener('click', event => { if (event.target === svg) { selected = []; selectedEdge = null; render(); } });
+$('diagram').addEventListener('click', event => {
+  if (suppressNextClick) { event.preventDefault(); event.stopPropagation(); suppressNextClick = false; return; }
+  if (event.target === svg && !connectMode) { selected = []; selectedEdge = null; render(); }
+});
 document.querySelectorAll('[data-add]').forEach(button => button.onclick = () => addNode(button.dataset.add));
 $('connect').onclick = connect; $('edit-node').onclick = () => { const node = nodes.find(item => item.id === selected.at(-1)); if (node) editNode(node); };
 $('edit-edge').onclick = editEdge; $('reverse-edge').onclick = reverseEdge;
 $('delete-node').onclick = deleteSelected; $('save-file').onclick = () => save(); $('open-file').onclick = open;
 $('new-diagram').onclick = async () => { if (!(await confirmDiscard())) return; nodes = []; edges = []; selected = []; selectedEdge = null; filePath = null; dirty = false; $('diagram-title').value = 'Diagrama sem título'; title(); render(); say('Novo diagrama'); };
 $('diagram-title').oninput = markDirty;
-addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); } });
+addEventListener('keydown', event => {
+  if (event.key === 'Escape' && connectMode) { connectMode = false; connectFrom = null; render(); say('Ligação cancelada.'); }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); save(); }
+});
 os.args().then(args => args?.path ? os.fs.read(args.path).then(text => { parse(text); filePath = args.path; title(); }) : title()).catch(error => say(error.message));
 render();

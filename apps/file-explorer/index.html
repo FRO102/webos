@@ -10,20 +10,34 @@
   <nav>
     <button id="up" aria-label="Pasta acima">↑</button>
     <input id="addr" aria-label="Caminho" spellcheck="false">
+    <button id="refresh" aria-label="Atualizar pasta">Atualizar</button>
+    <button id="new-file">Novo ficheiro</button>
     <button id="mkdir">Nova pasta</button>
-    <button id="trash-open">Lixeira</button>
-    <button id="restore">Restaurar</button>
-    <button id="empty-trash">Esvaziar</button>
     <button id="upload">Importar</button>
     <button id="download">Exportar</button>
     <button id="rename">Mover/Renomear</button>
     <button id="del">Apagar</button>
+    <button id="restore">Restaurar</button>
+    <button id="empty-trash">Esvaziar lixeira</button>
   </nav>
-  <div id="wrap">
-    <table>
-      <thead><tr><th>Nome</th><th>Tamanho</th><th>Modificado</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
+  <div class="explorer">
+    <aside id="places" aria-label="Locais">
+      <span class="places-heading">Locais</span>
+      <button data-place="home">Pasta pessoal</button>
+      <button data-place="Desktop">Desktop</button>
+      <button data-place="Documentos">Documentos</button>
+      <button data-place="Imagens">Imagens</button>
+      <button data-place="Música">Música</button>
+      <button data-place="Vídeos">Vídeos</button>
+      <button data-place="Downloads">Downloads</button>
+      <button data-place="trash">Lixeira</button>
+    </aside>
+    <div id="wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Tamanho</th><th>Modificado</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
   </div>
   <p id="status" role="status"></p>
   <input id="file-input" type="file" hidden>

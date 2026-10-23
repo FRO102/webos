@@ -4,6 +4,7 @@ import { closeAll } from './window-manager.js';
 import { logout, lockSession } from './boot.js';
 import * as fs from './filesystem.js';
 import { getRecentApps } from './app-loader.js';
+import { translate } from './i18n.js';
 
 export function initStartMenu(apps) {
   const btn = document.getElementById('start-btn');
@@ -24,7 +25,7 @@ export function initStartMenu(apps) {
 
   const filteredApps = () => {
     const q = input.value.trim().toLowerCase();
-    return apps.filter(a => a.manifest.name.toLowerCase().includes(q));
+    return apps.filter(a => `${a.manifest.name} ${translate(a.manifest.name)}`.toLowerCase().includes(q));
   };
   const render = async () => {
     list.replaceChildren();

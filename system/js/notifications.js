@@ -1,5 +1,7 @@
 import { bus } from './event-bus.js';
 import { kv } from './storage.js';
+import { localeFor } from './i18n.js';
+import { getSettings } from './settings.js';
 
 export async function initNotifications() {
   const box = document.createElement('div');
@@ -21,7 +23,7 @@ export async function initNotifications() {
   const render = () => {
     list.replaceChildren();
     if (!history.length) { const empty = document.createElement('p'); empty.textContent = 'Nenhuma notificação.'; list.append(empty); return; }
-    history.forEach(({ app, message, time }) => { const item = document.createElement('article'); item.innerHTML = '<strong></strong><span></span><time></time>'; item.querySelector('strong').textContent = app; item.querySelector('span').textContent = message; item.querySelector('time').textContent = time; list.append(item); });
+    history.forEach(({ app, message, time, timeAt }) => { const item = document.createElement('article'); item.innerHTML = '<strong></strong><span></span><time></time>'; item.querySelector('strong').textContent = app; item.querySelector('span').textContent = message; item.querySelector('time').textContent = timeAt ? new Date(timeAt).toLocaleTimeString(localeFor(getSettings().language), { hour: '2-digit', minute: '2-digit' }) : time; list.append(item); });
   };
   const updateBadge = () => { button?.setAttribute('data-unread', unread ? String(unread) : ''); button?.setAttribute('aria-label', unread ? `Centro de notificações, ${unread} não lidas` : 'Centro de notificações'); };
   button?.addEventListener('click', async () => { panel.hidden = !panel.hidden; button.setAttribute('aria-expanded', String(!panel.hidden)); if (!panel.hidden) { unread = 0; await kv.set('system:notifications:unread', 0); updateBadge(); render(); } });
@@ -29,7 +31,7 @@ export async function initNotifications() {
   document.addEventListener('pointerdown', e => { if (!panel.hidden && !panel.contains(e.target) && e.target !== button) close(); }, true);
 
   bus.on('notify', ({ app, message }) => {
-    history.unshift({ app, message, time: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) });
+    history.unshift({ app, message, timeAt: Date.now(), time: new Date().toLocaleTimeString(localeFor(getSettings().language), { hour: '2-digit', minute: '2-digit' }) });
     history.splice(20);
     unread++;
     kv.set('system:notifications', history).catch(() => {});
@@ -48,6 +50,7 @@ export async function initNotifications() {
     setTimeout(dismiss, 5000);
     while (box.children.length > 4) box.firstChild.remove();
   });
+  bus.on('locale:changed', render);
   updateBadge();
   render();
 }
