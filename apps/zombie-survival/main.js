@@ -10,6 +10,7 @@ import { renderAchievementsScreen } from './achievements.js';
 import { MAPS, MAP_STORAGE_KEY } from './constants.js';
 import { initAppStorage, getStoredValue, setStoredValue } from './persistence.js';
 
+async function startGame() {
 await initAppStorage([
   MAP_STORAGE_KEY,
   'nightnine-best-run-v1',
@@ -190,3 +191,6 @@ syncFullscreenButtons();
 
 // Iniciar loop
 requestAnimationFrame(loop);
+}
+
+startGame();

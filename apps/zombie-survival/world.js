@@ -52,14 +52,27 @@ export function buildDebris() {
 export function buildObstacles() {
   const map = currentMap();
   obstacles = [];
-  for(let i=0; i<26; i++) {
+  const targetCount = 26;
+  const maxAttempts = targetCount * 30;
+  const gap = 10;
+  const spawnX = WORLD_W / 2;
+  const spawnY = WORLD_H / 2;
+
+  for (let attempt = 0; attempt < maxAttempts && obstacles.length < targetCount; attempt++) {
     const type = weightedPick(map.obstacleMix);
-    obstacles.push({
+    const obstacle = {
       x: rand(80,WORLD_W-80), y: rand(80,WORLD_H-80),
       w: type === 'grave' ? 22 : 28,
       h: type === 'grave' ? 30 : 28,
       type, hp:40
-    });
+    };
+    const avoidsSpawn = Math.abs(obstacle.x - spawnX) >= 70 || Math.abs(obstacle.y - spawnY) >= 70;
+    const avoidsOthers = obstacles.every(other =>
+      Math.abs(obstacle.x - other.x) >= (obstacle.w + other.w) / 2 + gap ||
+      Math.abs(obstacle.y - other.y) >= (obstacle.h + other.h) / 2 + gap
+    );
+
+    if (avoidsSpawn && avoidsOthers) obstacles.push(obstacle);
   }
 }
 
