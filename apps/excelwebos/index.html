@@ -10,6 +10,17 @@
   <div class="app">
     <header class="toolbar">
       <div class="toolbar-group">
+        <button type="button" class="btn-icon" id="btn-undo" title="Desfazer (Ctrl+Z)" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+        </button>
+        <button type="button" class="btn-icon" id="btn-redo" title="Refazer (Ctrl+Y)" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+        </button>
+      </div>
+      
+      <div class="toolbar-separator"></div>
+      
+      <div class="toolbar-group">
         <button type="button" class="btn" id="btn-open" title="Abrir (Ctrl+O)">Abrir</button>
         <button type="button" class="btn" id="btn-save" title="Guardar (Ctrl+S)">Guardar</button>
         <button type="button" class="btn" id="btn-export-csv" title="Exportar para CSV">Exportar CSV</button>
@@ -44,7 +55,7 @@
 
     <div class="formula-bar">
       <div class="cell-address" id="cell-address">A1</div>
-      <input type="text" id="formula-input" placeholder="Insira um valor ou fórmula (=A1+B2)" spellcheck="false" autocomplete="off">
+      <input type="text" id="formula-input" placeholder="Insira um valor ou fórmula (=A1+B2 ou =SUM(A1:A5))" spellcheck="false" autocomplete="off">
     </div>
 
     <div class="grid-container" id="grid-container">
@@ -62,6 +73,7 @@
 
     <footer class="status-bar">
       <span id="status-message">Pronto</span>
+      <span id="status-stats" style="font-weight: 600;"></span>
       <span id="status-coords">Célula: A1</span>
     </footer>
   </div>

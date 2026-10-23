@@ -1,18 +1,21 @@
 (function () {
   'use strict';
 
-  const COLS = 15; // A a O
+  const COLS = 15;
   const ROWS = 50;
-  const DRAFT_KEY = 'excel_draft';
+  const DRAFT_KEY = 'excel_draft_v2';
 
-  // Estado da aplicação
   const state = {
-    cells: {}, // Formato: { "A1": { raw: "=B1", computed: "10", style: {...} } }
+    cells: {}, // { "A1": { raw: "=SUM(B1:B5)", computed: "100", style: {...} } }
     activeCell: 'A1',
+    selectionRange: null, // { start: 'A1', end: 'B5' }
+    isSelecting: false,
     path: null,
     docName: 'Sem título',
     dirty: false,
-    saveTimer: null
+    saveTimer: null,
+    history: [],
+    historyIndex: -1,
   };
 
   const els = {};
@@ -25,7 +28,8 @@
     buildGrid();
     bindEvents();
     await restoreDraft();
-    if (!state.path) setStatus('Novo documento');
+    pushHistory(); // Estado inicial
+    setActiveCell('A1', false);
     updateWindowTitle();
   }
 
@@ -33,37 +37,33 @@
     els.formulaInput = document.getElementById('formula-input');
     els.cellAddress = document.getElementById('cell-address');
     els.statusMsg = document.getElementById('status-message');
+    els.statusStats = document.getElementById('status-stats');
     els.statusCoords = document.getElementById('status-coords');
     els.colorPicker = document.getElementById('color-picker');
     els.colorPreview = document.getElementById('color-preview');
     tableBody = document.getElementById('sheet-body');
   }
 
-  // ------------------------------------------------------------- Grelha
+  // ------------------------------------------------------------- Grelha & UI
 
   function buildGrid() {
     const colHeaders = document.getElementById('col-headers');
     colHeaders.innerHTML = '<th class="corner"></th>';
 
-    // Cabeçalhos de Coluna
     for (let c = 0; c < COLS; c++) {
       const th = document.createElement('th');
       th.textContent = getColName(c);
       colHeaders.appendChild(th);
     }
 
-    // Linhas
     tableBody.innerHTML = '';
     for (let r = 1; r <= ROWS; r++) {
       const tr = document.createElement('tr');
-      
-      // Cabeçalho da Linha
       const rowHeader = document.createElement('th');
       rowHeader.className = 'row-header';
       rowHeader.textContent = r;
       tr.appendChild(rowHeader);
 
-      // Células
       for (let c = 0; c < COLS; c++) {
         const td = document.createElement('td');
         const id = getColName(c) + r;
@@ -72,31 +72,74 @@
         const div = document.createElement('div');
         div.contentEditable = 'true';
         div.dataset.id = id;
-        // Para evitar que o browser insira tags HTML ao colar
-        div.addEventListener('paste', e => {
-          e.preventDefault();
-          const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-          document.execCommand('insertText', false, text);
-        });
-
+        
         td.appendChild(div);
         tr.appendChild(td);
       }
       tableBody.appendChild(tr);
     }
-
-    // Aplicar estado aos inputs (se houver draft)
     renderAllCells();
   }
 
-  function renderAllCells() {
-    for (const id in state.cells) {
-      renderCell(id);
+  function renderCell(id) {
+    const el = document.querySelector(`td[data-id="${id}"] div`);
+    if (!el) return;
+
+    const cellData = state.cells[id];
+    
+    // Se a célula estiver em foco, não sobrescrever o que o utilizador está a escrever
+    if (document.activeElement === el) return;
+
+    if (!cellData) {
+      el.textContent = '';
+      el.className = '';
+      return;
     }
-    setActiveCell(state.activeCell, false);
+
+    el.textContent = cellData.computed;
+    
+    let classes = [];
+    if (cellData.isError) classes.push('error');
+    if (cellData.style) {
+      if (cellData.style.bold) classes.push('bold');
+      if (cellData.style.italic) classes.push('italic');
+      if (cellData.style.align) classes.push('align-' + cellData.style.align);
+    }
+    el.className = classes.join(' ');
+    el.style.color = (cellData.style && cellData.style.color) ? cellData.style.color : '';
   }
 
-  // ------------------------------------------------------------- Cálculos
+  function renderAllCells() {
+    document.querySelectorAll('td div').forEach(el => { el.textContent = ''; el.className = ''; el.style.color = ''; });
+    for (const id in state.cells) renderCell(id);
+  }
+
+  // ------------------------------------------------------------- Motor de Fórmulas
+
+  function getRangeValues(start, end) {
+    const cells = [];
+    const startCol = start.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const startRow = parseInt(start.replace(/[A-Z]/g, ''), 10);
+    const endCol = end.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const endRow = parseInt(end.replace(/[A-Z]/g, ''), 10);
+
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+
+    for (let r = minRow; r <= maxRow; r++) {
+      for (let c = minCol; c <= maxCol; c++) {
+        const id = getColName(c) + r;
+        const cell = state.cells[id];
+        if (cell && !cell.isError) {
+          const num = parseFloat(cell.computed);
+          if (!isNaN(num)) cells.push(num);
+        }
+      }
+    }
+    return cells;
+  }
 
   function evaluateFormula(rawStr) {
     if (typeof rawStr !== 'string' || !rawStr.startsWith('=')) {
@@ -105,28 +148,40 @@
 
     let expr = rawStr.substring(1).toUpperCase();
 
-    // Substituir referências (A1, B10) pelos seus valores computados
+    // 1. Resolver Intervalos (Ranges) com Funções: SUM, AVG, MIN, MAX
+    const funcRegex = /(SUM|AVG|MIN|MAX)\(([A-Z]+[0-9]+):([A-Z]+[0-9]+)\)/g;
+    expr = expr.replace(funcRegex, (match, func, start, end) => {
+      const vals = getRangeValues(start, end);
+      if (vals.length === 0) return '0';
+      
+      switch (func) {
+        case 'SUM': return vals.reduce((a, b) => a + b, 0).toString();
+        case 'AVG': return (vals.reduce((a, b) => a + b, 0) / vals.length).toString();
+        case 'MIN': return Math.min(...vals).toString();
+        case 'MAX': return Math.max(...vals).toString();
+        default: return '0';
+      }
+    });
+
+    // 2. Resolver Células Individuais
     const cellRegex = /[A-Z]+[0-9]+/g;
     expr = expr.replace(cellRegex, (match) => {
       const cell = state.cells[match];
       if (!cell) return '0';
-      const val = cell.computed;
-      const num = parseFloat(val);
+      const num = parseFloat(cell.computed);
       return isNaN(num) ? '0' : num.toString();
     });
 
-    // Validação de segurança: apenas números, operadores e parênteses
+    // 3. Validar e Calcular Expressão Matemática
     if (!/^[0-9+\-*/().\s]+$/.test(expr)) {
       return { computed: '#ERRO!', isError: true };
     }
 
     try {
-      // Math evaluation segura
       const result = new Function('return ' + expr)();
       if (result === Infinity || result === -Infinity || isNaN(result)) {
         return { computed: '#ERRO!', isError: true };
       }
-      // Arredondar dízimas
       const rounded = Math.round(result * 1000000) / 1000000;
       return { computed: rounded.toString(), isError: false };
     } catch (e) {
@@ -137,6 +192,9 @@
   function updateCellValue(id, rawValue) {
     if (!state.cells[id]) state.cells[id] = { raw: '', computed: '', style: {} };
     
+    const oldRaw = state.cells[id].raw;
+    if (oldRaw === rawValue) return;
+
     state.cells[id].raw = rawValue;
     const result = evaluateFormula(rawValue);
     state.cells[id].computed = result.computed;
@@ -145,136 +203,180 @@
     renderCell(id);
     markDirty();
 
-    // Se a célula atualizada for a ativa, atualiza o input superior
     if (id === state.activeCell) {
       els.formulaInput.value = rawValue;
     }
   }
 
-  function renderCell(id) {
-    const cellEl = document.querySelector(`td[data-id="${id}"] div`);
-    if (!cellEl) return;
-
-    const cellData = state.cells[id];
-    if (!cellData) {
-      cellEl.textContent = '';
-      cellEl.className = '';
-      return;
-    }
-
-    // Mostrar o valor computado, exceto se a célula estiver em edição
-    // (Para simplificar, mostramos sempre o computado. Excel mostra raw ao editar).
-    cellEl.textContent = cellData.computed;
-    
-    // Aplicar classes de estilo e erro
-    let classes = [];
-    if (cellData.isError) classes.push('error');
-    if (cellData.style) {
-      if (cellData.style.bold) classes.push('bold');
-      if (cellData.style.italic) classes.push('italic');
-      if (cellData.style.align) classes.push('align-' + cellData.style.align);
-    }
-    cellEl.className = classes.join(' ');
-    
-    if (cellData.style && cellData.style.color) {
-      cellEl.style.color = cellData.style.color;
-    } else {
-      cellEl.style.color = '';
-    }
-  }
-
-  // ------------------------------------------------------------- Navegação
+  // ------------------------------------------------------------- Seleção e Navegação
 
   function setActiveCell(id, focusGrid = true) {
-    // Remover destaque antigo
-    const oldActive = document.querySelector('td.active');
-    if (oldActive) oldActive.classList.remove('active');
+    const td = document.querySelector(`td[data-id="${id}"]`);
+    if (!td) return;
 
     state.activeCell = id;
+    state.selectionRange = { start: id, end: id };
+    updateSelectionUI();
+
     els.cellAddress.textContent = id;
     els.statusCoords.textContent = 'Célula: ' + id;
 
-    // Destacar nova célula
-    const td = document.querySelector(`td[data-id="${id}"]`);
-    if (td) {
-      td.classList.add('active');
-      const input = td.querySelector('div');
-      if (focusGrid) {
-        input.focus();
-      }
-    }
-
-    // Atualizar formula bar
+    const input = td.querySelector('div');
     const cell = state.cells[id];
     els.formulaInput.value = cell ? cell.raw : '';
     
-    // Atualizar estado dos botões de formatação
     updateToolbarState();
+    
+    if (focusGrid) input.focus();
+  }
+
+  function updateSelectionUI() {
+    document.querySelectorAll('td.active, td.selected').forEach(el => {
+      el.classList.remove('active', 'selected');
+    });
+
+    if (!state.selectionRange) return;
+
+    const { start, end } = state.selectionRange;
+    const startCol = start.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const startRow = parseInt(start.replace(/[A-Z]/g, ''), 10);
+    const endCol = end.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const endRow = parseInt(end.replace(/[A-Z]/g, ''), 10);
+
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+
+    // Mostrar stats na status bar se houver seleção múltipla
+    if (minCol !== maxCol || minRow !== maxRow) {
+      const vals = getRangeValues(start, end);
+      if (vals.length > 0) {
+        const sum = vals.reduce((a, b) => a + b, 0);
+        const avg = sum / vals.length;
+        els.statusStats.textContent = `Soma: ${sum.toFixed(2)} | Média: ${avg.toFixed(2)} | Contagem: ${vals.length}`;
+      } else {
+        els.statusStats.textContent = '';
+      }
+    } else {
+      els.statusStats.textContent = '';
+    }
+
+    for (let r = minRow; r <= maxRow; r++) {
+      for (let c = minCol; c <= maxCol; c++) {
+        const td = document.querySelector(`td[data-id="${getColName(c) + r}"]`);
+        if (td) {
+          td.classList.add('selected');
+          if (getColName(c) + r === state.activeCell) {
+            td.classList.remove('selected');
+            td.classList.add('active');
+          }
+        }
+      }
+    }
   }
 
   function moveSelection(dRow, dCol) {
-    const colStr = state.activeCell.replace(/[0-9]/g, '');
-    const rowStr = state.activeCell.replace(/[A-Z]/g, '');
-    
-    let colIdx = colStr.charCodeAt(0) - 65; // 'A' = 0
-    let rowIdx = parseInt(rowStr, 10);
+    let colIdx = state.activeCell.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    let rowIdx = parseInt(state.activeCell.replace(/[A-Z]/g, ''), 10);
 
     colIdx = Math.max(0, Math.min(COLS - 1, colIdx + dCol));
     rowIdx = Math.max(1, Math.min(ROWS, rowIdx + dRow));
 
-    const newId = getColName(colIdx) + rowIdx;
-    setActiveCell(newId);
+    setActiveCell(getColName(colIdx) + rowIdx);
   }
 
-  // ------------------------------------------------------------- Eventos
+  // ------------------------------------------------------------- Eventos e Interação
 
   function bindEvents() {
-    // Cliques na grelha
-    tableBody.addEventListener('click', e => {
+    // Mouse (Seleção e Edição)
+    tableBody.addEventListener('mousedown', e => {
       const td = e.target.closest('td');
-      if (td && td.dataset.id) setActiveCell(td.dataset.id);
+      if (!td || !td.dataset.id) return;
+      
+      // Se clicar na célula já ativa e ela estiver em modo de edição, permite.
+      if (td.dataset.id === state.activeCell && document.activeElement === td.querySelector('div')) {
+        return; 
+      }
+
+      e.preventDefault(); // Evita selecionar texto ao arrastar
+      state.isSelecting = true;
+      setActiveCell(td.dataset.id, false);
+      document.activeElement.blur(); // Sai do modo de edição se estava noutra
     });
 
-    // Navegação por teclado dentro das células
-    tableBody.addEventListener('keydown', e => {
-      const isEditing = e.target.isContentEditable && document.activeElement === e.target;
+    tableBody.addEventListener('mouseover', e => {
+      if (!state.isSelecting) return;
+      const td = e.target.closest('td');
+      if (td && td.dataset.id) {
+        state.selectionRange.end = td.dataset.id;
+        updateSelectionUI();
+      }
+    });
 
+    window.addEventListener('mouseup', () => {
+      state.isSelecting = false;
+    });
+
+    // Duplo clique entra em modo de edição
+    tableBody.addEventListener('dblclick', e => {
+      const td = e.target.closest('td');
+      if (td && td.dataset.id) {
+        const input = td.querySelector('div');
+        input.focus();
+        // Selecionar o texto todo para o utilizador substituir
+        document.execCommand('selectAll', false, null);
+      }
+    });
+
+    // Teclado e Edição
+    tableBody.addEventListener('focusin', e => {
+      if (e.target.tagName === 'DIV' && e.target.dataset.id) {
+        const id = e.target.dataset.id;
+        const cell = state.cells[id];
+        // Ao focar, mostra a FÓRMULA BRUTA (raw)
+        if (cell) e.target.textContent = cell.raw;
+      }
+    });
+
+    tableBody.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        e.target.blur(); // Confirma a edição
+        e.target.blur();
         moveSelection(1, 0);
       } else if (e.key === 'Tab') {
         e.preventDefault();
         e.target.blur();
         moveSelection(0, e.shiftKey ? -1 : 1);
-      } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) && !isEditing) {
-        // Se não estiver a editar, as setas movem a seleção
-        e.preventDefault();
-        if (e.key === 'ArrowUp') moveSelection(-1, 0);
-        if (e.key === 'ArrowDown') moveSelection(1, 0);
-        if (e.key === 'ArrowLeft') moveSelection(0, -1);
-        if (e.key === 'ArrowRight') moveSelection(0, 1);
+      } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        // Se estiver a editar, as setas movem o cursor. Se não, movem a seleção.
+        const isEditing = document.activeElement === e.target && e.target.textContent !== (state.cells[e.target.dataset.id]?.computed || '');
+        if (!isEditing) {
+          e.preventDefault();
+          if (e.key === 'ArrowUp') moveSelection(-1, 0);
+          if (e.key === 'ArrowDown') moveSelection(1, 0);
+          if (e.key === 'ArrowLeft') moveSelection(0, -1);
+          if (e.key === 'ArrowRight') moveSelection(0, 1);
+        }
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+         // Limpar células selecionadas
+         if (document.activeElement.tagName !== 'DIV' || document.activeElement.textContent === '') {
+           e.preventDefault();
+           clearSelection();
+         }
       }
     });
 
-    // Atualização do valor (ao sair da célula)
     tableBody.addEventListener('blur', e => {
       if (e.target.tagName === 'DIV' && e.target.dataset.id) {
         const id = e.target.dataset.id;
         const newValue = e.target.textContent.trim();
-        const currentRaw = state.cells[id] ? state.cells[id].raw : '';
-        
-        // Só atualiza se o texto visível for diferente da raw (ou seja, o user editou)
-        if (newValue !== currentRaw) {
-          updateCellValue(id, newValue);
-        } else {
-          // Repõe o valor computado visualmente (caso tenha apagado e reescrito igual)
-          renderCell(id);
-        }
+        updateCellValue(id, newValue);
+        renderCell(id); // Volta a mostrar o valor computado
       }
     }, true);
 
-    // Atualização do valor em tempo real via Formula Bar
+    // Formula Bar
     els.formulaInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -289,81 +391,207 @@
        }
     });
 
+    // Copiar / Colar TSV
+    window.addEventListener('copy', handleCopy);
+    window.addEventListener('paste', handlePaste);
+
     // Formatação
     document.getElementById('btn-bold').addEventListener('click', () => applyStyle('bold'));
     document.getElementById('btn-italic').addEventListener('click', () => applyStyle('italic'));
     document.getElementById('btn-align-left').addEventListener('click', () => applyStyle('align', 'left'));
     document.getElementById('btn-align-center').addEventListener('click', () => applyStyle('align', 'center'));
     document.getElementById('btn-align-right').addEventListener('click', () => applyStyle('align', 'right'));
-
-    // Cor
+    
     document.getElementById('btn-color').addEventListener('click', () => els.colorPicker.click());
     els.colorPicker.addEventListener('input', () => {
       els.colorPreview.style.background = els.colorPicker.value;
       applyStyle('color', els.colorPicker.value);
     });
 
-    // Ficheiros
+    // Ficheiros e Histórico
     document.getElementById('btn-open').addEventListener('click', openFile);
     document.getElementById('btn-save').addEventListener('click', saveFile);
     document.getElementById('btn-export-csv').addEventListener('click', exportCsv);
+    document.getElementById('btn-undo').addEventListener('click', undo);
+    document.getElementById('btn-redo').addEventListener('click', redo);
 
-    // Atalhos Globais
     document.addEventListener('keydown', e => {
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 's') { e.preventDefault(); saveFile(); }
         if (e.key === 'o') { e.preventDefault(); openFile(); }
+        if (e.key === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+        if (e.key === 'y') { e.preventDefault(); redo(); }
       }
     });
 
-    // Carregar argumentos (se aberto pelo explorer)
     if (window.os && os.args) {
-      os.args().then(args => {
-        if (args && args.path) loadPath(args.path);
-      }).catch(()=>{});
+      os.args().then(args => { if (args && args.path) loadPath(args.path); }).catch(()=>{});
     }
   }
 
-  // ------------------------------------------------------------- Formatação
+  // ------------------------------------------------------------- Copiar / Colar
 
-  function applyStyle(key, val = true) {
-    const id = state.activeCell;
-    if (!state.cells[id]) state.cells[id] = { raw: '', computed: '', style: {} };
-    if (!state.cells[id].style) state.cells[id].style = {};
-
-    // Toggle para bold/italic
-    if (key === 'bold' || key === 'italic') {
-      state.cells[id].style[key] = !state.cells[id].style[key];
-    } else {
-      state.cells[id].style[key] = val;
+  function handleCopy(e) {
+    if (document.activeElement.tagName === 'DIV' && document.activeElement.textContent !== '') {
+      return; // Deixa o browser copiar o texto da célula normalmente
     }
 
-    renderCell(id);
+    e.preventDefault();
+    if (!state.selectionRange) return;
+
+    const { start, end } = state.selectionRange;
+    const startCol = start.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const startRow = parseInt(start.replace(/[A-Z]/g, ''), 10);
+    const endCol = end.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const endRow = parseInt(end.replace(/[A-Z]/g, ''), 10);
+
+    let copyText = "";
+    for (let r = Math.min(startRow, endRow); r <= Math.max(startRow, endRow); r++) {
+      let row = [];
+      for (let c = Math.min(startCol, endCol); c <= Math.max(startCol, endCol); c++) {
+        const cell = state.cells[getColName(c) + r];
+        row.push(cell ? cell.raw : '');
+      }
+      copyText += row.join('\t') + '\n';
+    }
+
+    e.clipboardData.setData('text/plain', copyText);
+    setStatus('Copiado!');
+  }
+
+  function handlePaste(e) {
+    if (document.activeElement.tagName === 'DIV') {
+      return; // Deixa o browser colar texto na célula
+    }
+
+    e.preventDefault();
+    const pasteData = (e.clipboardData || window.clipboardData).getData('text/plain');
+    if (!pasteData) return;
+
+    const rows = pasteData.split(/\r?\n/).filter((r, i, arr) => i < arr.length - 1 || r !== '');
+    const startCol = state.activeCell.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const startRow = parseInt(state.activeCell.replace(/[A-Z]/g, ''), 10);
+
+    rows.forEach((rowStr, rOffset) => {
+      const cols = rowStr.split('\t');
+      cols.forEach((colStr, cOffset) => {
+        const id = getColName(startCol + cOffset) + (startRow + rOffset);
+        if (startCol + cOffset < COLS && startRow + rOffset <= ROWS) {
+          updateCellValue(id, colStr);
+        }
+      });
+    });
+    pushHistory();
+    setStatus('Colado!');
+  }
+
+  function clearSelection() {
+    if (!state.selectionRange) return;
+    const { start, end } = state.selectionRange;
+    const startCol = start.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const startRow = parseInt(start.replace(/[A-Z]/g, ''), 10);
+    const endCol = end.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const endRow = parseInt(end.replace(/[A-Z]/g, ''), 10);
+
+    for (let r = Math.min(startRow, endRow); r <= Math.max(startRow, endRow); r++) {
+      for (let c = Math.min(startCol, endCol); c <= Math.max(startCol, endCol); c++) {
+        const id = getColName(c) + r;
+        if (state.cells[id]) {
+          state.cells[id].raw = '';
+          state.cells[id].computed = '';
+          renderCell(id);
+        }
+      }
+    }
+    markDirty();
+    pushHistory();
+  }
+
+  // ------------------------------------------------------------- Formatação e Estado
+
+  function applyStyle(key, val = true) {
+    // Aplica a TODAS as células da seleção
+    const { start, end } = state.selectionRange;
+    const startCol = start.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const startRow = parseInt(start.replace(/[A-Z]/g, ''), 10);
+    const endCol = end.replace(/[0-9]/g, '').charCodeAt(0) - 65;
+    const endRow = parseInt(end.replace(/[A-Z]/g, ''), 10);
+
+    for (let r = Math.min(startRow, endRow); r <= Math.max(startRow, endRow); r++) {
+      for (let c = Math.min(startCol, endCol); c <= Math.max(startCol, endCol); c++) {
+        const id = getColName(c) + r;
+        if (!state.cells[id]) state.cells[id] = { raw: '', computed: '', style: {} };
+        if (!state.cells[id].style) state.cells[id].style = {};
+
+        if (key === 'bold' || key === 'italic') {
+          // Toggle based on active cell's state
+          const activeStyle = state.cells[state.activeCell]?.style || {};
+          state.cells[id].style[key] = !activeStyle[key];
+        } else {
+          state.cells[id].style[key] = val;
+        }
+        renderCell(id);
+      }
+    }
     updateToolbarState();
     markDirty();
+    pushHistory();
   }
 
   function updateToolbarState() {
     const style = state.cells[state.activeCell]?.style || {};
     document.getElementById('btn-bold').setAttribute('aria-pressed', style.bold ? 'true' : 'false');
     document.getElementById('btn-italic').setAttribute('aria-pressed', style.italic ? 'true' : 'false');
+    els.colorPreview.style.background = style.color || '#000000';
+    els.colorPicker.value = style.color || '#000000';
+  }
+
+  // ------------------------------------------------------------- Histórico (Undo/Redo)
+
+  function pushHistory() {
+    // Limpar estados futuros se estivermos a fazer uma nova ação após Undo
+    if (state.historyIndex < state.history.length - 1) {
+      state.history = state.history.slice(0, state.historyIndex + 1);
+    }
     
-    if (style.color) {
-      els.colorPreview.style.background = style.color;
-      els.colorPicker.value = style.color;
-    } else {
-      els.colorPreview.style.background = '#000000';
-      els.colorPicker.value = '#000000';
+    state.history.push(JSON.stringify(state.cells));
+    
+    // Limitar memória a 30 passos
+    if (state.history.length > 30) state.history.shift();
+    state.historyIndex = state.history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function undo() {
+    if (state.historyIndex > 0) {
+      state.historyIndex--;
+      state.cells = JSON.parse(state.history[state.historyIndex]);
+      renderAllCells();
+      updateUndoRedoButtons();
     }
   }
 
-  // ------------------------------------------------------------- Ficheiros
+  function redo() {
+    if (state.historyIndex < state.history.length - 1) {
+      state.historyIndex++;
+      state.cells = JSON.parse(state.history[state.historyIndex]);
+      renderAllCells();
+      updateUndoRedoButtons();
+    }
+  }
+
+  function updateUndoRedoButtons() {
+    document.getElementById('btn-undo').disabled = state.historyIndex <= 0;
+    document.getElementById('btn-redo').disabled = state.historyIndex >= state.history.length - 1;
+  }
 
   function markDirty() {
     state.dirty = true;
     updateWindowTitle();
     scheduleDraft();
   }
+
+  // ------------------------------------------------------------- Persistência
 
   function updateWindowTitle() {
     if (!window.os || !os.window) return;
@@ -377,7 +605,6 @@
 
   async function saveFile() {
     if (!window.os) return;
-    
     let path = state.path;
     if (!path) {
       path = await os.dialog.save({ title: 'Guardar Folha', defaultName: 'folha.json', start: '/home/user/Documentos/' });
@@ -421,12 +648,11 @@
       state.docName = path.split('/').pop();
       state.dirty = false;
       
-      // Limpar a grelha visualmente e recarregar
-      document.querySelectorAll('td div').forEach(div => { div.textContent = ''; div.className = ''; div.style.color = ''; });
       renderAllCells();
+      setActiveCell('A1', false);
+      pushHistory();
       updateWindowTitle();
       setStatus('Ficheiro aberto: ' + state.docName);
-      
     } catch (err) {
       os.notify('Erro ao abrir: ' + err.message);
     }
@@ -457,11 +683,8 @@
         const id = getColName(c) + r;
         const cell = state.cells[id];
         let val = cell ? cell.computed : "";
-        // Escapar aspas duplas e adicionar aspas se contiver vírgulas ou quebras de linha
         val = String(val).replace(/"/g, '""');
-        if (val.includes(',') || val.includes('\n') || val.includes('"')) {
-          val = `"${val}"`;
-        }
+        if (val.includes(',') || val.includes('\n') || val.includes('"')) val = `"${val}"`;
         row.push(val);
       }
       csvContent += row.join(",") + "\r\n";
@@ -478,26 +701,20 @@
   function parseCsv(text) {
     state.cells = {};
     const lines = text.split(/\r?\n/);
-    let maxR = Math.min(lines.length, ROWS);
-    for (let r = 0; r < maxR; r++) {
+    for (let r = 0; r < Math.min(lines.length, ROWS); r++) {
       if (!lines[r]) continue;
-      // Split simples por vírgula (não suporta vírgulas dentro de aspas por simplificação)
       const cols = lines[r].split(',');
       for (let c = 0; c < Math.min(cols.length, COLS); c++) {
         let val = cols[c].trim();
-        // Remover aspas externas
         if (val.startsWith('"') && val.endsWith('"')) {
           val = val.substring(1, val.length - 1).replace(/""/g, '"');
         }
-        if (val) {
-          const id = getColName(c) + (r + 1);
-          state.cells[id] = { raw: val, computed: val, style: {} };
-        }
+        if (val) state.cells[getColName(c) + (r + 1)] = { raw: val, computed: val, style: {} };
       }
     }
   }
 
-  // ------------------------------------------------------------- Draft & Helpers
+  // ------------------------------------------------------------- Helpers
 
   function scheduleDraft() {
     if (state.saveTimer) clearTimeout(state.saveTimer);
@@ -524,7 +741,6 @@
   }
 
   function getColName(index) {
-    // 0 = A, 1 = B, ..., 25 = Z, 26 = AA
     let name = '';
     while (index >= 0) {
       name = String.fromCharCode((index % 26) + 65) + name;
