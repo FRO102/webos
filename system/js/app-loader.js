@@ -42,6 +42,16 @@ bus.on('locale:changed', () => {
 });
 
 async function discoverAppIds() {
+  try {
+    const registryResponse = await fetch('apps/registry.json', { cache: 'no-store' });
+    if (registryResponse.ok) {
+      const registry = await registryResponse.json();
+      if (Array.isArray(registry) && registry.length) return registry.map(String).filter(Boolean);
+    }
+  } catch (error) {
+    // Ignore and fall back to directory listing for local development.
+  }
+
   const response = await fetch('apps/');
   if (!response.ok) throw new Error(`Não foi possível listar as aplicações (${response.status}). O servidor tem de permitir a listagem da pasta apps/.`);
   const ids = parseAppDirectoryListing(await response.text());

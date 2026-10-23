@@ -51,7 +51,7 @@ php -S localhost:8000
 
 Abre [http://localhost:8000](http://localhost:8000). Não abras `index.html` com `file://`: o shell usa ES modules e carrega as aplicações em iframes.
 
-> **Importante:** o carregador descobre aplicações através da listagem HTTP da pasta `apps/`. O servidor escolhido tem de expor listagens de diretórios; sem elas, o browser não consegue descobrir automaticamente as pastas.
+> **Importante:** o carregador tenta primeiro ler `apps/registry.json`. Esse ficheiro permite que o WebOS funcione em Cloudflare Pages, onde a listagem de diretórios estática costuma falhar. Localmente, ainda pode recorrer à listagem HTTP da pasta `apps/` se o servidor expuser diretórios.
 
 ## Idiomas
 
@@ -88,7 +88,9 @@ Get-ChildItem -Path . -Recurse -Filter *.js | ForEach-Object { node --check $_.F
 
 ## Criar uma aplicação
 
-Adiciona uma pasta `apps/<id>/` com um `manifest.json` e os ficheiros da aplicação. O `id` do manifest tem de corresponder ao nome da pasta. Não é necessário editar um registo central.
+Adiciona uma pasta `apps/<id>/` com um `manifest.json` e os ficheiros da aplicação. O `id` do manifest tem de corresponder ao nome da pasta.
+
+Quando publicares em Cloudflare Pages, atualiza também o ficheiro [`apps/registry.json`](apps/registry.json) com o `id` da nova app; esse registry é a fonte de verdade em produção.
 
 As aplicações são isoladas em iframes sandbox. Inclui o SDK antes do código da app:
 
@@ -96,7 +98,7 @@ As aplicações são isoladas em iframes sandbox. Inclui o SDK antes do código 
 <script src="../../system/sdk/os-sdk.js"></script>
 ```
 
-Usa as APIs `window.os` em vez de aceder diretamente ao DOM do shell ou a `localStorage`. Declara no manifest apenas as permissões necessárias. A listagem de `apps/` tem de estar ativa no servidor para a app ser descoberta.
+Usa as APIs `window.os` em vez de aceder diretamente ao DOM do shell ou a `localStorage`. Declara no manifest apenas as permissões necessárias.
 
 O guia completo, incluindo manifests, permissões, filesystem e localização, está em [`docs/app-development.md`](docs/app-development.md).
 
@@ -104,7 +106,7 @@ O guia completo, incluindo manifests, permissões, filesystem e localização, e
 
 ```text
 index.html          Entrada do WebOS
-apps/               Aplicações autónomas e respetivos manifests
+apps/               Aplicações autónomas, manifests e registry.json
 assets/             Recursos partilhados
 docs/               Guias de desenvolvimento
 system/js/          Shell, janelas, filesystem e serviços

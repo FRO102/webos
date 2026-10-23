@@ -1,1 +1,26 @@
-{ "apps": ["file-explorer", "terminal", "notepad", "images", "browser", "calculator", "clock", "snake", "settings", "task-manager", "app-store", "calendar", "media-player", "downloads", "portfolio", "despesas", "diagramas", "conversor", "codigos-qr", "paletas", "backup-restauro"] }
+[
+  "app-store",
+  "backup-restauro",
+  "browser",
+  "calculator",
+  "calendar",
+  "clock",
+  "codigos-qr",
+  "conversor",
+  "desenhador",
+  "despesas",
+  "diagramas",
+  "downloads",
+  "file-explorer",
+  "images",
+  "media-player",
+  "notepad",
+  "paletas",
+  "portfolio",
+  "settings",
+  "snake",
+  "task-manager",
+  "terminal",
+  "tic-tac-toe",
+  "wordwebos"
+]

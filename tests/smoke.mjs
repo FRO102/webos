@@ -39,8 +39,9 @@ assert.equal((await readFile(join(root, 'apps/browser/index.html'), 'utf8')).inc
 await mustContain('system/js/window-manager.js', ['switchWorkspace', 'snapWindow', 'toggleMaximize']);
 await mustContain('system/js/notifications.js', ['system:notifications', 'system:notifications:unread']);
 await mustContain('system/js/users.js', ['createUser', 'selectUser']);
-await mustContain('system/js/app-loader.js', ['parseAppDirectoryListing', "fetch('apps/')", 'listagem da pasta apps/']);
+await mustContain('system/js/app-loader.js', ['parseAppDirectoryListing', "fetch('apps/')", 'listagem da pasta apps/', "fetch('apps/registry.json'"]);
 await mustContain('system/js/app-discovery.js', ['parseAppDirectoryListing', 'appIdPattern']);
+assert.ok(Array.isArray(JSON.parse(await readFile(join(root, 'apps/registry.json'), 'utf8'))), 'O registry de apps para Cloudflare Pages deve existir e ser um array.');
 await mustContain('system/js/i18n.js', ['export const localeFor', 'export const translate', 'locale:changed', 'function translateTextNode']);
 await mustContain('system/sdk/os-sdk.js', ['i18n:', 'onChange:', 'new Intl.DateTimeFormat(localeData.locale', "call('locale.get')"]);
 await mustContain('system/js/api.js', ["'locale.get'", "event: 'locale:changed'"]);

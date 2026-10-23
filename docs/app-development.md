@@ -2,12 +2,13 @@
 
 1. Cria `apps/<id>/` com `manifest.json`, `index.html` e um ícone SVG.
 2. No `index.html`, carrega o SDK com um script normal: `<script src="../../system/sdk/os-sdk.js"></script>`.
-3. Inicia o WebOS com um servidor que exponha a listagem de diretórios em `apps/` (por exemplo, Five Server ou Python HTTP Server): a pasta é descoberta automaticamente e não é necessário editar o shell nem qualquer índice de apps.
-4. Se o servidor não expuser essa listagem, configura-o para a permitir. Um browser não consegue descobrir nomes de pastas num servidor estático que os oculte.
+3. Adiciona o `id` da app ao array em [`apps/registry.json`](apps/registry.json). No Cloudflare Pages, esse registry é a fonte de verdade e evita a falha de listagem de diretórios.
+4. Em desenvolvimento local, pode continuar a usar um servidor que exponha a listagem de diretórios em `apps/` para descoberta automática; o sistema também faz fallback para o registry.
 
 Regras:
 - O `id` do manifest deve ser igual ao nome da pasta e conter apenas letras, números e hífen.
 - O `id` deve usar apenas minúsculas, números e hífen.
+- Em Cloudflare Pages, o `id` também tem de aparecer em [`apps/registry.json`](apps/registry.json) para a app ser carregada.
 - Todos os ficheiros e imagens específicos da app devem ficar dentro da própria pasta `apps/<id>/`.
 - O `icon` e o `entry` são caminhos relativos à pasta da app.
 - `fileTypes`, quando usado, é um array de extensões com ponto e em minúsculas, como `[".txt", ".md"]`.

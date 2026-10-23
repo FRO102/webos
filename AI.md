@@ -28,14 +28,15 @@ A app não deve exigir alterações ao shell, ao `main.js` ou ao gestor de janel
 
 O carregador está em `system/js/app-loader.js`.
 
-1. Primeiro tenta obter a listagem HTTP de `apps/`.
-2. Extrai nomes de pastas válidos, no formato `a-z`, `0-9` e hífen.
-3. Carrega `apps/<id>/manifest.json` para cada pasta.
-4. Sem listagem de diretórios, informa que o servidor precisa de expor `apps/`; não existe fallback de registo manual.
-5. Manifests inválidos são ignorados e registados na consola.
-6. As apps válidas aparecem no Menu Iniciar, na Loja e podem ser abertas pelo shell.
+1. Primeiro tenta ler `apps/registry.json`.
+2. Se o registry existir, usa a lista explícita de IDs da app.
+3. Se não existir, tenta obter a listagem HTTP de `apps/` em ambiente local.
+4. Extrai nomes de pastas válidos, no formato `a-z`, `0-9` e hífen.
+5. Carrega `apps/<id>/manifest.json` para cada pasta.
+6. Manifests inválidos são ignorados e registados na consola.
+7. As apps válidas aparecem no Menu Iniciar, na Loja e podem ser abertas pelo shell.
 
-Usa um servidor que exponha listagens de diretórios, como Five Server ou Python HTTP Server. Em servidores que não permitem directory listing, configura essa opção no servidor: não há registo manual alternativo.
+Este fallback é essencial para Cloudflare Pages, porque esse hosting não expõe listagem de diretórios de forma confiável. Em desenvolvimento local, ainda se pode usar um servidor que exponha `apps/` para descoberta automática.
 
 ## Manifest obrigatório
 
@@ -70,6 +71,7 @@ Regras:
 - `window` é opcional; sem ele o shell usa `width: 480`, `height: 320`, `minWidth: 240` e `minHeight: 140` pixels.
 - `singleInstance` é opcional, booleano e por defeito é `false`; quando `true`, abrir novamente foca a janela existente.
 - `fileTypes` é opcional e, quando presente, é um array de extensões com ponto e em minúsculas, como `[".txt", ".md"]`. A comparação ignora maiúsculas e minúsculas. O runtime escolhe por extensão, não por MIME.
+- Em produção no Cloudflare Pages, cada app nova também deve ser adicionada ao array de [`apps/registry.json`](apps/registry.json); sem esse registo, a app não é carregada.
 - `version` é uma string livre no runtime atual; usar Semantic Versioning (`MAJOR.MINOR.PATCH`) por convenção.
 - `icon` deve apontar para um SVG local. SVG é o formato recomendado pelo projeto.
 - A permissão tem de estar na lista suportada pelo shell.

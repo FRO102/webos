@@ -82,8 +82,10 @@
 
     els.findBar = document.getElementById('findBar');
     els.findInput = document.getElementById('findInput');
+    els.replaceInput = document.getElementById('replaceInput');
     els.findPrev = document.getElementById('findPrev');
     els.findNext = document.getElementById('findNext');
+    els.replaceAll = document.getElementById('replaceAll');
     els.findClose = document.getElementById('findClose');
   }
 
@@ -178,6 +180,9 @@
     });
 
     els.heading.addEventListener('change', () => applyHeading(els.heading.value));
+    document.querySelectorAll('[data-style]').forEach(btn => {
+      btn.addEventListener('click', () => applyParagraphStyle(btn.dataset.style));
+    });
     els.fontFamily.addEventListener('change', () => applyFontFamily(els.fontFamily.value));
     els.fontSize.addEventListener('change', () => applyFontSize(Number(els.fontSize.value)));
 
@@ -210,10 +215,21 @@
   }
 
   function applyHeading(tag) {
+    applyParagraphStyle(tag);
+  }
+
+  function applyParagraphStyle(style) {
+    const normalized = String(style || 'p').toLowerCase();
+    const tag = normalized === 'normal' ? 'p' : normalized === 'quote' ? 'blockquote' : normalized;
     editor.focus();
     try {
       document.execCommand('formatBlock', false, '<' + tag + '>');
-    } catch (err) { /* noop */ }
+    } catch (err) {
+      try {
+        const selected = window.getSelection() && window.getSelection().toString() ? window.getSelection().toString() : ' ';
+        document.execCommand('insertHTML', false, '<' + tag + '>' + escapeHtml(selected) + '</' + tag + '>');
+      } catch (e) { /* noop */ }
+    }
     onEditorChanged();
   }
 
@@ -267,6 +283,41 @@
     const redoBtn = document.querySelector('[data-cmd="redo"]');
     if (undoBtn) undoBtn.disabled = !canUndo();
     if (redoBtn) redoBtn.disabled = !canRedo();
+
+    try {
+      const fontName = document.queryCommandValue('fontName') || 'Calibri';
+      const normalized = normalizeFontName(fontName);
+      if (els.fontFamily && normalized) {
+        const options = Array.from(els.fontFamily.options).map(option => option.value.toLowerCase());
+        const index = options.findIndex(value => value.includes(normalized.toLowerCase()));
+        if (index >= 0) els.fontFamily.value = els.fontFamily.options[index].value;
+      }
+    } catch (e) { /* noop */ }
+
+    try {
+      const size = document.queryCommandValue('fontSize');
+      if (size && els.fontSize) {
+        const value = String(size).replace(/px|pt|/gi, '');
+        const numeric = Number(value);
+        if (!Number.isNaN(numeric) && numeric >= 8) {
+          const match = Array.from(els.fontSize.options).find(option => Number(option.value) === numeric || Number(option.value) >= numeric);
+          if (match) els.fontSize.value = match.value;
+        }
+      }
+    } catch (e) { /* noop */ }
+  }
+
+  function normalizeFontName(name) {
+    const value = String(name || '').toLowerCase();
+    if (!value) return 'Calibri';
+    if (value.includes('calibri')) return 'Calibri';
+    if (value.includes('cambria')) return 'Cambria';
+    if (value.includes('segoe')) return 'Segoe UI';
+    if (value.includes('arial')) return 'Arial';
+    if (value.includes('times')) return 'Times New Roman';
+    if (value.includes('georgia')) return 'Georgia';
+    if (value.includes('courier')) return 'Courier New';
+    return value;
   }
 
   function canUndo() {
@@ -528,6 +579,9 @@
 
     document.getElementById('insertPageBreak').addEventListener('mousedown', preventFocusLoss);
     document.getElementById('insertPageBreak').addEventListener('click', insertPageBreak);
+
+    document.getElementById('insertLink').addEventListener('mousedown', preventFocusLoss);
+    document.getElementById('insertLink').addEventListener('click', insertLink);
   }
 
   function insertTable() {
@@ -556,6 +610,43 @@
     editor.focus();
     const dateStr = formatDate(new Date());
     try { document.execCommand('insertText', false, dateStr); } catch (e) {}
+    onEditorChanged();
+  }
+
+  async function insertLink() {
+    let url = '';
+    if (window.os && os.dialog && typeof os.dialog.prompt === 'function') {
+      try {
+        url = await os.dialog.prompt({
+          title: t('Inserir hiperligação'),
+          message: t('Escreve a URL:'),
+          defaultValue: 'https://',
+          okLabel: t('Inserir')
+        });
+      } catch (err) {
+        return;
+      }
+    } else {
+      url = window.prompt(t('Escreve a URL:'), 'https://');
+    }
+    if (!url) return;
+
+    const clean = String(url).trim();
+    if (!clean) return;
+    const resolved = /^https?:\/\//i.test(clean) || /^mailto:/i.test(clean) || /^tel:/i.test(clean) || clean.startsWith('#')
+      ? clean
+      : 'https://' + clean;
+
+    editor.focus();
+    try {
+      document.execCommand('createLink', false, resolved);
+    } catch (e) {
+      try {
+        const selection = window.getSelection();
+        const selectionText = selection && selection.toString() ? selection.toString() : resolved;
+        document.execCommand('insertHTML', false, '<a href="' + escapeHtml(resolved) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(selectionText) + '</a>');
+      } catch (err) { /* noop */ }
+    }
     onEditorChanged();
   }
 
@@ -689,6 +780,7 @@
   function bindFindBar() {
     els.findNext.addEventListener('click', findNext);
     els.findPrev.addEventListener('click', findPrev);
+    els.replaceAll.addEventListener('click', replaceAllText);
     els.findClose.addEventListener('click', closeFindBar);
     els.findInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
@@ -697,6 +789,12 @@
       } else if (e.key === 'Escape') {
         e.preventDefault();
         closeFindBar();
+      }
+    });
+    els.replaceInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        replaceAllText();
       }
     });
   }
@@ -728,6 +826,41 @@
     else setStatus('', null);
   }
 
+  function replaceAllText() {
+    const search = (els.findInput.value || '').trim();
+    if (!search) {
+      setStatus(t('Escreve um texto para substituir.'), 'info');
+      els.findInput.focus();
+      return;
+    }
+
+    const replacement = els.replaceInput ? (els.replaceInput.value || '') : '';
+    let count = 0;
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.nodeValue && node.nodeValue.toLowerCase().includes(search.toLowerCase())) nodes.push(node);
+    }
+
+    nodes.forEach(node => {
+      const text = node.nodeValue || '';
+      const regex = new RegExp(escapeRegExp(search), 'gi');
+      const updated = text.replace(regex, replacement);
+      if (updated !== text) {
+        node.nodeValue = updated;
+        count++;
+      }
+    });
+
+    if (count) {
+      setStatus(t('Substituído') + ': ' + count, 'success');
+      onEditorChanged();
+    } else {
+      setStatus(t('Sem correspondências.'), 'info');
+    }
+  }
+
   // ---------------------------------------------------------------- editor events
 
   function bindEditorEvents() {
@@ -736,6 +869,7 @@
     editor.addEventListener('mouseup', updateToolbarState);
     editor.addEventListener('dragover', e => e.preventDefault());
     editor.addEventListener('drop', e => e.preventDefault());
+    editor.addEventListener('paste', handlePaste);
     editor.addEventListener('paste', sanitizePaste);
 
     document.addEventListener('selectionchange', () => {
@@ -744,6 +878,22 @@
       if (!editor.contains(sel.anchorNode)) return;
       updateToolbarState();
     });
+  }
+
+  function handlePaste(event) {
+    if (event.clipboardData && event.clipboardData.types.includes('text/plain') && !event.clipboardData.types.includes('text/html')) {
+      const text = event.clipboardData.getData('text/plain');
+      if (text) {
+        event.preventDefault();
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(document.createTextNode(text));
+        range.collapse(false);
+        onEditorChanged();
+      }
+    }
   }
 
   function onEditorChanged() {
@@ -916,21 +1066,50 @@
   function bindKeyboard() {
     document.addEventListener('keydown', e => {
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key.toLowerCase() === 's') {
+      const key = e.key.toLowerCase();
+
+      if (mod && key === 's') {
         e.preventDefault();
         saveDocument(e.shiftKey);
-      } else if (mod && e.key.toLowerCase() === 'o') {
+      } else if (mod && key === 'o') {
         e.preventDefault();
         openDocument();
-      } else if (mod && e.key.toLowerCase() === 'n') {
+      } else if (mod && key === 'n') {
         e.preventDefault();
         newDocument();
-      } else if (mod && e.key.toLowerCase() === 'f') {
+      } else if (mod && key === 'f') {
         e.preventDefault();
         openFindBar();
-      } else if (mod && e.key.toLowerCase() === 'p') {
+      } else if (mod && key === 'p') {
         e.preventDefault();
         try { window.print(); } catch (err) {}
+      } else if (mod && key === 'b') {
+        e.preventDefault();
+        runCommand('bold');
+      } else if (mod && key === 'i') {
+        e.preventDefault();
+        runCommand('italic');
+      } else if (mod && key === 'u') {
+        e.preventDefault();
+        runCommand('underline');
+      } else if (mod && key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) runCommand('redo'); else runCommand('undo');
+      } else if (mod && key === 'y') {
+        e.preventDefault();
+        runCommand('redo');
+      } else if (mod && key === 'l') {
+        e.preventDefault();
+        runCommand('justifyLeft');
+      } else if (mod && key === 'e') {
+        e.preventDefault();
+        runCommand('justifyCenter');
+      } else if (mod && key === 'r') {
+        e.preventDefault();
+        runCommand('justifyRight');
+      } else if (mod && key === 'j') {
+        e.preventDefault();
+        runCommand('justifyFull');
       } else if (e.key === 'Escape' && !els.findBar.hidden) {
         e.preventDefault();
         closeFindBar();
@@ -965,6 +1144,10 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   function extractBodyFromHtml(html) {

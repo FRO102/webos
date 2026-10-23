@@ -85,6 +85,16 @@
           </div>
 
           <div class="ribbon-group">
+            <div class="ribbon-group__content style-toolbar">
+              <button type="button" class="style-chip" data-style="normal">Normal</button>
+              <button type="button" class="style-chip style-chip--primary" data-style="h1">Título 1</button>
+              <button type="button" class="style-chip" data-style="h2">Título 2</button>
+              <button type="button" class="style-chip" data-style="blockquote">Citação</button>
+            </div>
+            <span class="ribbon-group__label">Parágrafos</span>
+          </div>
+
+          <div class="ribbon-group">
             <div class="ribbon-group__content font-group">
               <select id="fontFamily" aria-label="Tipo de letra" class="select-font">
                 <option value="Calibri, 'Segoe UI', sans-serif">Calibri</option>
@@ -206,6 +216,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="3 3"/><polyline points="9 7 12 4 15 7"/><polyline points="9 17 12 20 15 17"/></svg>
                 <span>Quebra</span>
               </button>
+              <button type="button" class="big" id="insertLink">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.07 0l2.12-2.12a5 5 0 0 0-7.07-7.07L10 6"/><path d="M14 11a5 5 0 0 0-7.07 0L4.81 13.12a5 5 0 0 0 7.07 7.07L14 18"/></svg>
+                <span>Hiperligação</span>
+              </button>
               <button type="button" class="big" data-cmd="insertHorizontalRule">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/></svg>
                 <span>Linha</span>
@@ -264,6 +278,8 @@
 
     <div class="find-bar" id="findBar" hidden>
       <input type="text" id="findInput" placeholder="Localizar…" aria-label="Localizar">
+      <input type="text" id="replaceInput" placeholder="Substituir por…" aria-label="Substituir por">
+      <button type="button" id="replaceAll" aria-label="Substituir tudo">Tudo</button>
       <button type="button" id="findPrev" aria-label="Anterior">↑</button>
       <button type="button" id="findNext" aria-label="Seguinte">↓</button>
       <button type="button" id="findClose" aria-label="Fechar">×</button>
