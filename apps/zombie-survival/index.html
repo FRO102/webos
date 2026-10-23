@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NIGHT NINE — Zombie Survival</title>
+<link rel="stylesheet" href="zombie-survival.css">
+</head>
+<body>
+<div id="stage">
+  <!-- TELA DE TUTORIAL -->
+<div class="screen hidden" id="tutorial-screen">
+  <h1 class="title" style="font-size:34px;">TUTORIAL</h1>
+  <div id="tutorial-message" class="tagline" style="font-size:18px;">Use WASD para se mover</div>
+  <div id="tutorial-progress" style="color:var(--olive-lt);font-size:12px;margin-top:8px;">Passo 1/8</div>
+  <div class="menu-actions">
+    <button class="btn" id="skip-tutorial-btn">PULAR TUTORIAL</button>
+  </div>
+</div>
+  <canvas id="game" width="960" height="600"></canvas>
+  <div id="controls-hint">
+  <div class="hint-row"><kbd>WASD</kbd> move</div>
+  <div class="hint-row"><kbd>Mouse</kbd> aim &amp; <kbd>CLICK</kbd> shoot</div>
+  <div class="hint-row"><kbd>RIGHT CLICK</kbd> called shot</div>
+  <div class="hint-row"><kbd>SHIFT</kbd> sprint &nbsp;·&nbsp; <kbd>R</kbd> reload</div>
+  <div class="hint-row"><kbd>1-9,0</kbd> / <kbd>SCROLL</kbd> switch weapon &nbsp;·&nbsp; <kbd>F</kbd> melee</div>
+  <div class="hint-row"><kbd>SPACE</kbd> dash &nbsp;·&nbsp; <kbd>Q</kbd> medkit</div>
+  <div class="hint-row"><kbd>ESC</kbd> pause</div>
+</div>
+  <div id="overlay"></div>
+  <div id="flash"></div>
+  <div id="damage-indicators">
+    <div class="damage-indicator" id="dmg-top"></div>
+    <div class="damage-indicator" id="dmg-right"></div>
+    <div class="damage-indicator" id="dmg-bottom"></div>
+    <div class="damage-indicator" id="dmg-left"></div>
+  </div>
+
+  <div id="hud">
+    <div class="hud-panel" id="topleft">
+      <div class="label">Vitals</div>
+      <div class="row"><div id="healthbar-outer"><div id="healthbar-inner"></div></div></div>
+      <div class="row"><div id="staminabar-outer"><div id="staminabar-inner"></div></div></div>
+      <div class="row"><div id="armorbar-outer"><div id="armorbar-inner"></div></div></div>
+      <div class="label" style="margin-top:6px;">Minimap</div>
+      <canvas id="minimap" width="140" height="96"></canvas>
+      <div class="label" style="margin-top:6px;">Utility</div>
+      <div class="row"><span>MEDKIT</span><span id="medkit-count">0</span></div>
+      <div class="row"><span>DASH</span><div id="dashbar-outer"><div id="dashbar-inner"></div></div></div>
+    </div>
+    <div class="hud-panel" id="topright">
+      <div class="label">Night</div>
+      <div class="row" style="justify-content:flex-end;font-size:20px;color:var(--rust-lt);" id="wave-num">1</div>
+      <div class="label" style="margin-top:4px;">Kills</div>
+      <div class="row" style="justify-content:flex-end;" id="kill-count">0</div>
+      <div class="label" style="margin-top:4px;">Level</div>
+      <div class="row" style="justify-content:flex-end;" id="level-num">1</div>
+      <div class="row" style="justify-content:flex-end;margin-top:4px;">
+        <div id="xpbar-outer"><div id="xpbar-inner"></div></div>
+      </div>
+    </div>
+    <div class="hud-panel" id="buffs-panel">
+      <div class="label">Active Effects</div>
+      <div id="buffs-row"></div>
+    </div>
+<div class="hud-panel" id="ammo-panel">
+  <div class="label">Ammo <span style="opacity:0.6;">(active weapon)</span></div>
+  <div id="ammo-active-row">
+    <span class="ammo-name" id="ammo-active-name">Pistol</span>
+    <span class="ammo-count" id="ammo-active-count">12/60</span>
+  </div>
+  <div id="ammo-active-bar-outer"><div id="ammo-active-bar-inner"></div></div>
+</div>
+<div id="bottomcenter"></div>
+    <div id="combo-indicator">COMBO x1.0</div>
+    <div id="spinup-outer"><div id="spinup-inner"></div></div>
+    <div id="wave-banner">NIGHT <span id="banner-num">1</span><span class="sub" id="banner-sub">THEY ARE COMING</span></div>
+    <div id="center-msg"></div>
+    <div class="hud-panel" id="run-info">
+      <div class="label">Run</div>
+      <div class="row"><span>TIME</span><span id="run-time">0:00</span></div>
+      <div class="row"><span>REMAINING</span><span id="wave-remaining">0</span></div>
+      <div class="row"><span>WEATHER</span><span id="weather-label">CLEAR</span></div>
+    </div>
+    <div id="bossbar-wrap" class="hidden">
+      <div id="bossbar-name">BOSS</div>
+      <div id="bossbar-outer"><div id="bossbar-inner"></div></div>
+    </div>
+  </div>
+
+  <div id="mobile-controls">
+    <div id="joystick-zone"><div id="joystick-nub"></div></div>
+    <div id="fire-btn">FIRE</div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="screen" id="start-screen">
+    <h1 class="title">NIGHT<span>NINE</span></h1>
+    <div class="tagline">SURVIVE THE ROT</div>
+    <div class="instructions">
+      <b>WASD</b> move &nbsp;•&nbsp; <b>MOUSE</b> aim &nbsp;•&nbsp; <b>CLICK</b> shoot &nbsp;•&nbsp; <b>RIGHT CLICK</b> called shot<br>
+      <b>SHIFT</b> sprint &nbsp;•&nbsp; <b>R</b> reload &nbsp;•&nbsp; <b>1-9/0, SCROLL</b> switch weapon &nbsp;•&nbsp; <b>F</b> melee<br>
+      <b>SPACE</b> dash &nbsp;•&nbsp; <b>Q</b> use medkit &nbsp;•&nbsp;
+      <b>ESC</b> pause &nbsp;•&nbsp; 13 weapons, 15 enemy types, 16 perks — survive boss nights every 5 waves.
+      Survive endless nights. Ammo & health crates drop from the fallen.
+    </div>
+    <div id="start-options">
+      <div class="setting-row">
+        <span class="setting-label">DIFFICULTY</span>
+        <select id="difficulty-select">
+          <option value="rookie">ROOKIE</option>
+          <option value="survivor" selected>SURVIVOR</option>
+          <option value="nightmare">NIGHTMARE</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">CLASS</span>
+        <select id="class-select">
+          <option value="assault" selected>ASSAULT (+AMMO, +DAMAGE)</option>
+          <option value="medic">MEDIC (+HEALING, +MEDKITS)</option>
+          <option value="scout">SCOUT (+SPEED, +DASH, +PICKUP RANGE)</option>
+          <option value="heavy">HEAVY (+ARMOR, +AMMO, -SPEED)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">MAP</span>
+        <select id="map-select">
+          <option value="random">🎲 RANDOM</option>
+          <option value="forest" selected>ROTTEN FOREST</option>
+          <option value="city">DEAD CITY BLOCKS</option>
+          <option value="graveyard">OLD GRAVEYARD</option>
+        </select>
+      </div>
+    </div>
+    <div class="tagline" id="map-desc-label">The original woods — overgrown and familiar.</div>
+    <div class="tagline" id="best-run">BEST: 0 KILLS | NIGHT 0 | LV 1</div>
+    <div class="tagline" id="lifetime-stats">TOTAL: 0 KILLS | 0 RUNS | 0 ACHIEVEMENTS</div>
+    <div class="menu-actions">
+      <button class="btn" id="start-btn">▶ ENTER THE DARK</button>
+      <button class="btn" id="customize-btn">CUSTOMIZE SURVIVOR</button>
+      <button class="btn" id="achievements-btn">🏆 ACHIEVEMENTS</button>
+      <button class="btn" id="fullscreen-btn">FULLSCREEN: OFF</button>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS SCREEN -->
+  <div class="screen hidden" id="achievements-screen">
+    <h1 class="title" style="font-size:34px;">ACHIEVEMENTS</h1>
+    <div class="tagline" id="achievements-progress">0 / 0 UNLOCKED</div>
+    <div id="achievements-list"></div>
+    <div class="menu-actions">
+      <button class="btn" id="back-achievements-btn">BACK</button>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENT TOAST -->
+  <div id="achievement-toast">
+    <div class="ach-toast-icon" id="ach-toast-icon">🏆</div>
+    <div class="ach-toast-body">
+      <div class="ach-toast-title">ACHIEVEMENT UNLOCKED</div>
+      <div class="ach-toast-name" id="ach-toast-name">-</div>
+    </div>
+  </div>
+
+  <!-- CUSTOMIZE SCREEN -->
+  <div class="screen hidden" id="customize-screen">
+    <h1 class="title" style="font-size:34px;">CUSTOMIZE</h1>
+    <div class="tagline">Build your survivor look</div>
+    <div id="customize-panel">
+      <div class="setting-row">
+        <span class="setting-label">OUTFIT</span>
+        <select id="custom-outfit">
+          <option value="militia">MILITIA GREEN</option>
+          <option value="ash">ASH GRAY</option>
+          <option value="blood">BLOOD HUNTER</option>
+          <option value="navy">NIGHT NAVY</option>
+          <option value="desert">DESERT TAN</option>
+          <option value="shadow">SHADOW BLACK</option>
+          <option value="crimson">CRIMSON</option>
+          <option value="arctic">ARCTIC</option>
+          <option value="toxic">TOXIC</option>
+          <option value="royal">ROYAL PURPLE</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">SKIN</span>
+        <select id="custom-skin">
+          <option value="warm">WARM</option>
+          <option value="tan">TAN</option>
+          <option value="deep">DEEP</option>
+          <option value="pale">PALE</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">HAT</span>
+        <select id="custom-hat">
+          <option value="none">NONE</option>
+          <option value="cap">CAP</option>
+          <option value="beanie">BEANIE</option>
+          <option value="helmet">HELMET</option>
+          <option value="bandana">BANDANA</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">BACKPACK</span>
+        <select id="custom-backpack">
+          <option value="none">NONE</option>
+          <option value="scout">SCOUT PACK</option>
+          <option value="medic">MEDIC PACK</option>
+          <option value="tactical">TACTICAL RIG</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">MASK</span>
+        <select id="custom-mask">
+          <option value="none">NONE</option>
+          <option value="bandit">BANDIT</option>
+          <option value="gasmask">GAS MASK</option>
+          <option value="skull">SKULL</option>
+        </select>
+      </div>
+      <canvas id="custom-preview" width="120" height="120"></canvas>
+    </div>
+    <div class="menu-actions">
+      <button class="btn" id="apply-custom-btn">APPLY</button>
+      <button class="btn" id="back-custom-btn">BACK</button>
+    </div>
+  </div>
+
+  <!-- PERK SCREEN -->
+  <div class="screen hidden" id="perk-screen">
+    <h1 class="title" style="font-size:34px;">LEVEL UP</h1>
+    <div class="tagline" id="perk-desc">Choose one perk</div>
+    <div id="perk-choices">
+      <button class="btn perk-btn" id="perk-a">PERK A</button>
+      <button class="btn perk-btn" id="perk-b">PERK B</button>
+      <button class="btn perk-btn" id="perk-c">PERK C</button>
+    </div>
+  </div>
+
+  <!-- DEATH SCREEN -->
+  <div class="screen hidden" id="death-screen">
+    <h1 class="title" style="font-size:38px;">YOU DIED</h1>
+    <div id="deathstats">
+      <div>NIGHTS SURVIVED: <span class="num" id="stat-wave">1</span></div>
+      <div>ZOMBIES SLAIN: <span class="num" id="stat-kills">0</span></div>
+      <div>LEVEL REACHED: <span class="num" id="stat-level">1</span></div>
+      <div>TIME SURVIVED: <span class="num" id="stat-time">0:00</span></div>
+      <div>BEST COMBO: <span class="num" id="stat-combo">x1.0</span></div>
+      <div>BEST RUN: <span class="num" id="stat-best">0 KILLS | NIGHT 0 | LV 1</span></div>
+    </div>
+    <div id="death-new-achievements"></div>
+    <div class="menu-actions" style="display:flex; gap:12px; margin-top:8px;">
+      <button class="btn" id="retry-btn">↺ RISE AGAIN</button>
+      <button class="btn" id="menu-from-death-btn">🏠 MENU</button>
+    </div>
+  </div>
+
+  <!-- PAUSE / SETTINGS -->
+  <div class="screen hidden" id="pause-screen">
+    <h1 class="title" style="font-size:34px;">PAUSED</h1>
+    <div class="tagline">HOLD THE NIGHT</div>
+    <div id="pause-settings">
+      <div class="setting-row">
+        <span class="setting-label">MASTER VOLUME</span>
+        <input id="volume-slider" type="range" min="0" max="100" value="70">
+      </div>
+      <div class="setting-row">
+        <button class="btn" id="mute-btn">MUTE: OFF</button>
+      </div>
+      <div class="setting-row">
+        <button class="btn" id="pause-fullscreen-btn">FULLSCREEN: OFF</button>
+      </div>
+      <div class="setting-row">
+        <button class="btn" id="menu-btn">🏠 MENU</button>
+      </div>
+    </div>
+    <button class="btn" id="resume-btn">▶ RESUME</button>
+  </div>
+</div>
+
+<!-- Carrega o JavaScript modular -->
+<script src="../../system/sdk/os-sdk.js"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>
