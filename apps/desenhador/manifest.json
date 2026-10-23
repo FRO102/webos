@@ -1,0 +1,15 @@
+{
+  "id": "desenhador",
+  "name": "Desenhador",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 620,
+    "height": 780,
+    "minWidth": 380,
+    "minHeight": 520
+  },
+  "singleInstance": true,
+  "permissions": ["fs.read", "fs.write"]
+}

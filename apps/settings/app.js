@@ -11,6 +11,7 @@ function render() {
   $('sounds').checked = st.sounds;
   $('language').value = st.language;
   $('language-status').textContent = st.language === 'en' ? 'English' : 'Português';
+  updateFullscreenUI();
   $('custom').value = st.accent;
   $('accents').replaceChildren(...ACCENTS.map(c => {
     const b = document.createElement('button');
@@ -32,6 +33,13 @@ function render() {
   }));
 }
 
+function updateFullscreenUI(active = false) {
+  const button = $('fullscreen');
+  button.textContent = active ? 'Sair do ecrã inteiro' : 'Ativar ecrã inteiro';
+  button.setAttribute('aria-pressed', String(active));
+  $('fullscreen-status').textContent = active ? 'O WebOS está em ecrã inteiro. Usa Esc para sair.' : 'O browser pode exigir confirmação para entrar em ecrã inteiro.';
+}
+
 async function set(patch) {
   try { st = { ...st, ...(await os.settings.set(patch)) }; render(); }
   catch (e) { $('status').textContent = e.message; os.notify(e.message); }
@@ -45,7 +53,13 @@ $('animations').onchange = e => set({ animations: e.target.checked });
 $('sounds').onchange = e => set({ sounds: e.target.checked });
 $('language').onchange = e => set({ language: e.target.value });
 $('test').onclick = () => os.notify('Esta é uma notificação de teste.');
+$('fullscreen').onclick = async () => {
+  try { updateFullscreenUI(await os.shell.toggleFullscreen()); }
+  catch (error) { $('fullscreen-status').textContent = os.errors.message(error, 'Não foi possível ativar o ecrã inteiro.'); }
+};
 $('reset').onclick = () => set(DEFAULTS);
 
 os.settings.get().then(s => { st = s; render(); }).catch(e => { $('status').textContent = e.message; });
 os.i18n.onChange(({ language }) => { if (st) { st.language = language; render(); } });
+os.on('fullscreen:changed', ({ active }) => updateFullscreenUI(active));
+os.shell.isFullscreen().then(updateFullscreenUI).catch(() => {});

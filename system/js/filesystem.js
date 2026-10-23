@@ -27,6 +27,10 @@ export async function stat(p) {
   return meta(n);
 }
 
+export async function exists(p) {
+  return !!(await get(norm(p)));
+}
+
 export async function list(p) {
   p = norm(p);
   const n = await get(p);

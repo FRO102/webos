@@ -104,8 +104,10 @@ $('upload').onclick = () => fileInput.click();
 fileInput.onchange = async () => {
   const file = fileInput.files?.[0];
   if (!file) return;
-  const content = await file.text();
-  act(() => os.fs.write(join(cwd, file.name), content));
+  try {
+    const content = file.type.startsWith('image/') ? await readAsDataUrl(file) : await file.text();
+    await os.fs.write(join(cwd, file.name), content, file.type || undefined);
+  } catch (error) { say(error.message); }
   fileInput.value = '';
 };
 $('download').onclick = async () => {
@@ -113,13 +115,37 @@ $('download').onclick = async () => {
   if (!en || en.type !== 'file') return say('Seleciona um ficheiro primeiro.');
   try {
     const content = await os.fs.read(en.path);
+    const dataUrl = typeof content === 'string' && content.startsWith('data:');
+    const blob = dataUrl
+      ? dataUrlToBlob(content)
+      : new Blob([content], { type: en.mime });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([content], { type: en.mime }));
+    link.href = URL.createObjectURL(blob);
     link.download = en.name;
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 0);
   } catch (e) { say(e.message); }
 };
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Não foi possível ler o ficheiro.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataUrlToBlob(value) {
+  const match = value.match(/^data:([^,]*),(.*)$/s);
+  if (!match) throw new Error('O ficheiro de imagem não tem um formato válido.');
+  const [mime = 'application/octet-stream', ...parameters] = match[1].split(';');
+  const encoded = match[2];
+  const content = parameters.includes('base64') ? atob(encoded) : decodeURIComponent(encoded);
+  const bytes = new Uint8Array(content.length);
+  for (let index = 0; index < content.length; index++) bytes[index] = content.charCodeAt(index);
+  return new Blob([bytes], { type: mime });
+}
 
 os.on('fs:changed', () => go(cwd));
 Promise.all([os.fs.home(), os.args()]).then(([path, args]) => {

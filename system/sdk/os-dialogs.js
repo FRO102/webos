@@ -97,7 +97,13 @@
         cwd = p; sel = null; pathIn.value = p;
         if (mode === 'open') name.value = '';
         list.replaceChildren();
-        items.filter(i => i.type === 'dir' || !o.filter || o.filter(i.name)).forEach(i => {
+        const matchesFilter = name => {
+          if (!o.filter) return true;
+          if (typeof o.filter === 'function') return o.filter(name);
+          const extensions = Array.isArray(o.filter) ? o.filter : [o.filter];
+          return extensions.some(extension => name.toLowerCase().endsWith(String(extension).toLowerCase()));
+        };
+        items.filter(i => i.type === 'dir' || matchesFilter(i.name)).forEach(i => {
           const li = document.createElement('li'), b = document.createElement('button');
           b.textContent = `${i.type === 'dir' ? '📁' : '📄'} ${i.name}`;
           b.setAttribute('aria-selected', 'false');
@@ -124,10 +130,12 @@
         if (!n || n.includes('/')) return name.focus();
         const p = join(cwd, n);
         try {
-          const st = await os.fs.stat(p);
-          if (st.type === 'dir') return go(p);
+          if (await os.fs.exists(p)) {
+            const st = await os.fs.stat(p);
+            if (st.type === 'dir') return go(p);
           if (!await box({ title: 'Substituir ficheiro?', message: `"${n}" já existe nesta pasta.`, okLabel: 'Substituir', danger: true })) return;
-        } catch { /* ficheiro novo */ }
+          }
+        } catch (error) { return; }
         finish(p);
       }
 

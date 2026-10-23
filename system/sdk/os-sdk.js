@@ -113,10 +113,11 @@
       resize: (width, height) => call('window.resize', { width, height }),
       close: () => call('window.close'),
     },
-    shell: { windows: () => call('shell.windows'), apps: () => call('shell.apps'), open: appId => call('shell.open', { appId }), focus: id => call('shell.focus', { id }), close: id => call('shell.close', { id }) },
+    shell: { windows: () => call('shell.windows'), apps: () => call('shell.apps'), open: appId => call('shell.open', { appId }), focus: id => call('shell.focus', { id }), close: id => call('shell.close', { id }), isFullscreen: () => call('shell.fullscreenState'), toggleFullscreen: () => call('shell.fullscreen') },
     fs: { // requer "fs.read" / "fs.write" no manifest
       home: () => call('fs.home'),
       list: path => call('fs.list', { path }),
+      exists: path => call('fs.exists', { path }),
       read: path => call('fs.read', { path }),
       stat: path => call('fs.stat', { path }),
       search: (query, path = '/') => call('fs.search', { query, path }),

@@ -1,0 +1,15 @@
+{
+  "id": "tic-tac-toe",
+  "name": "Tic Tac Toe",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 440,
+    "height": 700,
+    "minWidth": 340,
+    "minHeight": 560
+  },
+  "singleInstance": true,
+  "permissions": ["fs.read"]
+}

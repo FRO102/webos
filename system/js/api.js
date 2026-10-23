@@ -39,6 +39,16 @@ const methods = {
   'shell.open':      { fn: (c, { appId }) => openApp(String(appId)) },
   'shell.focus':     { fn: (c, { id }) => focusWindow(Number(id)) },
   'shell.close':     { fn: (c, { id }) => closeWindow(Number(id)) },
+  'shell.fullscreenState': { fn: () => !!document.fullscreenElement },
+  'shell.fullscreen': { fn: async () => {
+    if (!document.fullscreenEnabled && !document.fullscreenElement) throw new Error('O browser não permite ecrã inteiro nesta página.');
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return false;
+    }
+    await document.documentElement.requestFullscreen();
+    return true;
+  } },
   'notify':          { perm: 'notifications', fn: (c, { message }) => bus.emit('notify', { app: c.manifest.name, message: String(message).slice(0, 500) }) },
   'clipboard.write': { perm: 'clipboard', fn: async (c, { text }) => { await navigator.clipboard.writeText(String(text ?? '').slice(0, 10000)); return true; } },
   'clipboard.read':  { perm: 'clipboard', fn: async () => navigator.clipboard.readText() },
@@ -79,6 +89,7 @@ const R = 'fs.read', W = 'fs.write';
 Object.assign(methods, {
   'fs.home':   { perm: R, fn: () => fs.ensureUserHome(getCurrentUser()?.id) },
   'fs.list':   { perm: R, fn: (c, { path }) => fs.list(scopedPath(path)) },
+  'fs.exists': { perm: R, fn: (c, { path }) => fs.exists(scopedPath(path)) },
   'fs.read':   { perm: R, fn: (c, { path }) => fs.read(scopedPath(path)) },
   'fs.stat':   { perm: R, fn: (c, { path }) => fs.stat(scopedPath(path)) },
   'fs.search': { perm: R, fn: (c, { query, path }) => fs.search(query, scopedPath(path)) },
@@ -131,6 +142,10 @@ bus.on('settings:changed', () => {
 });
 bus.on('locale:changed', data => {
   for (const win of clients.keys()) win.postMessage({ event: 'locale:changed', data }, '*');
+});
+document.addEventListener('fullscreenchange', () => {
+  const data = { active: !!document.fullscreenElement };
+  for (const win of clients.keys()) win.postMessage({ event: 'fullscreen:changed', data }, '*');
 });
 bus.on('window:opened', () => bus.emit('shell:changed'));
 bus.on('window:closed', () => bus.emit('shell:changed'));

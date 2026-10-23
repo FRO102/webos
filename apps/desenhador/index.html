@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desenhador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="toolbar" aria-label="Ferramentas">
+      <div class="palette" id="palette" role="group" aria-label="Cores">
+        <button type="button" class="swatch" data-color="#000000" style="--swatch:#000000" aria-label="Preto"></button>
+        <button type="button" class="swatch" data-color="#ffffff" style="--swatch:#ffffff" aria-label="Branco"></button>
+        <button type="button" class="swatch" data-color="#e53935" style="--swatch:#e53935" aria-label="Vermelho"></button>
+        <button type="button" class="swatch" data-color="#fb8c00" style="--swatch:#fb8c00" aria-label="Laranja"></button>
+        <button type="button" class="swatch" data-color="#fdd835" style="--swatch:#fdd835" aria-label="Amarelo"></button>
+        <button type="button" class="swatch" data-color="#43a047" style="--swatch:#43a047" aria-label="Verde"></button>
+        <button type="button" class="swatch" data-color="#1e88e5" style="--swatch:#1e88e5" aria-label="Azul"></button>
+        <button type="button" class="swatch" data-color="#8e24aa" style="--swatch:#8e24aa" aria-label="Roxo"></button>
+        <button type="button" class="swatch" data-color="#ec407a" style="--swatch:#ec407a" aria-label="Rosa"></button>
+        <button type="button" class="swatch" data-color="#6d4c41" style="--swatch:#6d4c41" aria-label="Castanho"></button>
+        <input type="color" id="color-picker" value="#000000" aria-label="Escolher cor">
+      </div>
+
+      <div class="tools">
+        <label class="thickness">
+          <span class="thickness__label">Espessura</span>
+          <input type="range" id="thickness" min="1" max="40" value="4" step="1" aria-label="Espessura do traço">
+          <span class="thickness__value" id="thickness-value">4</span>
+          <span class="thickness__preview" id="thickness-preview" aria-hidden="true"></span>
+        </label>
+        <button type="button" class="tool" id="eraser" aria-pressed="false">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 11l5-5 4 4-3 3H5z"/>
+            <path d="M8 6l3-3 4 4-3 3"/>
+          </svg>
+          <span>Borracha</span>
+        </button>
+      </div>
+    </section>
+
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="512" height="512" aria-label="Área de desenho"></canvas>
+    </div>
+
+    <section class="actions">
+      <button type="button" class="btn" id="undo" disabled>Desfazer</button>
+      <button type="button" class="btn btn--danger" id="clear" disabled>Limpar</button>
+      <button type="button" class="btn btn--primary" id="save" disabled>Guardar PNG…</button>
+    </section>
+
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

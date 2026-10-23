@@ -20,9 +20,10 @@ Regras:
 - `external.open` permite abrir URLs `http`, `https` e `mailto` através do SDK.
 
 ## API (fase 5)
-- `os.fs.list/read/stat/write/mkdir/remove/move` (permissões `fs.read` / `fs.write`)
+- `os.fs.list/read/stat/exists/write/mkdir/remove/move` (`exists` requer `fs.read`; as operações de leitura requerem `fs.read` e as de alteração requerem `fs.write`)
 - `os.storage.get/set/remove` — armazenamento privado da app, sem permissão
 - `os.args()` — argumentos de arranque, ex.: `{ path }` quando a app é aberta a partir de um ficheiro
+- `os.shell.isFullscreen()` / `os.shell.toggleFullscreen()` — consultar ou alternar o modo ecrã inteiro do WebOS. A chamada para entrar deve partir diretamente de uma ação do utilizador e pode ser recusada pelas políticas do browser.
 - `os.openFile(path)` — abre o ficheiro na app registada para a extensão (`fileTypes` no manifest); permissão `apps.launch`
 - `os.on('fs:changed', fn)` — recebido por apps com `fs.read`
 - `os.i18n.language` / `os.i18n.locale` — idioma ativo (`pt-PT` ou `en`) e localidade de formatação (`pt-PT` ou `en-GB`).

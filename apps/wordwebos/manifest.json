@@ -1,0 +1,16 @@
+{
+  "id": "wordwebos",
+  "name": "WordWebos",
+  "version": "1.1.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 1100,
+    "height": 750,
+    "minWidth": 600,
+    "minHeight": 450
+  },
+  "singleInstance": false,
+  "permissions": ["fs.read", "fs.write"],
+  "fileTypes": [".html", ".htm", ".txt"]
+}

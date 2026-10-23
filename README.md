@@ -1,77 +1,117 @@
 # WebOS
 
-WebOS é um simulador de sistema operativo que corre inteiramente no browser. Inclui ambiente de trabalho, janelas, áreas de trabalho virtuais, Menu Iniciar, filesystem virtual, definições, notificações e aplicações isoladas. É construído com HTML, CSS e JavaScript, sem backend nem processo de build obrigatório.
+Um ambiente de trabalho virtual que corre no browser. O WebOS reúne janelas, áreas de trabalho, um sistema de ficheiros virtual e aplicações isoladas, sem backend nem processo de build.
 
-## Requisitos
+> Projeto experimental, construído com HTML, CSS e JavaScript.
 
-- Um navegador moderno, preferencialmente Chrome ou Edge.
+## O que inclui
+
+- Ambiente de trabalho com janelas redimensionáveis, minimizáveis e encaixáveis.
+- Menu Iniciar, barra de tarefas, quatro áreas de trabalho e alternador de janelas.
+- Sistema de ficheiros virtual persistente no browser, com Pasta pessoal, Desktop e Lixeira.
+- Definições de tema, papel de parede, acessibilidade e idioma.
+- Opção para colocar o WebOS em ecrã inteiro através das Definições.
+- Notificações, perfis de utilizador e cópia de segurança/restauro de dados do perfil.
+- Aplicações executadas em iframes sandbox e integradas com o sistema através de um SDK próprio.
+- Interface em Português e Inglês. Textos ainda sem tradução mantêm a língua de origem.
+
+## Aplicações
+
+O projeto inclui 21 aplicações:
+
+| Sistema e produtividade | Ferramentas e conteúdo |
+| --- | --- |
+| Definições, Aplicações, Ficheiros, Terminal | Calculadora, Calendário, Relógio, Snake |
+| Navegador, Gestor de Tarefas, Gestor de Downloads | Diagramas, Despesas, Conversor de Unidades |
+| Backup e Restauro, Portefolio Terminal | Códigos QR, Paleta de Cores, Imagens, Leitor Multimédia, Bloco de Notas |
+
+Cada aplicação vive na sua própria pasta dentro de [`apps/`](apps/).
+
+## Começar
+
+### Requisitos
+
+- Um browser moderno com suporte para JavaScript modules, IndexedDB e iframes sandbox.
+- Python ou PHP para servir o projeto localmente. Também podes usar Five Server no VS Code.
 - Node.js para executar os testes.
-- Um servidor HTTP local para servir o projeto. Não abras `index.html` com `file://`: o shell usa ES Modules e aplicações em iframe.
 
-## Executar
+### Executar localmente
 
-Na raiz do projeto, inicia um dos servidores seguintes:
+Na raiz do projeto, inicia um servidor HTTP:
 
-```powershell
-# PHP
-php -S localhost:8000
-
-# Python
+```bash
 python -m http.server 8000
 ```
 
-Também podes usar Five Server no VS Code. Abre depois o endereço correspondente, por exemplo `http://localhost:8000`.
+Ou, se tiveres PHP instalado:
 
-O carregador descobre automaticamente cada app pela listagem HTTP de `apps/` e lê o respetivo `manifest.json`. Para adicionar uma app, basta criar a pasta `apps/<id>/` com o código e o manifest. O servidor tem de expor listagem de diretórios em `apps/`; sem essa capacidade, um browser não consegue enumerar as pastas num site estático.
-
-## Aplicações incluídas
-
-O projeto inclui apps de sistema e ferramentas como Calculadora, Calendário, Relógio, Ficheiros, Bloco de Notas, Imagens, Leitor Multimédia, Snake, Despesas, Diagramas, Conversor de Unidades, Códigos QR, Paleta de Cores e Backup e Restauro. Os manifests e respetivos pontos de entrada estão nas pastas de [`apps/`](apps/).
-
-O sistema suporta Português (`pt-PT`) e Inglês (`en`). A seleção é guardada nas Definições, atualiza o shell e é propagada às apps abertas; textos sem tradução mantêm o original. As apps podem usar `os.i18n` para traduções próprias e formatação regional.
-
-## Testes e validação
-
-Executa na raiz do projeto:
-
-```powershell
-node .\tests\validate-manifests.mjs
-node .\tests\smoke.mjs
-node .\tests\i18n.mjs
+```bash
+php -S localhost:8000
 ```
 
-Para verificar a sintaxe de todos os scripts JavaScript:
+Abre [http://localhost:8000](http://localhost:8000). Não abras `index.html` com `file://`: o shell usa ES modules e carrega as aplicações em iframes.
+
+> **Importante:** o carregador descobre aplicações através da listagem HTTP da pasta `apps/`. O servidor escolhido tem de expor listagens de diretórios; sem elas, o browser não consegue descobrir automaticamente as pastas.
+
+## Idiomas
+
+Escolhe **Português** ou **English** em **Definições → Acessibilidade → Idioma**. A preferência é guardada e aplicada ao shell e às aplicações abertas. Datas e números usam a localidade correspondente (`pt-PT` ou `en-GB`). A cobertura de tradução está em evolução; texto sem tradução permanece no idioma original.
+
+## Atalhos
+
+| Atalho | Ação |
+| --- | --- |
+| `Alt+Q` | Alternar entre janelas abertas; mantém `Alt` e repete `Q`. `Shift` inverte a direção. |
+| `Alt+←` / `Alt+→` | Encaixar a janela ativa à esquerda ou à direita. |
+| `Alt+↑` / `Alt+↓` | Maximizar ou repor o tamanho da janela. |
+| `Esc` | Fechar menus e o alternador de janelas. |
+| `Ctrl+S` | Guardar em aplicações com suporte, como Bloco de Notas e Diagramas. |
+| `Tab` | Completar comandos no Terminal. |
+
+O browser reserva `Alt+Tab` ao sistema operativo anfitrião.
+
+## Testes
+
+Executa a partir da raiz do projeto:
+
+```bash
+node tests/validate-manifests.mjs
+node tests/smoke.mjs
+node tests/i18n.mjs
+```
+
+Para verificar a sintaxe dos scripts JavaScript em PowerShell:
 
 ```powershell
 Get-ChildItem -Path . -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
 ```
 
-## Estrutura
-
-- `index.html`: ponto de entrada do shell.
-- `system/js/`: arranque, janelas, desktop, Menu Iniciar, filesystem e restantes serviços do shell.
-- `system/sdk/`: API usada pelas apps dentro dos seus iframes sandbox.
-- `apps/<id>/`: aplicações autónomas, cada uma com manifest, HTML, JavaScript, CSS e assets próprios.
-- `assets/`: recursos partilhados do shell.
-- `docs/`: documentação de desenvolvimento.
-- `tests/`: validação de manifests e smoke tests.
-
 ## Criar uma aplicação
 
-1. Cria `apps/<id>/` com `manifest.json`, `index.html`, `app.js`, `style.css` e um ícone SVG.
-2. Inclui `../../system/sdk/os-sdk.js` antes do JavaScript da app; usa scripts clássicos, não ES Modules.
-3. Declara no manifest apenas as permissões necessárias e mantém os ficheiros próprios dentro da pasta da app.
-4. Confirma que o servidor permite listar o conteúdo de `apps/`; não é necessário registar a app noutro ficheiro.
-5. Consulta [`docs/app-development.md`](docs/app-development.md) para o formato do manifest, APIs, dados e filesystem virtual.
-6. Executa os três testes acima e testa a app pelo shell, não apenas abrindo o HTML isoladamente.
+Adiciona uma pasta `apps/<id>/` com um `manifest.json` e os ficheiros da aplicação. O `id` do manifest tem de corresponder ao nome da pasta. Não é necessário editar um registo central.
 
-As apps usam `os.storage` para dados privados, `os.settings` para preferências globais e `os.fs` para documentos do utilizador. A app Backup e Restauro pode exportar e restaurar os dados suportados do perfil ativo.
+As aplicações são isoladas em iframes sandbox. Inclui o SDK antes do código da app:
 
-## Atalhos
+```html
+<script src="../../system/sdk/os-sdk.js"></script>
+```
 
-- **Alt+Q**: alternar entre janelas; mantém Alt e repete Q. Shift inverte a direção. O browser reserva Alt+Tab ao sistema operativo.
-- **Alt+←/→**: encaixar a janela ativa; **Alt+↑** maximiza; **Alt+↓** repõe o tamanho anterior.
-- **Esc**: fechar menus e o alternador de janelas.
-- **Ctrl+S**: guardar no Bloco de Notas e em apps com suporte de gravação.
-- **Tab**: completar comandos no Terminal.
-- Menu Iniciar → **Terminar sessão** volta ao ecrã de login; **Reiniciar** volta ao arranque.
+Usa as APIs `window.os` em vez de aceder diretamente ao DOM do shell ou a `localStorage`. Declara no manifest apenas as permissões necessárias. A listagem de `apps/` tem de estar ativa no servidor para a app ser descoberta.
+
+O guia completo, incluindo manifests, permissões, filesystem e localização, está em [`docs/app-development.md`](docs/app-development.md).
+
+## Estrutura do projeto
+
+```text
+index.html          Entrada do WebOS
+apps/               Aplicações autónomas e respetivos manifests
+assets/             Recursos partilhados
+docs/               Guias de desenvolvimento
+system/js/          Shell, janelas, filesystem e serviços
+system/sdk/         APIs para aplicações sandboxed
+tests/              Validação de manifests, smoke tests e i18n
+```
+
+## Licença
+
+Este repositório não contém atualmente um ficheiro de licença. Até ser adicionada uma licença, não assumas que o código pode ser reutilizado, redistribuído ou modificado fora dos direitos concedidos pela legislação aplicável.

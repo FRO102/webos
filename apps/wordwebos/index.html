@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordWebos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" data-layout="print">
+    <header class="ribbon">
+      <div class="ribbon__tabs" role="tablist" aria-label="Separadores">
+        <button type="button" role="tab" data-tab="file" aria-selected="false" tabindex="-1">File</button>
+        <button type="button" role="tab" data-tab="home" aria-selected="true">Start</button>
+        <button type="button" role="tab" data-tab="insert" aria-selected="false" tabindex="-1">Inserir</button>
+        <button type="button" role="tab" data-tab="view" aria-selected="false" tabindex="-1">Ver</button>
+      </div>
+
+      <div class="ribbon__panels">
+        <!-- FICHEIRO -->
+        <div class="ribbon__panel" data-panel="file" role="tabpanel" hidden>
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="menuNew">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>
+                <span>New</span>
+              </button>
+              <button type="button" class="big" id="menuOpen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                <span>Open…</span>
+              </button>
+              <button type="button" class="big" id="menuSave">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-8h8v8"/></svg>
+                <span>Save</span>
+              </button>
+              <button type="button" class="big" id="menuSaveAs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 3h11l3 3v15H5z"/><path d="M8 21v-8h8v8"/></svg>
+                <span>Guardar como…</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">File</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="menuExportTxt">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v13"/><polyline points="7 11 12 16 17 11"/><path d="M4 20h16"/></svg>
+                <span>Exportar .txt</span>
+              </button>
+              <button type="button" class="big" id="menuPrint">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 17H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg>
+                <span>Imprimir…</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Export</span>
+          </div>
+        </div>
+
+        <!-- INÍCIO -->
+        <div class="ribbon__panel" data-panel="home" role="tabpanel">
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="btn-icon" data-cmd="undo" aria-label="Undo" title="Desfazer (Ctrl+Z)" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+              </button>
+              <button type="button" class="btn-icon" data-cmd="redo" aria-label="Redo" title="Refazer (Ctrl+Y)" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Undo</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <select id="heading" aria-label="Estilo" class="select-style">
+                <option value="p">Normal</option>
+                <option value="h1">Título 1</option>
+                <option value="h2">Título 2</option>
+                <option value="h3">Título 3</option>
+                <option value="h4">Título 4</option>
+                <option value="blockquote">Citação</option>
+              </select>
+            </div>
+            <span class="ribbon-group__label">Estilos</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content font-group">
+              <select id="fontFamily" aria-label="Tipo de letra" class="select-font">
+                <option value="Calibri, 'Segoe UI', sans-serif">Calibri</option>
+                <option value="Cambria, Georgia, serif">Cambria</option>
+                <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="'Courier New', monospace">Courier New</option>
+              </select>
+              <select id="fontSize" aria-label="Size" class="select-size">
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11" selected>11</option>
+                <option value="12">12</option>
+                <option value="14">14</option>
+                <option value="16">16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="36">36</option>
+                <option value="48">48</option>
+              </select>
+              <div class="divider"></div>
+              <button type="button" class="btn-icon" data-cmd="bold" aria-label="Negrito" title="Negrito (Ctrl+B)"><b>B</b></button>
+              <button type="button" class="btn-icon" data-cmd="italic" aria-label="Itálico" title="Itálico (Ctrl+I)"><i>I</i></button>
+              <button type="button" class="btn-icon" data-cmd="underline" aria-label="Sublinhado" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+              <button type="button" class="btn-icon" data-cmd="strikeThrough" aria-label="Rasurado" title="Rasurado"><s>S</s></button>
+              <div class="divider"></div>
+              <button type="button" id="textColorBtn" aria-label="Cor do texto" title="Cor do texto" class="btn-icon split-btn">
+                <span class="btn__label">A</span>
+                <span class="color-swatch" id="textColorSwatch" style="background:#000000"></span>
+              </button>
+              <button type="button" id="highlightBtn" aria-label="Realçar" title="Realce" class="btn-icon split-btn">
+                <span class="btn__label">a</span>
+                <span class="color-swatch" id="highlightSwatch" style="background:#ffff00"></span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Tipo de Letra</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="btn-icon" data-cmd="justifyLeft" aria-label="Alinhar à esquerda" title="Alinhar à esquerda">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <button type="button" class="btn-icon" data-cmd="justifyCenter" aria-label="Centrar" title="Centrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <button type="button" class="btn-icon" data-cmd="justifyRight" aria-label="Alinhar à direita" title="Alinhar à direita">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="4" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <button type="button" class="btn-icon" data-cmd="justifyFull" aria-label="Justificar" title="Justificar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <div class="divider"></div>
+              <button type="button" class="btn-icon" data-cmd="insertUnorderedList" aria-label="Lista com marcas" title="Lista com marcas">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="6" r="1" fill="currentColor"/><line x1="9" y1="6" x2="20" y2="6"/><circle cx="5" cy="12" r="1" fill="currentColor"/><line x1="9" y1="12" x2="20" y2="12"/><circle cx="5" cy="18" r="1" fill="currentColor"/><line x1="9" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <button type="button" class="btn-icon" data-cmd="insertOrderedList" aria-label="Lista numerada" title="Lista numerada">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><text x="3" y="8" font-size="7" fill="currentColor" stroke="none">1</text><line x1="9" y1="6" x2="20" y2="6"/><text x="3" y="14" font-size="7" fill="currentColor" stroke="none">2</text><line x1="9" y1="12" x2="20" y2="12"/><text x="3" y="20" font-size="7" fill="currentColor" stroke="none">3</text><line x1="9" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <div class="divider"></div>
+              <button type="button" class="btn-icon" data-cmd="outdent" aria-label="Diminuir avanço" title="Diminuir avanço">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="8 8 4 12 8 16"/><line x1="12" y1="6" x2="20" y2="6"/><line x1="12" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+              </button>
+              <button type="button" class="btn-icon" data-cmd="indent" aria-label="Aumentar avanço" title="Aumentar avanço">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="4 8 8 12 4 16"/><line x1="12" y1="6" x2="20" y2="6"/><line x1="12" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Parágrafo</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="btn-icon" data-cmd="removeFormat" aria-label="Limpar formatação" title="Limpar formatação">Tx</button>
+            </div>
+            <span class="ribbon-group__label">Clear</span>
+          </div>
+        </div>
+
+        <!-- INSERIR -->
+        <div class="ribbon__panel" data-panel="insert" role="tabpanel" hidden>
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="insertTable">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></svg>
+                <span>Tabela</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Tabelas</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="insertImage">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="1"/><circle cx="8.5" cy="9.5" r="1.5"/><polyline points="21 16 15 10 5 20"/></svg>
+                <span>Imagem…</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Ilustrações</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="insertDate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+                <span>Date</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Texto</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="insertPageBreak">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="3 3"/><polyline points="9 7 12 4 15 7"/><polyline points="9 17 12 20 15 17"/></svg>
+                <span>Quebra</span>
+              </button>
+              <button type="button" class="big" data-cmd="insertHorizontalRule">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="3" y1="12" x2="21" y2="12"/></svg>
+                <span>Linha</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Páginas</span>
+          </div>
+        </div>
+
+        <!-- VER -->
+        <div class="ribbon__panel" data-panel="view" role="tabpanel" hidden>
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="zoomOut" aria-label="Reduzir zoom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="10" cy="10" r="6"/><line x1="20" y1="20" x2="14.5" y2="14.5"/><line x1="7" y1="10" x2="13" y2="10"/></svg>
+                <span>Menos</span>
+              </button>
+              <button type="button" class="big" id="zoomIn" aria-label="Aumentar zoom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="10" cy="10" r="6"/><line x1="20" y1="20" x2="14.5" y2="14.5"/><line x1="7" y1="10" x2="13" y2="10"/><line x1="10" y1="7" x2="10" y2="13"/></svg>
+                <span>Mais</span>
+              </button>
+              <button type="button" class="big" id="zoomReset">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>
+                <span>100%</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Zoom</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big layout-btn" data-layout="print" data-active="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="5" y="3" width="14" height="18" rx="1"/></svg>
+                <span>Page</span>
+              </button>
+              <button type="button" class="big layout-btn" data-layout="web" data-active="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="8" x2="21" y2="8"/></svg>
+                <span>Web</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Vistas</span>
+          </div>
+
+          <div class="ribbon-group">
+            <div class="ribbon-group__content">
+              <button type="button" class="big" id="toggleFullscreen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg>
+                <span>Ecrã inteiro</span>
+              </button>
+            </div>
+            <span class="ribbon-group__label">Janela</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="find-bar" id="findBar" hidden>
+      <input type="text" id="findInput" placeholder="Localizar…" aria-label="Localizar">
+      <button type="button" id="findPrev" aria-label="Anterior">↑</button>
+      <button type="button" id="findNext" aria-label="Seguinte">↓</button>
+      <button type="button" id="findClose" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="editor-wrapper">
+      <div class="editor-area" id="editorArea">
+        <div class="page" id="page">
+          <div class="page__content" id="editor" contenteditable="true" spellcheck="true" aria-label="Área de edição" aria-multiline="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="statusbar">
+      <span class="statusbar__cell" id="statusPath">Documento não guardado</span>
+      <span class="statusbar__cell statusbar__cell--message" id="statusMessage" role="status" aria-live="polite"></span>
+      <span class="statusbar__cell" id="saveState">—</span>
+      <span class="statusbar__cell" id="wordCount">0 palavras</span>
+      <span class="statusbar__cell" id="pageCount">1 página</span>
+      <span class="statusbar__cell" id="zoomValue">100%</span>
+    </footer>
+
+    <input type="color" id="textColorInput" value="#000000" hidden aria-hidden="true">
+    <input type="color" id="highlightInput" value="#ffff00" hidden aria-hidden="true">
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
