@@ -1,0 +1,15 @@
+{
+  "id": "diario",
+  "name": "Diário",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 760,
+    "height": 580,
+    "minWidth": 380,
+    "minHeight": 420
+  },
+  "singleInstance": true,
+  "permissions": ["fs.read", "fs.write"]
+}

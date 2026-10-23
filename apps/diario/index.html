@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diário</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav role="tablist" aria-label="Secções">
+    <button role="tab" id="t-diary" data-tab="diary" aria-controls="p-diary" aria-selected="true">Diário</button>
+    <button role="tab" id="t-habits" data-tab="habits" aria-controls="p-habits" aria-selected="false" tabindex="-1">Hábitos</button>
+    <button role="tab" id="t-summary" data-tab="summary" aria-controls="p-summary" aria-selected="false" tabindex="-1">Resumo</button>
+  </nav>
+
+  <header id="bar">
+    <button id="prev" class="icon-only" data-icon="left" aria-label="Dia anterior"></button>
+    <div class="daylabel">
+      <strong id="daylabel" aria-live="polite"></strong>
+      <input type="date" id="datepick" aria-label="Escolher data">
+    </div>
+    <button id="next" class="icon-only" data-icon="right" aria-label="Dia seguinte"></button>
+    <button id="today">Hoje</button>
+  </header>
+
+  <main>
+    <section id="p-diary" role="tabpanel" aria-labelledby="t-diary">
+      <div class="diary">
+        <div class="editor">
+          <div id="moods" role="group" aria-label="Humor do dia"></div>
+          <label for="text" class="sr">Entrada do diário</label>
+          <textarea id="text" placeholder="Como correu o dia?" spellcheck="true"></textarea>
+          <div class="editor-foot">
+            <span id="count"></span>
+            <button id="delentry" class="danger" data-icon="trash">Apagar entrada</button>
+          </div>
+        </div>
+        <aside class="side">
+          <label for="search" class="sr">Pesquisar entradas</label>
+          <input type="search" id="search" placeholder="Pesquisar entradas…">
+          <ul id="entries" aria-label="Entradas anteriores"></ul>
+        </aside>
+      </div>
+    </section>
+
+    <section id="p-habits" role="tabpanel" aria-labelledby="t-habits" hidden>
+      <p id="nohabits" class="muted">Ainda não tens hábitos. Cria o primeiro para acompanhares sequências e progresso.</p>
+      <ul id="habits"></ul>
+      <button id="addhabit" class="primary" data-icon="plus">Novo hábito</button>
+    </section>
+
+    <section id="p-summary" role="tabpanel" aria-labelledby="t-summary" hidden>
+      <dl id="stats"></dl>
+      <h2>Hábitos: últimas 12 semanas</h2>
+      <div id="heat" role="img"></div>
+      <p id="heatnote" class="muted"></p>
+      <h2>Humor: últimos 30 dias</h2>
+      <div id="chart" role="img"></div>
+      <p id="chartnote" class="muted"></p>
+      <button id="export" data-icon="download">Exportar para Markdown</button>
+    </section>
+  </main>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
