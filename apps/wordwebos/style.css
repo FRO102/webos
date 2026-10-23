@@ -362,6 +362,21 @@ body {
 
 /* Estilos de conteúdo dentro do papel */
 .page__content p { margin: 0 0 8pt; }
+.page__content .doc-header,
+.page__content .doc-footer {
+  text-align: center;
+  font-size: 10pt;
+  color: #666;
+  padding: 4pt 0;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 12pt;
+}
+.page__content .doc-footer {
+  border-bottom: none;
+  border-top: 1px solid #e5e5e5;
+  margin-top: 12pt;
+  margin-bottom: 0;
+}
 .page__content h1 { font-size: 22pt; margin: 12pt 0 6pt; font-weight: 600; }
 .page__content h2 { font-size: 18pt; margin: 10pt 0 5pt; font-weight: 600; }
 .page__content h3 { font-size: 14pt; margin: 8pt 0 4pt; font-weight: 600; }
@@ -437,6 +452,39 @@ body {
   display: none;
 }
 
+.app[data-layout="reading"] .editor-area {
+  padding: 32px 16px;
+  background: #f5f5f5;
+}
+
+.app[data-layout="reading"] .page {
+  width: 860px;
+  min-height: auto;
+  padding: 52px 90px 72px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+}
+
+.app[data-layout="reading"] .page__content {
+  font-size: 15pt;
+  line-height: 1.75;
+  color: #1f1f1f;
+}
+
+.app[data-layout="reading"] .page__content h1,
+.app[data-layout="reading"] .page__content h2,
+.app[data-layout="reading"] .page__content h3,
+.app[data-layout="reading"] .page__content h4 {
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.app[data-layout="reading"] .page__content hr.page-break {
+  border-top-color: rgba(24, 90, 189, 0.4);
+  margin: 22px 0;
+}
+
 /* ---------- Find bar ---------- */
 
 .find-bar {
@@ -492,6 +540,23 @@ body {
   min-width: 56px;
 }
 
+.inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--word-fg);
+  font-size: 11px;
+}
+
+.inline-field select {
+  min-width: 90px;
+  height: 26px;
+  border: 1px solid var(--word-border);
+  border-radius: 4px;
+  background: var(--word-field);
+  color: var(--word-fg);
+}
+
 /* ---------- Status bar ---------- */
 
 .statusbar {
@@ -542,9 +607,27 @@ body {
 @media print {
   .ribbon, .statusbar, .find-bar { display: none !important; }
   .editor-area { padding: 0; overflow: visible; }
-  .page { box-shadow: none; width: auto; min-height: auto; padding: 0; }
+  .page {
+    box-shadow: none;
+    width: auto;
+    min-height: auto;
+    padding: 0;
+    border-radius: 0;
+  }
   .page__content hr.page-break { page-break-after: always; border: none; }
   .page__content hr.page-break::after { display: none; }
+}
+
+.app[data-layout="print-preview"] .editor-area {
+  background: #f3f3f3;
+}
+
+.app[data-layout="print-preview"] .page {
+  width: 850px;
+  min-height: 1100px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  padding: 72px 72px 64px;
 }
 
 

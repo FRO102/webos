@@ -87,6 +87,8 @@
     els.findNext = document.getElementById('findNext');
     els.replaceAll = document.getElementById('replaceAll');
     els.findClose = document.getElementById('findClose');
+    els.pageMargin = document.getElementById('pageMargin');
+    els.pageOrientation = document.getElementById('pageOrientation');
   }
 
   // ---------------------------------------------------------------- i18n
@@ -335,6 +337,7 @@
     document.getElementById('menuSave').addEventListener('click', () => saveDocument(false));
     document.getElementById('menuSaveAs').addEventListener('click', () => saveDocument(true));
     document.getElementById('menuExportTxt').addEventListener('click', exportTxt);
+    document.getElementById('menuExportDocx').addEventListener('click', exportDocx);
     document.getElementById('menuPrint').addEventListener('click', () => {
       try { window.print(); } catch (e) { /* noop */ }
     });
@@ -550,6 +553,265 @@
     }
   }
 
+  async function exportDocx() {
+    if (!window.docx || !window.docx.Document || !window.docx.Packer) {
+      setStatus(t('Biblioteca DOCX indisponível.'), 'error');
+      return;
+    }
+
+    const fileName = ((state.docName || 'document').replace(/\.[^.]+$/, '') || 'document') + '.docx';
+    try {
+      const bodyHtml = sanitizeHtml(editor.innerHTML || '<p><br></p>');
+      const document = buildDocxDocumentFromHtml(bodyHtml);
+      const blob = await window.docx.Packer.toBlob(document);
+      triggerDownload(blob, fileName);
+      setStatus(t('Exportado') + ': ' + fileName, 'success');
+    } catch (err) {
+      console.error('WordWebos: export DOCX falhou', err);
+      setStatus(t('Falha ao exportar DOCX.'), 'error');
+    }
+  }
+
+  function triggerDownload(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      link.remove();
+    }, 2000);
+  }
+
+  function buildDocxDocumentFromHtml(bodyHtml) {
+    const { Document, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, AlignmentType, ImageRun } = window.docx;
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = bodyHtml;
+
+    const sections = [{
+      children: Array.from(wrapper.childNodes).flatMap(node => convertNodeToDocxChildren(node, { Document, Paragraph, Table, TableRow, TableCell, TextRun, HeadingLevel, AlignmentType, ImageRun }))
+    }];
+
+    return new Document({ sections });
+  }
+
+  function convertNodeToDocxChildren(node, api) {
+    if (!node) return [];
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || '';
+      if (!text) return [];
+      return [new api.Paragraph({ children: inlineChildrenToDocx(node, api) })];
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return [];
+
+    const tag = node.tagName.toUpperCase();
+    if (tag === 'P') {
+      return [new api.Paragraph({
+        alignment: alignmentForElement(node),
+        spacing: { after: 120 },
+        children: inlineChildrenToDocx(node, api)
+      })];
+    }
+    if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tag)) {
+      return [new api.Paragraph({
+        heading: headingLevelFor(tag, api),
+        alignment: alignmentForElement(node),
+        spacing: { after: 120 },
+        children: inlineChildrenToDocx(node, api)
+      })];
+    }
+    if (tag === 'BLOCKQUOTE') {
+      const value = (node.textContent || '').trim();
+      return [new api.Paragraph({
+        style: 'Quote',
+        indentation: { left: 720 },
+        children: value ? [new api.TextRun({ text: value, italics: true, color: '666666' })] : []
+      })];
+    }
+    if (tag === 'UL' || tag === 'OL') {
+      return Array.from(node.children).flatMap((item, index) => {
+        const label = tag === 'OL' ? `${index + 1}. ` : '• ';
+        return [new api.Paragraph({ children: [new api.TextRun({ text: label + (item.textContent || '').trim() })] })];
+      });
+    }
+    if (tag === 'TABLE') {
+      const rows = Array.from(node.querySelectorAll('tr'));
+      if (!rows.length) return [];
+      return [new api.Table({
+        rows: rows.map(row => new api.TableRow({
+          children: Array.from(row.children).map(cell => new api.TableCell({
+            children: [new api.Paragraph({ children: inlineChildrenToDocx(cell, api) || [new api.TextRun({ text: ' ' })] })]
+          }))
+        }))
+      })];
+    }
+    if (tag === 'HR') {
+      return [new api.Paragraph({ children: [new api.TextRun({ text: '' })], border: { bottom: { color: 'BFBFBF', style: 'single', size: 6 } } })];
+    }
+    if (tag === 'BR') {
+      return [new api.Paragraph({ children: [new api.TextRun({ text: '', break: 1 })] })];
+    }
+    if (tag === 'IMG') {
+      const imageRun = imageRunFromElement(node, api);
+      if (!imageRun) return [];
+      return [new api.Paragraph({ children: [imageRun] })];
+    }
+
+    const children = [];
+    for (const child of Array.from(node.childNodes)) {
+      children.push(...convertNodeToDocxChildren(child, api));
+    }
+    return children;
+  }
+
+  function inlineChildrenToDocx(node, api) {
+    if (!node || !node.childNodes) return [new api.TextRun({ text: '' })];
+    const runs = [];
+    const children = Array.from(node.childNodes);
+
+    for (const child of children) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        const text = child.textContent || '';
+        if (!text) continue;
+        runs.push(createDocxTextRun(text, node, api));
+        continue;
+      }
+      if (child.nodeType !== Node.ELEMENT_NODE) continue;
+
+      const tag = child.tagName.toUpperCase();
+      if (tag === 'BR') {
+        runs.push(new api.TextRun({ text: '', break: 1 }));
+        continue;
+      }
+      if (tag === 'IMG') {
+        const imageRun = imageRunFromElement(child, api);
+        if (imageRun) runs.push(imageRun);
+        continue;
+      }
+      const style = getInlineStyle(child);
+      const inlineRuns = inlineChildrenToDocx(child, api);
+      if (!inlineRuns.length) continue;
+      runs.push(...inlineRuns.map(run => styleTextRun(run, style, api)));
+    }
+
+    return runs.filter(Boolean);
+  }
+
+  function createDocxTextRun(text, sourceNode, api) {
+    const value = String(text || '').replace(/\r?\n/g, ' ');
+    if (!value) return null;
+    const style = getInlineStyle(sourceNode);
+    return new api.TextRun({
+      text: value,
+      bold: style.bold,
+      italics: style.italic,
+      underline: style.underline ? { type: 'single' } : undefined,
+      strike: style.strike,
+      color: style.color || undefined,
+      size: style.size || undefined,
+      font: style.font || undefined
+    });
+  }
+
+  function getInlineStyle(element) {
+    const style = element && element.getAttribute ? element.getAttribute('style') || '' : '';
+    const tag = element && element.tagName ? element.tagName.toUpperCase() : '';
+    const result = {
+      bold: tag === 'B' || tag === 'STRONG' || /font-weight\s*:\s*(bold|700|800|900)/i.test(style),
+      italic: tag === 'I' || tag === 'EM' || /font-style\s*:\s*italic/i.test(style),
+      underline: tag === 'U' || /text-decoration\s*:\s*underline/i.test(style),
+      strike: tag === 'S' || tag === 'STRIKE' || /text-decoration\s*:\s*line-through/i.test(style),
+      color: parseCssColor(style) || undefined,
+      size: parseCssSize(style),
+      font: parseCssFontFamily(style) || undefined
+    };
+    return result;
+  }
+
+  function styleTextRun(run, style, api) {
+    if (!run || !run.text) return run;
+    if (run instanceof api.TextRun) {
+      return new api.TextRun({
+        text: run.text,
+        bold: Boolean(style.bold || run.bold),
+        italics: Boolean(style.italic || run.italics),
+        underline: style.underline || run.underline ? { type: 'single' } : undefined,
+        strike: Boolean(style.strike || run.strike),
+        color: style.color || run.color,
+        size: style.size || run.size,
+        font: style.font || run.font
+      });
+    }
+    return run;
+  }
+
+  function parseCssColor(style) {
+    const match = /color\s*:\s*([^;]+)/i.exec(style || '');
+    if (!match) return undefined;
+    const value = match[1].trim();
+    return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value : undefined;
+  }
+
+  function parseCssSize(style) {
+    const match = /font-size\s*:\s*([0-9.]+)(px|pt|em|rem)?/i.exec(style || '');
+    if (!match) return undefined;
+    const value = Number(match[1]);
+    if (!Number.isFinite(value)) return undefined;
+    const unit = (match[2] || 'pt').toLowerCase();
+    const final = unit === 'px' ? value * 2 : value * 2;
+    return final <= 0 ? undefined : final;
+  }
+
+  function parseCssFontFamily(style) {
+    const match = /font-family\s*:\s*([^;]+)/i.exec(style || '');
+    if (!match) return undefined;
+    return match[1].trim().replace(/['"]/g, '').split(',')[0] || undefined;
+  }
+
+  function alignmentForElement(node) {
+    const align = (node.style && node.style.textAlign) || '';
+    if (align === 'center') return window.docx.AlignmentType.CENTER;
+    if (align === 'right') return window.docx.AlignmentType.RIGHT;
+    if (align === 'justify') return window.docx.AlignmentType.JUSTIFIED;
+    return window.docx.AlignmentType.LEFT;
+  }
+
+  function headingLevelFor(tag, api) {
+    const map = {
+      H1: api.HeadingLevel.HEADING_1,
+      H2: api.HeadingLevel.HEADING_2,
+      H3: api.HeadingLevel.HEADING_3,
+      H4: api.HeadingLevel.HEADING_4,
+      H5: api.HeadingLevel.HEADING_5,
+      H6: api.HeadingLevel.HEADING_6
+    };
+    return map[tag] || api.HeadingLevel.HEADING_1;
+  }
+
+  function imageRunFromElement(node, api) {
+    const src = node.getAttribute ? node.getAttribute('src') : '';
+    if (!src || !/^data:image\//i.test(src)) return null;
+    try {
+      const match = src.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) return null;
+      const binary = atob(match[1]);
+      const buffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+      const width = Number(node.getAttribute('width')) || 240;
+      const height = Number(node.getAttribute('height')) || 160;
+      return new api.ImageRun({
+        data: buffer,
+        transformation: { width, height }
+      });
+    } catch (err) {
+      console.warn('WordWebos: imagem não exportável para DOCX.', err);
+      return null;
+    }
+  }
+
   async function confirmDiscard() {
     if (window.os && os.dialog && typeof os.dialog.confirm === 'function') {
       try {
@@ -579,6 +841,15 @@
 
     document.getElementById('insertPageBreak').addEventListener('mousedown', preventFocusLoss);
     document.getElementById('insertPageBreak').addEventListener('click', insertPageBreak);
+
+    document.getElementById('insertPageNumber').addEventListener('mousedown', preventFocusLoss);
+    document.getElementById('insertPageNumber').addEventListener('click', insertPageNumber);
+
+    document.getElementById('insertHeader').addEventListener('mousedown', preventFocusLoss);
+    document.getElementById('insertHeader').addEventListener('click', () => insertDocumentLabel('header'));
+
+    document.getElementById('insertFooter').addEventListener('mousedown', preventFocusLoss);
+    document.getElementById('insertFooter').addEventListener('click', () => insertDocumentLabel('footer'));
 
     document.getElementById('insertLink').addEventListener('mousedown', preventFocusLoss);
     document.getElementById('insertLink').addEventListener('click', insertLink);
@@ -610,6 +881,45 @@
     editor.focus();
     const dateStr = formatDate(new Date());
     try { document.execCommand('insertText', false, dateStr); } catch (e) {}
+    onEditorChanged();
+  }
+
+  async function insertDocumentLabel(type) {
+    const label = type === 'header' ? 'Cabeçalho' : 'Rodapé';
+    let value = '';
+    if (window.os && os.dialog && typeof os.dialog.prompt === 'function') {
+      try {
+        value = await os.dialog.prompt({
+          title: label,
+          message: t('Escreve o texto do ' + (type === 'header' ? 'cabeçalho' : 'rodapé') + ':'),
+          defaultValue: label,
+          okLabel: t('Inserir')
+        });
+      } catch (err) {
+        return;
+      }
+    } else {
+      value = window.prompt(t('Escreve o texto do ' + (type === 'header' ? 'cabeçalho' : 'rodapé') + ':'), label);
+    }
+    if (!value) return;
+    const block = '<div class="doc-' + type + '">' + escapeHtml(String(value).trim()) + '</div>';
+    editor.focus();
+    try {
+      document.execCommand('insertHTML', false, block + '<p><br></p>');
+    } catch (e) {
+      editor.insertAdjacentHTML('beforeend', block);
+    }
+    onEditorChanged();
+  }
+
+  function insertPageNumber() {
+    editor.focus();
+    const count = editor.querySelectorAll('hr.page-break').length + 1;
+    try {
+      document.execCommand('insertText', false, String(count));
+    } catch (e) {
+      editor.insertAdjacentHTML('beforeend', '<span class="page-number">' + count + '</span>');
+    }
     onEditorChanged();
   }
 
@@ -746,6 +1056,36 @@
     });
 
     document.getElementById('toggleFullscreen').addEventListener('click', toggleFullscreen);
+    document.getElementById('previewPrint').addEventListener('click', () => {
+      const next = state.layout === 'print-preview' ? 'print' : 'print-preview';
+      setLayout(next);
+      if (next === 'print-preview') {
+        setStatus(t('Pré-visualização de impressão'), 'info');
+      }
+    });
+    if (els.pageMargin) {
+      els.pageMargin.addEventListener('change', () => applyPageLayout());
+    }
+    if (els.pageOrientation) {
+      els.pageOrientation.addEventListener('change', () => applyPageLayout());
+    }
+  }
+
+  function applyPageLayout() {
+    const margin = els.pageMargin?.value || 'normal';
+    const orientation = els.pageOrientation?.value || 'portrait';
+    const page = els.page;
+    if (!page) return;
+
+    const margins = {
+      small: '32px',
+      normal: '96px',
+      wide: '128px'
+    };
+
+    page.style.padding = margins[margin] || margins.normal;
+    page.style.width = orientation === 'landscape' ? '1100px' : '794px';
+    page.style.minHeight = orientation === 'landscape' ? '780px' : '1123px';
   }
 
   function setZoom(z) {
@@ -759,8 +1099,20 @@
     state.layout = layout;
     els.app.dataset.layout = layout;
     document.querySelectorAll('.layout-btn').forEach(btn => {
-      btn.dataset.active = btn.dataset.layout === layout ? 'true' : 'false';
+      const active = btn.dataset.layout === layout;
+      btn.dataset.active = active ? 'true' : 'false';
     });
+    const readable = layout === 'reading';
+    if (readable) {
+      setStatus(t('Modo de leitura'), 'info');
+      editor.setAttribute('data-layout', 'reading');
+    } else {
+      editor.removeAttribute('data-layout');
+    }
+
+    if (layout === 'print-preview') {
+      applyPageLayout();
+    }
   }
 
   async function toggleFullscreen() {

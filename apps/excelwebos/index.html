@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExcelWebos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <div class="toolbar-group">
+        <button type="button" class="btn" id="btn-open" title="Abrir (Ctrl+O)">Abrir</button>
+        <button type="button" class="btn" id="btn-save" title="Guardar (Ctrl+S)">Guardar</button>
+        <button type="button" class="btn" id="btn-export-csv" title="Exportar para CSV">Exportar CSV</button>
+      </div>
+      
+      <div class="toolbar-separator"></div>
+      
+      <div class="toolbar-group">
+        <button type="button" class="btn-icon" id="btn-bold" title="Negrito"><b>N</b></button>
+        <button type="button" class="btn-icon" id="btn-italic" title="Itálico"><i>I</i></button>
+        <button type="button" class="btn-icon" id="btn-color" title="Cor do texto" style="flex-direction: column; gap: 0; padding: 2px;">
+          <span style="font-family: serif; font-weight: bold; line-height: 1;">A</span>
+          <span id="color-preview" style="width: 12px; height: 3px; background: #000; display: block; margin-top: 2px;"></span>
+        </button>
+        <input type="color" id="color-picker" value="#000000" hidden>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="toolbar-group">
+        <button type="button" class="btn-icon" id="btn-align-left" title="Alinhar à Esquerda">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </button>
+        <button type="button" class="btn-icon" id="btn-align-center" title="Centrar">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </button>
+        <button type="button" class="btn-icon" id="btn-align-right" title="Alinhar à Direita">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="formula-bar">
+      <div class="cell-address" id="cell-address">A1</div>
+      <input type="text" id="formula-input" placeholder="Insira um valor ou fórmula (=A1+B2)" spellcheck="false" autocomplete="off">
+    </div>
+
+    <div class="grid-container" id="grid-container">
+      <table id="sheet">
+        <thead>
+          <tr id="col-headers">
+            <!-- Gerado via JS -->
+          </tr>
+        </thead>
+        <tbody id="sheet-body">
+          <!-- Gerado via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="status-bar">
+      <span id="status-message">Pronto</span>
+      <span id="status-coords">Célula: A1</span>
+    </footer>
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
