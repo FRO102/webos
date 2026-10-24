@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="PDFWebos">
+  <rect width="64" height="64" rx="10" fill="#E53935"/>
+  <path d="M18 10h20l10 10v34a2 2 0 0 1-2 2H18a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" fill="#ffffff"/>
+  <path d="M38 10v10h10" fill="#ffcdd2"/>
+  <text x="32" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#E53935">PDF</text>
+</svg>

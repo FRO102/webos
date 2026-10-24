@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDFWebos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <h3>Informações</h3>
+        <div class="info-row"><span>Nome:</span> <span id="info-name">—</span></div>
+        <div class="info-row"><span>Tamanho:</span> <span id="info-size">—</span></div>
+        <div class="info-row"><span>Modificado:</span> <span id="info-date">—</span></div>
+      </div>
+      <div class="sidebar-section">
+        <h3>Documentos Recentes</h3>
+        <ul class="recent-list" id="recent-list">
+          <li class="empty-recent">Nenhum documento aberto.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+      <header class="toolbar">
+        <button type="button" id="btn-toggle-sidebar" class="btn-icon" title="Alternar Barra Lateral">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        
+        <button type="button" id="btn-open" class="btn">Abrir do WebOS…</button>
+        <button type="button" id="btn-import-pc" class="btn">Importar do PC…</button>
+        
+        <span id="doc-name" class="doc-name">Nenhum documento</span>
+        <div class="spacer"></div>
+        
+        <div class="zoom-controls">
+          <button type="button" id="btn-zoom-out" class="btn-icon" disabled title="Reduzir zoom">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <span id="zoom-level" class="zoom-label">100%</span>
+          <button type="button" id="btn-zoom-in" class="btn-icon" disabled title="Aumentar zoom">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button type="button" id="btn-fullscreen" class="btn-icon" disabled title="Ecrã Inteiro">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
+          <button type="button" id="btn-print" class="btn-icon" disabled title="Imprimir">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V3h12v6"/><rect x="6" y="14" width="12" height="7"/><path d="M6 17H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="viewer-container" id="viewer-container">
+        <div class="empty-state" id="empty-state">
+          <svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <p>Arraste um ficheiro PDF para aqui, abra do WebOS ou importe do PC.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Input invisível para importar do PC -->
+  <input type="file" id="pc-file-input" accept="application/pdf,.pdf" hidden>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

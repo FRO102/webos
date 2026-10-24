@@ -1,0 +1,16 @@
+{
+  "id": "pdfwebos",
+  "name": "PDFWebos",
+  "version": "1.1.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 1000,
+    "height": 750,
+    "minWidth": 600,
+    "minHeight": 400
+  },
+  "singleInstance": false,
+  "permissions": ["fs.read", "notifications"],
+  "fileTypes": [".pdf"]
+}
