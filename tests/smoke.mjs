@@ -35,8 +35,11 @@ await mustContain('apps/wordwebos/app.js', ['filter: [\'.html\', \'.htm\', \'.tx
 assert.equal(JSON.parse(await readFile(join(root, 'apps/wordwebos/manifest.json'), 'utf8')).singleInstance, false, 'WordWebOS deve abrir cada documento numa janela própria.');
 await mustContain('apps/desenhador/app.js', ['blobToDataUrl(blob)', 'writeWithOverwrite(path, dataUrl, \'image/png\')', 'os.fs.exists(path)']);
 await mustContain('apps/file-explorer/app.js', ['readAsDataUrl(file)', 'dataUrlToBlob(content)', 'readAsDataURL(file)']);
-await mustContain('apps/browser/index.html', ['https://free-for.dev/#/', 'https://www.worldometers.info/', 'https://web.goodplan.app/']);
-assert.equal((await readFile(join(root, 'apps/browser/index.html'), 'utf8')).includes('Porto'), false, 'O atalho do Porto não deve aparecer no navegador.');
+await mustContain('apps/browser/index.html', ['https://free-for.dev/#/', 'https://www.worldometers.info/']);
+const browserHome = await readFile(join(root, 'apps/browser/index.html'), 'utf8');
+assert.equal(browserHome.includes('openstreetmap'), false, 'O atalho OpenStreetMap não deve aparecer no navegador.');
+assert.equal(browserHome.includes('goodplan'), false, 'O atalho GoodPlan não deve aparecer no navegador.');
+assert.equal(browserHome.includes('Porto'), false, 'O atalho do Porto não deve aparecer no navegador.');
 await mustContain('system/js/window-manager.js', ['switchWorkspace', 'snapWindow', 'toggleMaximize']);
 await mustContain('system/js/notifications.js', ['system:notifications', 'system:notifications:unread']);
 await mustContain('system/js/users.js', ['createUser', 'selectUser']);
