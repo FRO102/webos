@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sudoku</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <div class="difficulty-group">
+        <select id="difficulty-select" aria-label="Dificuldade">
+          <option value="easy">Fácil</option>
+          <option value="medium" selected>Médio</option>
+          <option value="hard">Difícil</option>
+        </select>
+        <button type="button" class="btn btn--primary" id="btn-new">Novo Jogo</button>
+      </div>
+      <div class="timer" id="timer">00:00</div>
+    </header>
+
+    <main class="game-area">
+      <div class="board-container">
+        <div class="board" id="board">
+          <!-- As 81 células geradas via JS -->
+        </div>
+        
+        <!-- Overlay de Vitória -->
+        <div class="win-overlay" id="win-overlay" hidden>
+          <div class="win-content">
+            <h2>Parabéns!</h2>
+            <p>Concluíste o Sudoku em <span id="win-time">00:00</span>.</p>
+            <button type="button" class="btn btn--primary" id="btn-play-again">Jogar Novamente</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="numpad" id="numpad">
+        <button type="button" class="num-btn" data-num="1">1</button>
+        <button type="button" class="num-btn" data-num="2">2</button>
+        <button type="button" class="num-btn" data-num="3">3</button>
+        <button type="button" class="num-btn" data-num="4">4</button>
+        <button type="button" class="num-btn" data-num="5">5</button>
+        <button type="button" class="num-btn" data-num="6">6</button>
+        <button type="button" class="num-btn" data-num="7">7</button>
+        <button type="button" class="num-btn" data-num="8">8</button>
+        <button type="button" class="num-btn" data-num="9">9</button>
+        <button type="button" class="num-btn num-btn--erase" data-num="0" aria-label="Apagar">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l5-5 4 4-3 3H5z"/><path d="M8 6l3-3 4 4-3 3"/><path d="M4 20h16"/></svg>
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

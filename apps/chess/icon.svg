@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Xadrez">
+  <rect width="64" height="64" rx="12" fill="#212121"/>
+  <!-- Desenho de um cavalo estilizado -->
+  <path d="M22 48h20v-4H22v4z M24 42h16v-4c0-4-2-6-6-8l-2-4 4-4c-2-4-6-6-10-6 0 2 2 4 2 6l-4 2-2 6h4l2-4 4 4v4h2c4 2 6 4 6 8v2H24v2z" fill="#ffffff"/>
+</svg>

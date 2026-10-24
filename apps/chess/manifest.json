@@ -1,0 +1,15 @@
+{
+  "id": "chess",
+  "name": "Xadrez",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 640,
+    "height": 760,
+    "minWidth": 420,
+    "minHeight": 500
+  },
+  "singleInstance": true,
+  "permissions": ["notifications"]
+}

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Sudoku">
+  <rect width="64" height="64" rx="12" fill="#1565C0"/>
+  <rect x="12" y="12" width="40" height="40" rx="2" fill="#ffffff"/>
+  <path d="M25.33 12v40M38.66 12v40M12 25.33h40M12 38.66h40" stroke="#1565C0" stroke-width="2"/>
+  <path d="M12 25.33h40M12 38.66h40M25.33 12v40M38.66 12v40" stroke="#1565C0" stroke-width="2"/>
+  <!-- Adicionar alguns números para dar aspeto de Sudoku -->
+  <text x="18.66" y="23" font-family="Arial" font-size="10" font-weight="bold" fill="#1565C0" text-anchor="middle">5</text>
+  <text x="32" y="23" font-family="Arial" font-size="10" font-weight="bold" fill="#1565C0" text-anchor="middle">3</text>
+  <text x="45.33" y="36.33" font-family="Arial" font-size="10" font-weight="bold" fill="#1565C0" text-anchor="middle">7</text>
+  <text x="32" y="49.66" font-family="Arial" font-size="10" font-weight="bold" fill="#1565C0" text-anchor="middle">9</text>
+  <text x="18.66" y="49.66" font-family="Arial" font-size="10" font-weight="bold" fill="#1565C0" text-anchor="middle">4</text>
+</svg>

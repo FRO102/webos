@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xadrez</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="toolbar">
+      <button type="button" class="btn btn--primary" id="btn-new">Novo Jogo</button>
+      
+      <select id="mode-select" aria-label="Modo de Jogo">
+        <option value="pvp">2 Jogadores</option>
+        <option value="pvc">Contra o PC</option>
+      </select>
+      
+      <select id="difficulty-select" aria-label="Dificuldade" disabled>
+        <option value="1">Fácil</option>
+        <option value="2" selected>Médio</option>
+        <option value="3">Difícil</option>
+      </select>
+
+      <div class="status" id="status-text">Vez das Brancas</div>
+      <div class="spacer"></div>
+      <button type="button" class="btn" id="btn-undo" disabled>Desfazer</button>
+    </header>
+
+    <main class="game-area">
+      <div class="board-container">
+        <div class="coords coords--files" id="coords-files"></div>
+        <div class="coords coords--ranks" id="coords-ranks"></div>
+        
+        <div class="board" id="board"></div>
+        
+        <div class="overlay" id="overlay" hidden>
+          <div class="overlay-content">
+            <h2 id="overlay-title">Xeque-Mate!</h2>
+            <p id="overlay-desc">As Brancas venceram.</p>
+            <button type="button" class="btn btn--primary" id="btn-play-again">Jogar Novamente</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

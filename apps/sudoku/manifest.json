@@ -1,0 +1,15 @@
+{
+  "id": "sudoku",
+  "name": "Sudoku",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 580,
+    "height": 760,
+    "minWidth": 380,
+    "minHeight": 520
+  },
+  "singleInstance": true,
+  "permissions": ["notifications"]
+}
