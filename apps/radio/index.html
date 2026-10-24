@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rádio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="search-bar">
+      <input type="search" id="search-input" placeholder="Pesquisar estações…" aria-label="Pesquisar estações">
+      <select id="country-filter" aria-label="Filtrar por país">
+        <option value="">Todos os países</option>
+      </select>
+      <select id="tag-filter" aria-label="Filtrar por género">
+        <option value="">Todos os géneros</option>
+      </select>
+    </header>
+
+    <div class="tabs" role="tablist" aria-label="Secções">
+      <button type="button" role="tab" data-tab="search" aria-selected="true">Pesquisar</button>
+      <button type="button" role="tab" data-tab="favorites" aria-selected="false">Favoritos</button>
+      <button type="button" role="tab" data-tab="history" aria-selected="false">Histórico</button>
+    </div>
+
+    <div class="station-list" id="station-list" role="list">
+      <div class="empty-state">Carregando estações…</div>
+    </div>
+
+    <footer class="player" id="player">
+      <div class="player-info">
+        <img id="player-favicon" src="" alt="" width="36" height="36" class="player-favicon" hidden>
+        <div class="player-text">
+          <div class="player-name" id="player-name">Nenhuma estação</div>
+          <div class="player-meta" id="player-meta">Selecione uma estação para ouvir</div>
+        </div>
+      </div>
+      <div class="player-controls">
+        <button type="button" class="ctrl-btn" id="play-pause" aria-label="Reproduzir" disabled>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="8,5 19,12 8,19"/></svg>
+        </button>
+        <input type="range" id="volume" min="0" max="1" step="0.01" value="0.7" aria-label="Volume">
+        <span class="volume-label" id="volume-label">70%</span>
+      </div>
+      <audio id="audio" preload="none"></audio>
+    </footer>
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

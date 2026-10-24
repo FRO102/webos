@@ -1,0 +1,15 @@
+{
+  "id": "radio",
+  "name": "Rádio",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 760,
+    "height": 640,
+    "minWidth": 480,
+    "minHeight": 400
+  },
+  "singleInstance": true,
+  "permissions": ["notifications"]
+}
