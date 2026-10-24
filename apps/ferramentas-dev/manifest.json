@@ -1,0 +1,14 @@
+{
+  "id": "ferramentas-dev",
+  "name": "Ferramentas de Programador",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 900,
+    "height": 620,
+    "minWidth": 420,
+    "minHeight": 420
+  },
+  "permissions": ["clipboard"]
+}

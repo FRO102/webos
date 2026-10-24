@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Meteorologia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <input type="text" id="search-input" placeholder="Pesquisar cidade (ex: Lisboa, Porto)...">
+    <button id="search-btn">Pesquisar</button>
+    <button id="fav-btn" title="Guardar nos favoritos">⭐</button>
+  </div>
+  <div class="content">
+    <div id="favorites-container" class="favorites-list"></div>
+    <div id="weather-display">
+      <div class="current-weather">
+        <h2 id="location-name">A carregar...</h2>
+        <div class="current-temp" id="current-temp">--°C</div>
+        <p id="current-desc">--</p>
+      </div>
+      <h3>Próximos Dias</h3>
+      <div class="forecast-grid" id="forecast-grid"></div>
+    </div>
+  </div>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

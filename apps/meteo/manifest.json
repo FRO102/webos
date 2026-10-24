@@ -1,0 +1,16 @@
+{
+  "id": "meteo",
+  "name": "Meteorologia",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 600,
+    "height": 500,
+    "minWidth": 400,
+    "minHeight": 350
+  },
+  "singleInstance": true,
+  "permissions": [],
+  "fileTypes": []
+}
