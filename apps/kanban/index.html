@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Quadro Kanban</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <input type="text" id="task-title" placeholder="Nova tarefa...">
+    <select id="task-column">
+      <option value="todo">A Fazer</option>
+      <option value="inprogress">Em Progresso</option>
+      <option value="done">Concluído</option>
+    </select>
+    <button id="add-btn">Adicionar</button>
+  </div>
+  <div class="board">
+    <div class="column" data-column="todo">
+      <div class="column-header">A Fazer <span id="count-todo" style="background:var(--os-border); padding: 2px 6px; border-radius:10px; font-size:0.8rem;">0</span></div>
+      <div class="task-list" id="list-todo" ondragover="allowDrop(event)" ondrop="drop(event, 'todo')"></div>
+    </div>
+    <div class="column" data-column="inprogress">
+      <div class="column-header">Em Progresso <span id="count-inprogress" style="background:var(--os-border); padding: 2px 6px; border-radius:10px; font-size:0.8rem;">0</span></div>
+      <div class="task-list" id="list-inprogress" ondragover="allowDrop(event)" ondrop="drop(event, 'inprogress')"></div>
+    </div>
+    <div class="column" data-column="done">
+      <div class="column-header">Concluído <span id="count-done" style="background:var(--os-border); padding: 2px 6px; border-radius:10px; font-size:0.8rem;">0</span></div>
+      <div class="task-list" id="list-done" ondragover="allowDrop(event)" ondrop="drop(event, 'done')"></div>
+    </div>
+  </div>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

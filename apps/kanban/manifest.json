@@ -1,0 +1,16 @@
+{
+  "id": "kanban",
+  "name": "Quadro Kanban",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 750,
+    "height": 500,
+    "minWidth": 500,
+    "minHeight": 350
+  },
+  "singleInstance": true,
+  "permissions": [],
+  "fileTypes": []
+}

@@ -1,0 +1,16 @@
+{
+  "id": "news-feed",
+  "name": "Feed de Notícias",
+  "version": "2.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "width": 750,
+    "height": 550,
+    "minWidth": 500,
+    "minHeight": 400
+  },
+  "singleInstance": true,
+  "permissions": ["external.open", "clipboard", "notifications"],
+  "fileTypes": []
+}
