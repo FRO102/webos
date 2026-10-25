@@ -7,32 +7,82 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <nav>
-    <button id="back" aria-label="Recuar">←</button>
-    <button id="fwd" aria-label="Avançar">→</button>
-    <button id="reload" aria-label="Recarregar">↻</button>
-    <button id="home" aria-label="Início">⌂</button>
-    <input id="addr" aria-label="Endereço" placeholder="https://… ou file:/home/user/…" spellcheck="false">
+  <nav class="toolbar" aria-label="Navegação">
+    <button id="back" type="button" aria-label="Recuar" title="Recuar (Alt+←)">←</button>
+    <button id="fwd" type="button" aria-label="Avançar" title="Avançar (Alt+→)">→</button>
+    <button id="reload" type="button" aria-label="Recarregar" title="Recarregar (F5)">↻</button>
+    <button id="stop" type="button" aria-label="Parar" title="Parar (Esc)">■</button>
+    <button id="home" type="button" aria-label="Início" title="Página inicial">⌂</button>
+    <input id="addr" aria-label="Endereço" placeholder="https://…, pesquisa, ou file:/home/user/…" spellcheck="false" autocomplete="off">
+    <button id="go" type="button" aria-label="Ir" title="Ir">Ir</button>
+    <button id="external" type="button" aria-label="Abrir no navegador do sistema" title="Abrir fora do WebOS">↗</button>
+    <button id="bookmark" type="button" aria-label="Adicionar aos favoritos" title="Favorito (Ctrl+D)">☆</button>
   </nav>
-  <main id="home-page">
+
+  <main id="home-page" aria-labelledby="home-title">
     <header class="home-heading">
-      <span class="eyebrow">WEBOS · PÁGINA INICIAL</span>
-      <h1>Explorar na Web</h1>
-      <p>Atalhos para páginas com versões preparadas para abrir dentro de frames.</p>
+      <span class="eyebrow">WEBOS · NAVEGADOR</span>
+      <h1 id="home-title">Explorar na Web</h1>
+      <p>Atalhos para páginas que podem ser incorporadas, além de favoritos e histórico guardados neste navegador.</p>
     </header>
+
+    <section class="home-search" aria-label="Pesquisa rápida">
+      <input id="home-query" type="search" placeholder="Pesquisar na web ou introduzir um endereço">
+      <button id="home-go" type="button">Pesquisar</button>
+    </section>
+
     <section class="site-list" aria-label="Sites incorporáveis">
       <button class="site-item directory" data-url="https://free-for.dev/#/">
-        <span class="site-mark" aria-hidden="true">{ }</span><span class="site-copy"><strong>Free for Developers</strong><small>Serviços gratuitos para programadores</small></span><span class="site-open" aria-hidden="true">↗</span>
+        <span class="site-mark" aria-hidden="true">{ }</span>
+        <span class="site-copy"><strong>Free for Developers</strong><small>Serviços gratuitos para programadores</small></span>
+        <span class="site-open" aria-hidden="true">↗</span>
       </button>
       <button class="site-item stats" data-url="https://www.worldometers.info/">
-        <span class="site-mark" aria-hidden="true">#</span><span class="site-copy"><strong>Worldometer</strong><small>Estatísticas mundiais em tempo real</small></span><span class="site-open" aria-hidden="true">↗</span>
+        <span class="site-mark" aria-hidden="true">#</span>
+        <span class="site-copy"><strong>Worldometer</strong><small>Estatísticas mundiais em tempo real</small></span>
+        <span class="site-open" aria-hidden="true">↗</span>
       </button>
     </section>
-    <p class="home-note">A disponibilidade e algumas funções dependem do site. Podes também introduzir qualquer endereço na barra acima.</p>
+
+    <section class="panel" id="bookmarks-panel" aria-label="Favoritos">
+      <div class="panel-head">
+        <h2>Favoritos</h2>
+        <div class="panel-actions">
+          <button id="export-bookmarks" type="button">Exportar</button>
+          <button id="import-bookmarks" type="button">Importar</button>
+          <button id="clear-bookmarks" type="button">Limpar</button>
+        </div>
+      </div>
+      <ul id="bookmarks-list" class="item-list"></ul>
+      <p id="bookmarks-empty" class="empty">Ainda não tens favoritos. Usa ☆ para guardar a página atual.</p>
+    </section>
+
+    <section class="panel" id="history-panel" aria-label="Histórico">
+      <div class="panel-head">
+        <h2>Histórico recente</h2>
+        <div class="panel-actions">
+          <button id="clear-history" type="button">Limpar</button>
+        </div>
+      </div>
+      <input id="history-filter" type="search" placeholder="Filtrar histórico">
+      <ul id="history-list" class="item-list"></ul>
+      <p id="history-empty" class="empty">O histórico aparece aqui depois de navegares.</p>
+    </section>
+
+    <p class="home-note">Alguns sites impedem a incorporação por segurança. Quando isso acontecer, usa ↗ para os abrir no navegador do sistema. Também podes introduzir qualquer endereço na barra acima.</p>
   </main>
-  <iframe id="frame" title="Página" hidden></iframe>
-  <p id="msg" role="status"></p>
+
+  <iframe id="frame" title="Página" hidden referrerpolicy="no-referrer"></iframe>
+
+  <div id="frame-blocked" class="blocked" hidden>
+    <p>Esta página pode não permitir incorporação. Se nada aparecer, abre-a fora do WebOS.</p>
+    <button id="blocked-external" type="button">Abrir no navegador do sistema</button>
+  </div>
+
+  <p id="msg" role="status" aria-live="polite"></p>
+
   <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
