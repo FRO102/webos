@@ -21,7 +21,7 @@ Regras:
 - Todos os ficheiros e imagens específicos da app devem ficar dentro da própria pasta `apps/<id>/`.
 - O `icon` e o `entry` são caminhos relativos à pasta da app.
 - `fileTypes`, quando usado, é um array de extensões com ponto e em minúsculas, como `[".txt", ".md"]`.
-- A app corre num iframe com `sandbox` (sem `allow-same-origin`): não acede ao DOM do sistema nem a `localStorage`.
+- A app corre num iframe com `sandbox`, e agora usa `allow-same-origin` para permitir módulos locais e scripts do WebOS sem CORS, mantendo o isolamento do DOM do sistema e do `localStorage` principal.
 - O sandbox permite `allow-popups` para links clicados abrirem no navegador; não usar isto para contornar as APIs do shell.
 - Usa scripts clássicos, não `type="module"` (a origem do iframe é opaca).
 - Fala com o sistema só através de `window.os` (`window.setTitle/resize/close`, `notify`, `theme.get`).

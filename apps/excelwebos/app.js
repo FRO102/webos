@@ -241,6 +241,11 @@
   // ------------------------------------------------------------- Eventos e Teclado
 
   function bindEvents() {
+    const on = (id, type, handler) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener(type, handler);
+    };
+
     tableBody.addEventListener('mousedown', e => {
       const td = e.target.closest('td');
       if (!td) return;
@@ -271,10 +276,13 @@
     });
 
     // Cabeçalhos (Selecionar coluna/linha inteira)
-    document.getElementById('col-headers').addEventListener('mousedown', e => {
-      const th = e.target.closest('th.col-header');
-      if (th) selectWholeCol(parseInt(th.dataset.col));
-    });
+    const colHeaders = document.getElementById('col-headers');
+    if (colHeaders) {
+      colHeaders.addEventListener('mousedown', e => {
+        const th = e.target.closest('th.col-header');
+        if (th) selectWholeCol(parseInt(th.dataset.col));
+      });
+    }
     tableBody.addEventListener('mousedown', e => {
       const th = e.target.closest('th.row-header');
       if (th) selectWholeRow(parseInt(th.dataset.row));
@@ -303,7 +311,7 @@
           if (e.key === 'ArrowLeft') nextId = getColName(Math.max(0, col - 1)) + row;
           if (e.key === 'ArrowRight') nextId = getColName(Math.min(COLS - 1, col + 1)) + row;
           expandSelection(nextId);
-          document.querySelector(`td[data-id="${nextId}"]`).scrollIntoView({ block: 'nearest' });
+          document.querySelector(`td[data-id="${nextId}"]`)?.scrollIntoView({ block: 'nearest' });
         } else {
           // Mover normalmente
           if (e.key === 'ArrowUp') moveSelection(-1, 0);
@@ -330,39 +338,42 @@
     }, true);
 
     // Formula Bar
-    els.formulaInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        updateCellValue(state.activeCell, els.formulaInput.value);
-        moveSelection(1, 0);
-      }
-    });
-    els.formulaInput.addEventListener('blur', () => {
-       if (els.formulaInput.value !== (state.cells[state.activeCell]?.raw || '')) {
-           updateCellValue(state.activeCell, els.formulaInput.value);
-       }
-    });
+    if (els.formulaInput) {
+      els.formulaInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          updateCellValue(state.activeCell, els.formulaInput.value);
+          moveSelection(1, 0);
+        }
+      });
+      els.formulaInput.addEventListener('blur', () => {
+         if (els.formulaInput.value !== (state.cells[state.activeCell]?.raw || '')) {
+             updateCellValue(state.activeCell, els.formulaInput.value);
+         }
+      });
+    }
 
     // Formatação
-    document.getElementById('btn-bold').addEventListener('click', () => applyStyle('bold'));
-    document.getElementById('btn-italic').addEventListener('click', () => applyStyle('italic'));
-    document.getElementById('btn-align-left').addEventListener('click', () => applyStyle('align', 'left'));
-    document.getElementById('btn-align-center').addEventListener('click', () => applyStyle('align', 'center'));
-    document.getElementById('btn-align-right').addEventListener('click', () => applyStyle('align', 'right'));
-    document.getElementById('btn-clear-format').addEventListener('click', () => applyStyle('clear'));
-    
-    document.getElementById('btn-color').addEventListener('click', () => els.colorPicker.click());
-    els.colorPicker.addEventListener('input', () => {
-      els.colorPreview.style.background = els.colorPicker.value;
-      applyStyle('color', els.colorPicker.value);
-    });
+    on('btn-bold', 'click', () => applyStyle('bold'));
+    on('btn-italic', 'click', () => applyStyle('italic'));
+    on('btn-align-left', 'click', () => applyStyle('align', 'left'));
+    on('btn-align-center', 'click', () => applyStyle('align', 'center'));
+    on('btn-align-right', 'click', () => applyStyle('align', 'right'));
+    on('btn-clear-format', 'click', () => applyStyle('clear'));
+    on('btn-color', 'click', () => els.colorPicker?.click());
+    if (els.colorPicker) {
+      els.colorPicker.addEventListener('input', () => {
+        els.colorPreview.style.background = els.colorPicker.value;
+        applyStyle('color', els.colorPicker.value);
+      });
+    }
 
     // Ficheiros e Histórico
-    document.getElementById('btn-open').addEventListener('click', openFile);
-    document.getElementById('btn-save').addEventListener('click', saveFile);
-    document.getElementById('btn-export-csv').addEventListener('click', exportCsv);
-    document.getElementById('btn-undo').addEventListener('click', undo);
-    document.getElementById('btn-redo').addEventListener('click', redo);
+    on('btn-open', 'click', openFile);
+    on('btn-save', 'click', saveFile);
+    on('btn-export-csv', 'click', exportCsv);
+    on('btn-undo', 'click', undo);
+    on('btn-redo', 'click', redo);
 
     // Atalhos Globais e Resize
     window.addEventListener('keydown', e => {
@@ -519,8 +530,6 @@
     document.getElementById('btn-redo').disabled = state.historyIndex >= state.history.length - 1;
   }
 
-  function markDirty() { state.revision++; state.dirty = true; updateWindowTitle(); scheduleDraft(); }
-  
   function updateWindowTitle() {
     if (!window.os || !os.window) return;
     os.window.setTitle(`ExcelWebos - ${state.docName}${state.dirty ? ' *' : ''}`);
