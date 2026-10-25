@@ -12,6 +12,6 @@
     "minHeight": 400
   },
   "singleInstance": false,
-  "permissions": ["fs.read", "notifications"],
+  "permissions": ["fs.read", "fs.write", "notifications"],
   "fileTypes": [".pdf"]
 }
