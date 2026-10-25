@@ -139,7 +139,7 @@
       restore: backup => call('profile.backup.restore', { backup }),
     },
     args: () => call('app.args'),                       // ex.: { path } quando aberta com um ficheiro
-    openFile: path => call('app.openFile', { path }),   // requer "apps.launch"
+    openFile: (path, appId) => call('app.openFile', { path, appId }),   // requer "apps.launch"
     notify: message => call('notify', { message }),
     external: { open: url => call('external.open', { url }) },
     clipboard: { read: () => call('clipboard.read'), write: text => call('clipboard.write', { text }) },

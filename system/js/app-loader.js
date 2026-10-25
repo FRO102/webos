@@ -94,7 +94,7 @@ export function launchApp(appId, args = null) {
 
 export const getRecentApps = () => [...recent];
 export const getApps = () => [...apps.values()].map(({ manifest: m, base }) => {
-  return { id: m.id, name: m.name, version: m.version, icon: new URL(base + m.icon, document.baseURI).href, category: { ...m.category } };
+  return { id: m.id, name: m.name, version: m.version, icon: new URL(base + m.icon, document.baseURI).href, category: { ...m.category }, fileTypes: [...(m.fileTypes ?? [])] };
 });
 
 const ext = p => (p.match(/\.[^./]+$/)?.[0] ?? '').toLowerCase();

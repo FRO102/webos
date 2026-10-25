@@ -19,6 +19,8 @@
 .os-dlg input{flex:1;min-width:0;padding:5px 8px;border:1px solid var(--os-border,#c4cdd3);border-radius:6px;background:var(--os-field,#fff);color:inherit;font:inherit}
 .os-dlg .body input{flex:none}
 .os-dlg .list{flex:1;margin:0;padding:4px;overflow:auto;list-style:none}
+.os-dlg .choices{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.os-dlg .choices button{display:block;width:100%;padding:8px;text-align:left}
 .os-dlg button{padding:5px 12px;border:0;border-radius:6px;background:var(--os-btn,#d3dce2);color:inherit;font:inherit;cursor:pointer}
 .os-dlg .list button{display:block;width:100%;padding:5px 8px;background:none;text-align:left;cursor:default}
 .os-dlg button:hover{background:color-mix(in srgb,var(--os-accent,#3cb6a4) 25%,var(--os-btn,#d3dce2))}
@@ -75,6 +77,30 @@
       ok.onclick = () => finish(input ? field.value : true);
       field.onkeydown = e => { if (e.key === 'Enter') ok.click(); };
       if (input) { field.focus(); field.select(); } else (danger ? cancelBtn : ok).focus();
+    });
+  }
+
+  function choose({ title = '', message = '', options = [], cancelLabel = 'Cancelar' }) {
+    return new Promise(resolve => {
+      const [$, finish] = modal(
+        '<div class="os-dlg small" role="dialog" aria-modal="true"><div class="body"><h3></h3><p></p><ul class="choices"></ul></div><footer><button class="cancel"></button></footer></div>',
+        null, resolve);
+      $('.os-dlg').setAttribute('aria-label', title || message);
+      $('h3').textContent = title;
+      $('p').textContent = message;
+      $('.cancel').textContent = cancelLabel;
+      const list = $('.choices');
+      options.forEach(option => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = option.label;
+        if (option.description) button.title = option.description;
+        button.onclick = () => finish(option.value);
+        item.append(button);
+        list.append(item);
+      });
+      (list.querySelector('button') ?? $('.cancel')).focus();
     });
   }
 
@@ -162,5 +188,6 @@
     save: o => files('save', o),
     prompt: o => box({ ...o, input: true }),
     confirm: o => box({ ...o, input: false }),
+    choose,
   };
 })();

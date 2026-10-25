@@ -255,6 +255,7 @@ API disponível:
 ```js
 await os.dialog.prompt({ title, message, defaultValue, okLabel });
 await os.dialog.confirm({ title, message, okLabel, danger });
+await os.dialog.choose({ title, message, options });
 await os.dialog.open({ title, start, filter });
 await os.dialog.save({ title, start, defaultName });
 ```
@@ -302,6 +303,7 @@ await os.fs.search(query, path);
 - Operações de escrita exigem `fs.write`.
 - O shell limita o acesso da app à pasta do utilizador e à Lixeira.
 - `/` e `/home` são interpretados como a pasta pessoal pelo SDK.
+- `os.dialog.choose()` devolve o `value` da opção escolhida ou `null`; usar em seleções explícitas como “Abrir com”.
 - `os.fs.read()` devolve texto como string e conteúdo binário como `Blob`; `os.fs.write()` aceita string, `Blob`, `ArrayBuffer` e `TypedArray`. `os.fs.stat().size` é medido em bytes.
 - O filesystem real do computador não é exposto diretamente.
 

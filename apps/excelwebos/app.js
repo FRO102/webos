@@ -16,6 +16,8 @@
     saveTimer: null,
     history: [],
     historyIndex: -1,
+    revision: 0,
+    savedSnapshot: '',
     colWidths: {} // { 0: 100, 1: 120 } (index: width)
   };
 
@@ -28,8 +30,11 @@
     cacheElements();
     buildGrid();
     bindEvents();
-    await restoreDraft();
-    pushHistory();
+    const args = window.os?.args ? await os.args().catch(() => null) : null;
+    const restoredDraft = await restoreDraft(args?.path ?? null);
+    if (args?.path && !restoredDraft) await loadPath(args.path);
+    if (!args?.path && !restoredDraft) state.savedSnapshot = documentSnapshot();
+    if (state.history.length === 0) pushHistory();
     setActiveCell('A1', false);
     updateWindowTitle();
   }
@@ -130,104 +135,14 @@
     for (const id in state.cells) renderCell(id);
   }
 
-  // ------------------------------------------------------------- Motor de Fórmulas (Com Cascata)
-
-  function getRangeValues(start, end) {
-    const cells = [];
-    const startCol = start.replace(/[0-9]/g, '').charCodeAt(0) - 65;
-    const startRow = parseInt(start.replace(/[A-Z]/g, ''), 10);
-    const endCol = end.replace(/[0-9]/g, '').charCodeAt(0) - 65;
-    const endRow = parseInt(end.replace(/[A-Z]/g, ''), 10);
-
-    const minCol = Math.min(startCol, endCol), maxCol = Math.max(startCol, endCol);
-    const minRow = Math.min(startRow, endRow), maxRow = Math.max(startRow, endRow);
-
-    for (let r = minRow; r <= maxRow; r++) {
-      for (let c = minCol; c <= maxCol; c++) {
-        const cell = state.cells[getColName(c) + r];
-        if (cell && !cell.isError) {
-          const num = parseFloat(cell.computed);
-          if (!isNaN(num)) cells.push(num);
-        }
-      }
-    }
-    return cells;
-  }
-
-  function evaluateFormula(rawStr, cellId) {
-    if (typeof rawStr !== 'string' || !rawStr.startsWith('=')) {
-      return { computed: rawStr, isError: false };
-    }
-
-    let expr = rawStr.substring(1).toUpperCase();
-
-    // Prevenir ciclos (ex: A1 = B1, B1 = A1)
-    if (expr.includes(cellId)) {
-        return { computed: '#CICLO!', isError: true };
-    }
-
-    // 1. Resolver Intervalos
-    const funcRegex = /(SUM|AVG|MIN|MAX)\(([A-Z]+[0-9]+):([A-Z]+[0-9]+)\)/g;
-    expr = expr.replace(funcRegex, (match, func, start, end) => {
-      const vals = getRangeValues(start, end);
-      if (vals.length === 0) return '0';
-      switch (func) {
-        case 'SUM': return vals.reduce((a, b) => a + b, 0).toString();
-        case 'AVG': return (vals.reduce((a, b) => a + b, 0) / vals.length).toString();
-        case 'MIN': return Math.min(...vals).toString();
-        case 'MAX': return Math.max(...vals).toString();
-        default: return '0';
-      }
-    });
-
-    // 2. Resolver Células
-    const cellRegex = /[A-Z]+[0-9]+/g;
-    expr = expr.replace(cellRegex, (match) => {
-      const cell = state.cells[match];
-      if (!cell) return '0';
-      const num = parseFloat(cell.computed);
-      return isNaN(num) ? '0' : num.toString();
-    });
-
-    // 3. Calcular
-    if (!/^[0-9+\-*/().\s]+$/.test(expr)) return { computed: '#ERRO!', isError: true };
-
-    try {
-      const result = new Function('return ' + expr)();
-      if (!isFinite(result)) return { computed: '#ERRO!', isError: true };
-      return { computed: (Math.round(result * 1000000) / 1000000).toString(), isError: false };
-    } catch (e) {
-      return { computed: '#ERRO!', isError: true };
-    }
-  }
-
-  // O Cérebro da folha de cálculo: recalcula dependências
+  // Recalcula dependências em ordem, detetando ciclos diretos e indiretos.
   function recalculateAll() {
-    // 1. Limpar valores computados (manter raw e style)
-    for (const id in state.cells) {
-      state.cells[id].computed = '';
-      state.cells[id].isError = false;
+    const results = ExcelWebOSFormula.calculateCells(state.cells);
+    for (const [id, result] of Object.entries(results)) {
+      state.cells[id].computed = result.computed;
+      state.cells[id].isError = result.isError;
     }
 
-    let changed = true;
-    let loops = 0;
-    // 2. Loop até estabilizar (max 5 iterações para evitar loop infinito se falharmos a deteção de ciclos)
-    while (changed && loops < 5) {
-      changed = false;
-      for (const id in state.cells) {
-        const cell = state.cells[id];
-        const result = evaluateFormula(cell.raw, id);
-        
-        if (cell.computed !== result.computed || cell.isError !== result.isError) {
-          cell.computed = result.computed;
-          cell.isError = result.isError;
-          changed = true;
-        }
-      }
-      loops++;
-    }
-
-    // 3. Atualizar UI
     renderAllCells();
     if (state.activeCell) {
       const active = state.cells[state.activeCell];
@@ -243,6 +158,7 @@
     state.cells[id].raw = rawValue;
     markDirty();
     recalculateAll();
+    pushHistory();
   }
 
   // ------------------------------------------------------------- Seleção
@@ -460,9 +376,6 @@
 
     bindColResize();
 
-    if (window.os && os.args) {
-      os.args().then(args => { if (args && args.path) loadPath(args.path); }).catch(()=>{});
-    }
   }
 
   function moveSelection(dRow, dCol) {
@@ -582,6 +495,8 @@
       state.cells = prev.cells;
       state.colWidths = prev.colWidths || {};
       renderAllCells();
+      recalculateAll();
+      markDirty();
       updateUndoRedoButtons();
     }
   }
@@ -593,6 +508,8 @@
       state.cells = next.cells;
       state.colWidths = next.colWidths || {};
       renderAllCells();
+      recalculateAll();
+      markDirty();
       updateUndoRedoButtons();
     }
   }
@@ -602,7 +519,7 @@
     document.getElementById('btn-redo').disabled = state.historyIndex >= state.history.length - 1;
   }
 
-  function markDirty() { state.dirty = true; updateWindowTitle(); scheduleDraft(); }
+  function markDirty() { state.revision++; state.dirty = true; updateWindowTitle(); scheduleDraft(); }
   
   function updateWindowTitle() {
     if (!window.os || !os.window) return;
@@ -610,6 +527,19 @@
   }
 
   function setStatus(msg) { els.statusMsg.textContent = msg; }
+
+  function documentSnapshot() {
+    const cells = Object.fromEntries(Object.entries(state.cells).map(([id, cell]) => [id, { raw: cell.raw, style: cell.style || {} }]));
+    return ExcelWebOSData.workbookSignature({ cells, colWidths: state.colWidths });
+  }
+
+  function markDirty() {
+    state.revision++;
+    state.dirty = documentSnapshot() !== state.savedSnapshot;
+    updateWindowTitle();
+    if (state.dirty) scheduleDraft();
+    else if (window.os?.storage) os.storage.remove(draftStorageKey(state.path)).catch(() => {});
+  }
 
   async function saveFile() {
     if (!window.os) return;
@@ -619,38 +549,71 @@
       if (!path) return;
       if (!path.endsWith('.json')) path += '.json';
     }
-    const data = { cells: state.cells, colWidths: state.colWidths };
+    const data = { format: 'webos-spreadsheet', version: 1, cells: state.cells, colWidths: state.colWidths };
+    const serialized = JSON.stringify(data, null, 2);
+    const savedSnapshot = documentSnapshot();
+    const savedRevision = state.revision;
     try {
-      await writeFileWithOverwrite(path, JSON.stringify(data, null, 2), 'application/json');
-      state.path = path; state.docName = path.split('/').pop(); state.dirty = false;
-      updateWindowTitle(); setStatus('Guardado.');
-      if (window.os && os.storage) await os.storage.remove(DRAFT_KEY);
+      await writeFileWithOverwrite(path, serialized, 'application/json');
+      state.path = path;
+      state.docName = path.split('/').pop();
+      state.savedSnapshot = savedSnapshot;
+      state.dirty = state.revision !== savedRevision || documentSnapshot() !== savedSnapshot;
+      updateWindowTitle();
+      setStatus('Guardado.');
+      if (!state.dirty && window.os && os.storage) {
+        await os.storage.remove(draftStorageKey(path));
+        await os.storage.remove(DRAFT_KEY);
+      } else if (state.dirty) scheduleDraft();
     } catch (err) { os.notify('Erro ao guardar: ' + err.message); }
   }
 
   async function openFile() {
     if (!window.os) return;
+    if (state.dirty) {
+      const discard = await os.dialog.confirm({
+        title: 'Alterações por guardar',
+        message: 'Queres descartar as alterações da folha atual?',
+        okLabel: 'Descartar',
+        danger: true,
+      });
+      if (!discard) return;
+    }
     const path = await os.dialog.open({ title: 'Abrir Folha', start: '/home/user/Documentos/', filter: ['.json', '.csv'] });
-    if (path) loadPath(path);
+    if (path) await loadPath(path);
   }
 
   async function loadPath(path) {
     try {
       const content = await os.fs.read(path);
+      let nextCells;
+      let nextColWidths = {};
       if (path.toLowerCase().endsWith('.csv')) {
-        parseCsv(content);
+        nextCells = parseCsv(typeof content === 'string' ? content : await content.text());
       } else {
-        const data = JSON.parse(content);
-        state.cells = data.cells || {};
-        state.colWidths = data.colWidths || {};
+        const text = typeof content === 'string' ? content : await content.text();
+        const data = ExcelWebOSData.validateWorkbook(JSON.parse(text));
+        nextCells = data.cells;
+        nextColWidths = data.colWidths;
       }
-      state.path = path; state.docName = path.split('/').pop(); state.dirty = false;
+      state.cells = nextCells;
+      state.colWidths = nextColWidths;
+      state.path = path; state.docName = path.split('/').pop();
+      state.revision++;
       
       // Reconstruir a grelha (para aplicar as larguras das colunas)
       buildGrid();
       recalculateAll();
+      state.savedSnapshot = documentSnapshot();
+      state.dirty = false;
       setActiveCell('A1', false);
+      state.history = [];
+      state.historyIndex = -1;
       pushHistory(); updateWindowTitle(); setStatus('Aberto: ' + state.docName);
+      if (window.os?.storage) {
+        await os.storage.remove(draftStorageKey(path));
+        await os.storage.remove(DRAFT_KEY);
+      }
     } catch (err) { os.notify('Erro ao abrir: ' + err.message); }
   }
 
@@ -658,64 +621,75 @@
     let path = await os.dialog.save({ title: 'Exportar CSV', defaultName: state.docName.replace('.json', '') + '.csv', start: '/home/user/Documentos/' });
     if (!path) return;
     if (!path.toLowerCase().endsWith('.csv')) path += '.csv';
-    let csvContent = "";
+    const rows = [];
     for (let r = 1; r <= ROWS; r++) {
-      let row = [];
+      const row = [];
       for (let c = 0; c < COLS; c++) {
         const cell = state.cells[getColName(c) + r];
-        let val = cell ? cell.computed : "";
-        val = String(val).replace(/"/g, '""');
-        if (val.includes(',') || val.includes('\n') || val.includes('"')) val = `"${val}"`;
-        row.push(val);
+        row.push(cell ? cell.computed : '');
       }
-      csvContent += row.join(",") + "\r\n";
+      rows.push(row);
     }
+    const csvContent = ExcelWebOSData.serializeCsv(rows);
     try { await writeFileWithOverwrite(path, csvContent, 'text/csv'); setStatus('CSV Exportado.'); } 
     catch (err) { os.notify('Erro ao exportar CSV.'); }
   }
 
   function parseCsv(text) {
-    state.cells = {};
-    const lines = text.split(/\r?\n/);
-    for (let r = 0; r < Math.min(lines.length, ROWS); r++) {
-      if (!lines[r]) continue;
-      const cols = lines[r].split(',');
-      for (let c = 0; c < Math.min(cols.length, COLS); c++) {
-        let val = cols[c].trim();
-        if (val.startsWith('"') && val.endsWith('"')) val = val.substring(1, val.length - 1).replace(/""/g, '"');
-        if (val) state.cells[getColName(c) + (r + 1)] = { raw: val, computed: val, style: {} };
+    const cells = {};
+    const rows = ExcelWebOSData.parseCsv(text);
+    for (let r = 0; r < Math.min(rows.length, ROWS); r++) {
+      for (let c = 0; c < Math.min(rows[r].length, COLS); c++) {
+        const val = rows[r][c];
+        if (val) cells[getColName(c) + (r + 1)] = { raw: val, computed: val, style: {} };
       }
     }
+    return cells;
   }
 
   async function writeFileWithOverwrite(path, content, mime) {
-    try { await os.fs.write(path, content, mime); } 
-    catch (err) {
-      if (os.errors && os.errors.is(err, 'already_exists')) { await os.fs.remove(path); await os.fs.write(path, content, mime); } 
-      else throw err;
-    }
+    await os.fs.write(path, content, mime);
   }
 
   // ------------------------------------------------------------- Helpers
 
+  function draftStorageKey(path = state.path) {
+    return path ? `${DRAFT_KEY}:${encodeURIComponent(path)}` : DRAFT_KEY;
+  }
+
   function scheduleDraft() {
     if (state.saveTimer) clearTimeout(state.saveTimer);
     state.saveTimer = setTimeout(async () => {
+      state.saveTimer = null;
+      if (!state.dirty) return;
       if (!window.os || !os.storage) return;
-      try { await os.storage.set(DRAFT_KEY, { cells: state.cells, path: state.path, name: state.docName, colWidths: state.colWidths }); } catch (e) {}
+      const path = state.path;
+      const key = draftStorageKey(path);
+      const draft = { cells: state.cells, path, name: state.docName, colWidths: state.colWidths, revision: state.revision, savedSnapshot: state.savedSnapshot, updatedAt: Date.now() };
+      try { await os.storage.set(key, draft); } catch (e) {}
     }, 1000);
   }
 
-  async function restoreDraft() {
-    if (!window.os || !os.storage) return;
+  async function restoreDraft(path = null) {
+    if (!window.os || !os.storage) return false;
     try {
-      const draft = await os.storage.get(DRAFT_KEY);
-      if (draft && draft.cells) {
+      const key = draftStorageKey(path);
+      let draft = await os.storage.get(key);
+      if (!draft && path) {
+        const legacy = await os.storage.get(DRAFT_KEY);
+        if (legacy?.path === path) draft = legacy;
+      }
+      if (draft && draft.cells && (!path || draft.path === path)) {
         state.cells = draft.cells; state.path = draft.path; state.docName = draft.name || 'Sem título';
         state.colWidths = draft.colWidths || {};
-        buildGrid(); recalculateAll(); setStatus('Rascunho restaurado.');
+        state.dirty = true;
+        state.revision = Number(draft.revision) || 0;
+        state.savedSnapshot = typeof draft.savedSnapshot === 'string' ? draft.savedSnapshot : '';
+        buildGrid(); recalculateAll(); updateWindowTitle(); setStatus('Rascunho restaurado.');
+        return true;
       }
     } catch (e) {}
+    return false;
   }
 
   function getColName(index) {

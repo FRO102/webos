@@ -24,6 +24,8 @@ jobs:
         run: node tests/i18n.mjs
       - name: Sudoku logic tests
         run: node tests/sudoku.mjs
+      - name: Excel data tests
+        run: node tests/excel-data.mjs
       - name: Check JavaScript syntax
         shell: bash
         run: |

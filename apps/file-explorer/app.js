@@ -65,7 +65,21 @@ function select(p) {
   [...rows.querySelectorAll('tr[data-path]')].forEach(row => row.classList.toggle('sel', row.dataset.path === p));
 }
 const current = () => entries.find(e => e.path === sel);
-const activate = en => (en.type === 'dir' ? go(en.path) : os.openFile(en.path).catch(e => say(e.message)));
+async function openFile(en) {
+  try {
+    const extension = en.name.match(/\.[^.]+$/)?.[0].toLowerCase();
+    const apps = await os.shell.apps();
+    const handlers = apps.filter(app => app.fileTypes?.some(type => type.toLowerCase() === extension));
+    if (handlers.length < 2) return await os.openFile(en.path, handlers[0]?.id);
+    const appId = await os.dialog.choose({
+      title: 'Abrir com',
+      message: `Escolhe a aplicação para abrir "${en.name}".`,
+      options: handlers.map(app => ({ label: app.name, value: app.id })),
+    });
+    if (appId) await os.openFile(en.path, appId);
+  } catch (error) { say(error.message); }
+}
+const activate = en => (en.type === 'dir' ? go(en.path) : openFile(en));
 
 async function act(fn) { try { await fn(); } catch (e) { say(e.message); } }
 

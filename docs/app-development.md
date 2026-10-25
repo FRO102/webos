@@ -35,6 +35,8 @@ Regras:
 - `os.args()` — argumentos de arranque, ex.: `{ path }` quando a app é aberta a partir de um ficheiro
 - `os.shell.isFullscreen()` / `os.shell.toggleFullscreen()` — consultar ou alternar o modo ecrã inteiro do WebOS. A chamada para entrar deve partir diretamente de uma ação do utilizador e pode ser recusada pelas políticas do browser.
 - `os.openFile(path)` — abre o ficheiro na app registada para a extensão (`fileTypes` no manifest); permissão `apps.launch`
+- `os.openFile(path, appId)` — abre o ficheiro numa app compatível escolhida explicitamente; omite `appId` para usar o handler predefinido.
+- O Explorador apresenta “Abrir com” quando mais de uma app declara a extensão do ficheiro. Declara apenas formatos que a app consegue importar.
 - `os.on('fs:changed', fn)` — recebido por apps com `fs.read`
 - `os.i18n.language` / `os.i18n.locale` — idioma ativo (`pt-PT` ou `en`) e localidade de formatação (`pt-PT` ou `en-GB`).
 - `os.i18n.t(text)` — traduz texto conhecido pelo catálogo do sistema, mantendo o original como fallback.
@@ -55,6 +57,7 @@ Ao adicionar rótulos novos à interface, incluir a tradução inglesa no catál
 - O filesystem é local ao browser/perfil e guardado em IndexedDB; o alojamento estático no Cloudflare Pages não fornece um disco remoto nem sincroniza ficheiros entre dispositivos. `apps/registry.json` continua a servir apenas para descobrir apps.
 - Esta configuração WebOS usa um único perfil chamado `User`; os dados antigos que eventualmente existam sob outros IDs não são apagados automaticamente pela inicialização.
 - `os.fs.write(path, content, mime)` preserva conteúdo binário quando recebe `Blob`, `ArrayBuffer` ou `TypedArray`. `os.fs.read(path)` devolve strings para conteúdo textual e `Blob` para conteúdo binário; `os.fs.stat(path).size` é sempre em bytes. Ficheiros antigos em Data URL e texto continuam legíveis.
+- O filesystem não fornece operações atómicas de substituição. `os.fs.write()` atualiza o caminho existente; para fluxos “Guardar como”, usa `os.dialog.save()`, que verifica e confirma a substituição antes de devolver o caminho.
 - A app **Backup e Restauro** exporta/restaura as definições globais, chaves privadas das apps e pasta pessoal do perfil ativo. Não inclui contas, credenciais, auditoria, notificações nem a Lixeira. A permissão `profile.backup` é reservada pelo shell ao ID `backup-restauro`; apps comuns não devem declará-la.
 - Não criar APIs globais de partilha de dados até existir um fluxo concreto que não possa ser resolvido por exportação/importação de ficheiros.
 
@@ -85,8 +88,6 @@ try {
 
 ## Diálogos de ficheiros
 Inclui `<script src="../../system/sdk/os-dialogs.js"></script>` depois do `os-sdk.js` (requer `fs.read`):
-- `os.dialog.open({ title, start, filter })` → caminho escolhido ou `null`
-- `os.dialog.save({ title, start, defaultName })` → caminho (pede confirmação se já existir) ou `null`
+ - `os.dialog.choose({ title, message, options })` → `value` escolhido ou `null`
+ `prompt` devolve texto ou `null`; `confirm` devolve booleano; `choose` devolve o `value` escolhido ou `null`; `open` e `save` devolvem caminho ou `null`. `open` e `save` exigem `fs.read`. Preferir estes diálogos a `window.prompt`, `window.confirm` e `alert`.
 - `os.dialog.prompt({ title, message, defaultValue, okLabel })` → texto ou `null`
-- `os.dialog.confirm({ title, message, okLabel, danger })` → `true`/`false` (usa `danger` para ações destrutivas; o foco começa em "Cancelar")
-- Prefere estes diálogos a `prompt()`/`confirm()`: ficam com o tema do sistema e não dependem de `allow-modals`.

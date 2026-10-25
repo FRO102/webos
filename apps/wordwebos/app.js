@@ -338,6 +338,7 @@
     document.getElementById('menuSaveAs').addEventListener('click', () => saveDocument(true));
     document.getElementById('menuExportTxt').addEventListener('click', exportTxt);
     document.getElementById('menuExportDocx').addEventListener('click', exportDocx);
+    document.getElementById('menuSaveDocx').addEventListener('click', saveDocxToWebOS);
     document.getElementById('menuPrint').addEventListener('click', () => {
       try { window.print(); } catch (e) { /* noop */ }
     });
@@ -378,7 +379,7 @@
         select: 'file',
         directory: false,
         start: '/home/user/Documentos/',
-        filter: ['.html', '.htm', '.txt']
+        filter: ['.html', '.htm', '.txt', '.docx']
       });
     } catch (err) {
       setStatus(errorMessage(err, t('Falha ao abrir.')), 'error');
@@ -393,6 +394,7 @@
 
   async function openFile(path, options = {}) {
     cancelDraftSave();
+    if (/\.docx$/i.test(path)) return importDocxFromWebOS(path);
     if (options.restoreDraft) {
       const draft = await getDraft(path);
       if (draft) {
@@ -554,21 +556,65 @@
   }
 
   async function exportDocx() {
-    if (!window.docx || !window.docx.Document || !window.docx.Packer) {
-      setStatus(t('Biblioteca DOCX indisponível.'), 'error');
-      return;
-    }
-
     const fileName = ((state.docName || 'document').replace(/\.[^.]+$/, '') || 'document') + '.docx';
     try {
-      const bodyHtml = sanitizeHtml(editor.innerHTML || '<p><br></p>');
-      const document = buildDocxDocumentFromHtml(bodyHtml);
-      const blob = await window.docx.Packer.toBlob(document);
+      const blob = await createDocxBlob();
       triggerDownload(blob, fileName);
       setStatus(t('Exportado') + ': ' + fileName, 'success');
     } catch (err) {
       console.error('WordWebos: export DOCX falhou', err);
       setStatus(t('Falha ao exportar DOCX.'), 'error');
+    }
+  }
+
+  async function createDocxBlob() {
+    if (!window.docx || !window.docx.Document || !window.docx.Packer) throw new Error(t('Biblioteca DOCX indisponível.'));
+    const bodyHtml = sanitizeHtml(editor.innerHTML || '<p><br></p>');
+    const doc = buildDocxDocumentFromHtml(bodyHtml);
+    return window.docx.Packer.toBlob(doc);
+  }
+
+  async function saveDocxToWebOS() {
+    const defaultName = ((state.docName || 'document').replace(/\.[^.]+$/, '') || 'document') + '.docx';
+    let path;
+    try {
+      path = await os.dialog.save({ title: 'Guardar DOCX no WebOS', start: '/home/user/Documentos/', defaultName });
+      if (!path) return;
+      if (!/\.docx$/i.test(path)) path += '.docx';
+      const blob = await createDocxBlob();
+      await os.fs.write(path, blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      setStatus(t('Guardado') + ': ' + path, 'success');
+    } catch (err) {
+      setStatus(errorMessage(err, t('Falha ao guardar DOCX.')), 'error');
+    }
+  }
+
+  async function importDocxFromWebOS(path) {
+    if (!window.mammoth || typeof window.mammoth.convertToHtml !== 'function') {
+      setStatus(t('Biblioteca de importação DOCX indisponível.'), 'error');
+      return false;
+    }
+    try {
+      const content = await os.fs.read(path);
+      let arrayBuffer;
+      if (content instanceof Blob) arrayBuffer = await content.arrayBuffer();
+      else if (content instanceof ArrayBuffer) arrayBuffer = content;
+      else throw new Error(t('O ficheiro DOCX não contém dados binários válidos.'));
+      const result = await window.mammoth.convertToHtml({ arrayBuffer });
+      editor.innerHTML = sanitizeHtml(result.value || '<p><br></p>') || '<p><br></p>';
+      state.path = null;
+      state.docName = basename(path).replace(/\.docx$/i, '.html');
+      state.revision++;
+      markDirty();
+      updateStatus();
+      updateWindowTitle();
+      updateSaveState('draft');
+      setStatus(t('Documento DOCX importado; guarda como HTML para continuar a editar.'), 'success');
+      if (result.messages?.length) console.warn('WordWebos: avisos ao importar DOCX', result.messages);
+      return true;
+    } catch (err) {
+      setStatus(errorMessage(err, t('Falha ao importar DOCX.')), 'error');
+      return false;
     }
   }
 

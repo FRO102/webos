@@ -78,6 +78,7 @@ node tests/i18n.mjs
 node tests/filesystem-paths.mjs
 node tests/filesystem-content.mjs
 node tests/sudoku.mjs
+node tests/excel-data.mjs
 ```
 
 Para verificar a sintaxe dos scripts JavaScript em PowerShell:

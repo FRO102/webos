@@ -103,7 +103,7 @@ Object.assign(methods, {
   'storage.set':    { fn: (c, { key, value }) => kv.set(`app:${c.appId}:${key}`, value) },
   'storage.remove': { fn: (c, { key }) => kv.remove(`app:${c.appId}:${key}`) },
   'app.args':     { fn: c => c.args },
-  'app.openFile': { perm: 'apps.launch', fn: (c, { path }) => bus.emit('file:open', { path }) },
+  'app.openFile': { perm: 'apps.launch', fn: (c, { path, appId }) => bus.emit('file:open', { path, appId }) },
 });
 
 // avisa as apps com acesso de leitura quando os ficheiros mudam

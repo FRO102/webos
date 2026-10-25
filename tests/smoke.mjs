@@ -24,6 +24,14 @@ await mustContain('apps/images/app.js', ['c instanceof Blob', 'URL.createObjectU
 await mustContain('apps/sudoku/app.js', ['const SudokuLogic', 'function toggleNotesMode()', 'function revealHint()', 'state.mistakes++']);
 await mustContain('apps/sudoku/index.html', ['id="btn-notes"', 'id="btn-hint"', 'id="mistakes"', 'id="game-status"']);
 await mustContain('apps/file-explorer/app.js', ['sortSelect', 'searchInput', 'Substituir ficheiro?', 'failures.push']);
+await mustContain('apps/file-explorer/app.js', ['os.dialog.choose', 'handlers.length < 2', 'os.openFile(en.path, appId)']);
+await mustContain('system/sdk/os-dialogs.js', ['function choose({ title', 'choose,']);
+await mustContain('system/js/app-loader.js', ['fileTypes: [...(m.fileTypes ?? [])]']);
+await mustContain('apps/excelwebos/app.js', ['ExcelWebOSData.parseCsv', 'ExcelWebOSData.validateWorkbook', 'ExcelWebOSFormula.calculateCells', 'Alterações por guardar', 'webos-spreadsheet', 'draftStorageKey', 'documentSnapshot()']);
+await mustContain('apps/excelwebos/index.html', ['data.js', 'formula-data.js']);
+await mustContain('apps/excelwebos/formula-data.js', ['function evaluateArithmetic', 'function calculateCells', 'visiting.has(id)', 'Number.isFinite(result)']);
+await mustContain('apps/wordwebos/app.js', ['importDocxFromWebOS(path)', 'saveDocxToWebOS()', 'window.mammoth.convertToHtml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
+await mustContain('apps/wordwebos/index.html', ['menuSaveDocx', 'mammoth@1.9.0']);
 await mustContain('apps/terminal/app.js', ['const HISTORY_KEY', 'os.fs.home()', 'await os.fs.trash(p)', 'async purge(a)', 'await walk(', 'metadata.mime']);
 await mustContain('system/sdk/os-dialogs.js', ['async function resolveStart()', "o.start.startsWith('/home/user/')"]);
 await mustContain('system/js/users.js', ["name: 'User'", 'users = [DEFAULT_USER]']);
@@ -44,8 +52,10 @@ await mustContain('apps/file-explorer/app.js', ['async function createFile()', '
 await mustContain('system/sdk/os-dialogs.js', ['typeof o.filter === \'function\'', 'Array.isArray(o.filter)', 'endsWith(String(extension).toLowerCase())']);
 await mustContain('apps/wordwebos/app.js', ['function sanitizeHtml(source)', 'blockedTags', 'DRAFTS_KEY', 'async function initializeDocument()', 'await os.fs.write(path, content, mime)', 'Rascunho existente', 'async function exportDocx()', 'Packer.toBlob']);
 await mustContain('apps/wordwebos/index.html', ['id="menuExportDocx"', 'docx@']);
+await mustContain('apps/wordwebos/index.html', ['id="menuSaveDocx"', 'mammoth@1.9.0']);
+await mustContain('apps/wordwebos/manifest.json', ['".docx"']);
 assert.equal(JSON.parse(await readFile(join(root, 'apps/wordwebos/manifest.json'), 'utf8')).singleInstance, false, 'WordWebOS deve poder abrir vários documentos em janelas próprias.');
-await mustContain('apps/wordwebos/app.js', ['filter: [\'.html\', \'.htm\', \'.txt\']', 'function sanitizeHtml(source)', 'blockedTags', 'DRAFTS_KEY', 'async function initializeDocument()', 'await os.fs.write(path, content, mime)', 'async function exportDocx()', 'Packer.toBlob']);
+await mustContain('apps/wordwebos/app.js', ['filter: [\'.html\', \'.htm\', \'.txt\', \'.docx\']', 'function sanitizeHtml(source)', 'blockedTags', 'DRAFTS_KEY', 'async function initializeDocument()', 'await os.fs.write(path, content, mime)', 'async function exportDocx()', 'Packer.toBlob']);
 assert.equal(JSON.parse(await readFile(join(root, 'apps/wordwebos/manifest.json'), 'utf8')).singleInstance, false, 'WordWebOS deve abrir cada documento numa janela própria.');
 await mustContain('apps/desenhador/app.js', ['blobToDataUrl(blob)', 'writeWithOverwrite(path, dataUrl, \'image/png\')', 'os.fs.exists(path)']);
 await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'dataUrlToBlob(content)', 'content instanceof Blob']);

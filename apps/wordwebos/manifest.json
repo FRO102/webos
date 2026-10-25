@@ -13,5 +13,5 @@
   },
   "singleInstance": false,
   "permissions": ["fs.read", "fs.write"],
-  "fileTypes": [".html", ".htm", ".txt"]
+  "fileTypes": [".html", ".htm", ".txt", ".docx"]
 }
