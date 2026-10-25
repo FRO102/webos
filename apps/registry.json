@@ -34,5 +34,6 @@
   "pdfwebos",
   "sudoku",
   "chess",
-  "puzzle"
+  "puzzle",
+  "pacman"
 ]

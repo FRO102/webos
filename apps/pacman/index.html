@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maze Chomp — HTML5 Arcade</title>
+    <meta
+      name="description"
+      content="Play Maze Chomp, a classic-inspired arcade maze game in your browser."
+    />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Maze Chomp — HTML5 Arcade" />
+    <meta
+      property="og:description"
+      content="Clear the maze, collect power pellets, and stay ahead of the ghosts."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="src/style.css" />
+  </head>
+  <body>
+    <main class="arcade-shell">
+      <div class="arcade-wrap">
+        <header class="masthead">
+          <div class="brand">
+            <div class="brand-mark" aria-hidden="true"></div>
+            <div>
+              <div class="brand-name">MAZE CHOMP</div>
+              <div class="brand-kicker">A little midnight arcade</div>
+            </div>
+          </div>
+          <div class="masthead-actions">
+            <div class="arcade-tag">INSERT COIN · EST. 1980</div>
+            <button class="secondary-btn return-menu-btn" id="return-to-menu" type="button" hidden>
+              ← MAIN MENU
+            </button>
+          </div>
+        </header>
+
+        <section class="main-menu" id="main-menu" aria-labelledby="menu-title">
+          <div class="menu-intro">
+            <p class="eyebrow">NEW RUN / 01</p>
+            <h1 id="menu-title">CHOOSE YOUR RUN</h1>
+            <p>Pick a mode, set the pace, and choose your maze.</p>
+          </div>
+          <div class="menu-options">
+            <section class="info-card map-picker">
+              <h2>Choose a maze</h2>
+              <p class="maze-current">Selected: <span id="active-maze">Classic</span></p>
+              <div class="maze-options" role="group" aria-label="Available mazes">
+                <button class="maze-option is-selected" type="button" data-maze-index="0" aria-pressed="true">
+                  <span class="maze-option-number">01</span>
+                  <span class="maze-option-label"><strong>Classic</strong><small>Original arcade</small></span>
+                </button>
+                <button class="maze-option" type="button" data-maze-index="1" aria-pressed="false">
+                  <span class="maze-option-number">02</span>
+                  <span class="maze-option-label"><strong>Crossroads</strong><small>Long lanes</small></span>
+                </button>
+                <button class="maze-option" type="button" data-maze-index="2" aria-pressed="false">
+                  <span class="maze-option-number">03</span>
+                  <span class="maze-option-label"><strong>Orbit</strong><small>Winding route</small></span>
+                </button>
+                <button class="maze-option" type="button" data-maze-index="3" aria-pressed="false">
+                  <span class="maze-option-number">04</span>
+                  <span class="maze-option-label"><strong>Zigzag</strong><small>Tricky passages</small></span>
+                </button>
+              </div>
+            </section>
+
+            <section class="info-card mode-picker">
+              <h2>Play mode</h2>
+              <div class="mode-options" role="group" aria-label="Choose a game mode">
+                <button class="mode-option is-selected" type="button" data-game-mode="single" aria-pressed="true">
+                  <strong>Single maze</strong>
+                  <small>Choose any maze</small>
+                </button>
+                <button class="mode-option" type="button" data-game-mode="campaign" aria-pressed="false">
+                  <strong>4-maze campaign</strong>
+                  <small>Clear every maze in order</small>
+                </button>
+              </div>
+              <div class="campaign-progress" id="campaign-progress" hidden>
+                <div class="campaign-progress-heading">
+                  <span>Campaign progress</span>
+                  <span id="campaign-progress-label">0 of 4 cleared</span>
+                </div>
+                <div
+                  class="campaign-progress-track"
+                  role="progressbar"
+                  aria-label="Campaign progress"
+                  aria-valuemin="0"
+                  aria-valuemax="4"
+                  aria-valuenow="0"
+                >
+                  <span id="campaign-progress-fill"></span>
+                </div>
+                <ol class="campaign-map-list" id="campaign-map-list" aria-label="Campaign map order"></ol>
+              </div>
+            </section>
+
+            <section class="info-card difficulty-picker">
+              <h2>Difficulty</h2>
+              <p class="maze-current">Selected: <span id="active-difficulty">Normal</span></p>
+              <div class="difficulty-options" role="group" aria-label="Choose a difficulty">
+                <button class="difficulty-option" type="button" data-difficulty-index="0" aria-pressed="false">
+                  <span class="difficulty-option-label"><strong>Easy</strong><small>5 lives · slower ghosts</small></span>
+                  <span class="difficulty-indicator" aria-hidden="true"></span>
+                </button>
+                <button class="difficulty-option is-selected" type="button" data-difficulty-index="1" aria-pressed="true">
+                  <span class="difficulty-option-label"><strong>Normal</strong><small>3 lives · balanced pace</small></span>
+                  <span class="difficulty-indicator" aria-hidden="true"></span>
+                </button>
+                <button class="difficulty-option" type="button" data-difficulty-index="2" aria-pressed="false">
+                  <span class="difficulty-option-label"><strong>Hard</strong><small>2 lives · faster ghosts</small></span>
+                  <span class="difficulty-indicator" aria-hidden="true"></span>
+                </button>
+              </div>
+            </section>
+          </div>
+          <div class="menu-footer">
+            <span class="best-note">BEST SCORE <strong id="menu-best-score">00000</strong></span>
+            <button class="primary-btn" id="menu-start" type="button">PLAY</button>
+          </div>
+        </section>
+
+        <div class="layout" id="game-layout" hidden>
+          <section class="game-card" aria-label="Arcade game">
+            <div class="hud">
+              <div>
+                <div class="hud-label">Score</div>
+                <div class="hud-value" id="score" data-testid="text-score">00000</div>
+              </div>
+              <div class="hud-score">
+                <div>
+                  <div class="hud-label">Dots left</div>
+                  <div class="hud-value" id="dots-left" data-testid="text-dots-left">0</div>
+                </div>
+                <div>
+                  <div class="hud-label">Lives</div>
+                  <div class="lives" id="lives" data-testid="status-lives" aria-label="3 lives remaining"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="maze-frame">
+              <canvas
+                class="maze"
+                id="game-canvas"
+                aria-label="Pac-Man maze game board"
+                data-testid="game-board"
+              ></canvas>
+              <div
+                class="game-overlay"
+                id="game-overlay"
+                role="status"
+                aria-live="polite"
+                data-testid="status-game-phase"
+              >
+                <div class="overlay-box">
+                  <div class="overlay-title" id="overlay-title">READY?</div>
+                  <p class="overlay-copy" id="overlay-copy">
+                    The dots are waiting. Keep moving, and watch the corners.
+                  </p>
+                  <button class="primary-btn" id="overlay-primary" data-testid="button-start">
+                    START GAME
+                  </button>
+                  <div class="button-row" id="overlay-actions" hidden>
+                    <button class="secondary-btn" id="overlay-resume" data-testid="button-resume">
+                      Resume
+                    </button>
+                    <button class="secondary-btn" id="overlay-restart" data-testid="button-restart">
+                      Restart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="game-footer">
+              <span class="status-pill" id="game-status" data-testid="status-game">READY TO PLAY</span>
+              <span><span id="footer-dots">0</span> dots to clear</span>
+              <div class="game-actions">
+                <button
+                  class="secondary-btn"
+                  id="pause-toggle"
+                  aria-label="Start game"
+                  data-testid="button-pause-toggle"
+                >
+                  Start
+                </button>
+                <button class="secondary-btn" id="restart-game" data-testid="button-restart-game">
+                  Restart
+                </button>
+              </div>
+              <span class="visually-hidden" id="game-announcement" role="status" aria-live="polite" aria-atomic="true"></span>
+            </div>
+          </section>
+
+          <aside class="side-panel">
+            <section class="info-card">
+              <h2>Hall of fame</h2>
+              <div class="best-score" id="best-score" data-testid="text-best-score">00000</div>
+              <div class="best-note">Your best run, saved on this device.</div>
+            </section>
+
+            <section class="info-card">
+              <h2>Maze signals</h2>
+              <div class="legend">
+                <div class="legend-row">
+                  <span class="legend-dot" aria-hidden="true"></span>
+                  Dots
+                  <span class="legend-points">10 pts</span>
+                </div>
+                <div class="legend-row">
+                  <span class="legend-power" aria-hidden="true"></span>
+                  Power pellet
+                  <span class="legend-points">50 pts</span>
+                </div>
+                <div class="legend-row">
+                  <span class="legend-ghost" aria-hidden="true"></span>
+                  Ghost
+                  <span class="legend-points">200 pts</span>
+                </div>
+              </div>
+              <p class="legend-tip">
+                Power pellets turn the hunters blue. For a few seconds, the chase goes the other way.
+              </p>
+            </section>
+
+            <section class="info-card desktop-controls">
+              <h2>Controls</h2>
+              <div class="controls-list">
+                <div class="control-line">
+                  <span>Move</span>
+                  <span><kbd class="keycap">↑</kbd><kbd class="keycap">←</kbd><kbd class="keycap">↓</kbd><kbd class="keycap">→</kbd></span>
+                </div>
+                <div class="control-line">
+                  <span>Also move</span>
+                  <span><kbd class="keycap">W</kbd><kbd class="keycap">A</kbd><kbd class="keycap">S</kbd><kbd class="keycap">D</kbd></span>
+                </div>
+                <div class="control-line"><span>Pause / resume</span><kbd class="keycap">Space</kbd></div>
+                <div class="control-line"><span>New run</span><kbd class="keycap">R</kbd></div>
+              </div>
+            </section>
+
+            <section class="info-card mobile-controls">
+              <h2>Touch controls</h2>
+              <div class="dpad" aria-label="Touch movement controls">
+                <button class="up" type="button" aria-label="Move up" data-direction="up" data-testid="button-move-up">↑</button>
+                <button class="left" type="button" aria-label="Move left" data-direction="left" data-testid="button-move-left">←</button>
+                <button class="down" type="button" aria-label="Move down" data-direction="down" data-testid="button-move-down">↓</button>
+                <button class="right" type="button" aria-label="Move right" data-direction="right" data-testid="button-move-right">→</button>
+              </div>
+              <small>ARROW KEYS OR WASD ALSO WORK</small>
+            </section>
+
+          </aside>
+        </div>
+      </div>
+    </main>
+    <script src="../../system/sdk/os-sdk.js"></script>
+    <script type="module" src="src/game.js"></script>
+  </body>
+</html>
