@@ -2,6 +2,7 @@
   "id": "images",
   "name": "Imagens",
   "version": "1.0.0",
+  "category": { "id": "applications", "name": "Aplicações", "nameEn": "Applications" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 640, "height": 460, "minWidth": 360, "minHeight": 260 },

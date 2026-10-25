@@ -2,6 +2,7 @@
   "id": "backup-restauro",
   "name": "Backup e Restauro",
   "version": "1.0.0",
+  "category": { "id": "system", "name": "Sistema", "nameEn": "System" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 680, "height": 540, "minWidth": 500, "minHeight": 430 },

@@ -121,7 +121,7 @@
       read: path => call('fs.read', { path }),
       stat: path => call('fs.stat', { path }),
       search: (query, path = '/') => call('fs.search', { query, path }),
-      write: (path, content, mime) => call('fs.write', { path, content, mime }),
+      write: (path, content, mime) => call('fs.write', { path, content, mime }), // string, Blob, ArrayBuffer ou TypedArray
       mkdir: path => call('fs.mkdir', { path }),
       remove: path => call('fs.remove', { path }),
       trash: path => call('fs.trash', { path }),

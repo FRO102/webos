@@ -2,7 +2,13 @@
 <html lang="pt-PT">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aplicações</title><link rel="stylesheet" href="style.css"></head>
 <body>
-  <header><div><h1>Aplicações</h1><p id="count">A carregar catálogo...</p></div><input id="search" type="search" placeholder="Pesquisar aplicações" aria-label="Pesquisar aplicações"></header>
+  <header>
+    <div><h1>Aplicações</h1><p id="count">A carregar catálogo...</p></div>
+    <div class="catalog-controls">
+      <select id="category-filter" aria-label="Filtrar por categoria"><option value="">Todas as categorias</option></select>
+      <input id="search" type="search" placeholder="Pesquisar aplicações" aria-label="Pesquisar aplicações">
+    </div>
+  </header>
   <main id="catalog"></main>
   <script src="../../system/sdk/os-sdk.js"></script><script src="app.js"></script>
 </body>

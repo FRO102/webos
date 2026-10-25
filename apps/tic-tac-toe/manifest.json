@@ -2,6 +2,7 @@
   "id": "tic-tac-toe",
   "name": "Tic Tac Toe",
   "version": "1.0.0",
+  "category": { "id": "games", "name": "Jogos", "nameEn": "Games" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": {

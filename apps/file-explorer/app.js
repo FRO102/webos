@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const rows = $('rows'), addr = $('addr'), status = $('status');
 const fileInput = $('file-input');
+const searchInput = $('search'), sortSelect = $('sort');
 let home = '/home/user', cwd = home, entries = [], sel = null;
 
 const say = msg => { status.textContent = msg; };
@@ -22,12 +23,26 @@ function render() {
     else button.removeAttribute('aria-current');
   });
   rows.replaceChildren();
-  if (!entries.length) {
+  const query = searchInput.value.trim().toLocaleLowerCase(os.i18n.locale);
+  const visibleEntries = entries.filter(entry => entry.name.toLocaleLowerCase(os.i18n.locale).includes(query));
+  if (sel && !visibleEntries.some(entry => entry.path === sel)) sel = null;
+  const sortBy = sortSelect.value;
+  visibleEntries.sort((a, b) => {
+    if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+    if (sortBy === 'size') return a.size - b.size || a.name.localeCompare(b.name, os.i18n.locale);
+    if (sortBy === 'date') return b.mtime - a.mtime || a.name.localeCompare(b.name, os.i18n.locale);
+    if (sortBy === 'type') return a.mime.localeCompare(b.mime, os.i18n.locale) || a.name.localeCompare(b.name, os.i18n.locale);
+    return a.name.localeCompare(b.name, os.i18n.locale);
+  });
+  if (!visibleEntries.length) {
     const tr = document.createElement('tr'), td = document.createElement('td');
-    td.colSpan = 3; td.textContent = 'Esta pasta está vazia.'; td.className = 'empty'; tr.append(td); rows.append(tr);
+    td.colSpan = 3;
+    td.textContent = entries.length ? 'Nenhum ficheiro corresponde à pesquisa.' : 'Esta pasta está vazia.';
+    td.className = 'empty'; tr.append(td); rows.append(tr);
   }
-  entries.forEach(en => {
+  visibleEntries.forEach(en => {
     const tr = document.createElement('tr');
+    tr.dataset.path = en.path;
     tr.tabIndex = 0;
     tr.classList.toggle('sel', sel === en.path);
     const cells = [`${en.type === 'dir' ? '📁' : '📄'} ${en.name}`, en.type === 'dir' ? '' : size(en.size), os.i18n.date(en.mtime, { dateStyle: 'short', timeStyle: 'short' })];
@@ -42,12 +57,12 @@ function render() {
     };
     rows.append(tr);
   });
-  say(`${entries.length} ${entries.length === 1 ? 'item' : 'itens'}`);
+  say(query ? `${visibleEntries.length} de ${entries.length} itens` : `${entries.length} ${entries.length === 1 ? 'item' : 'itens'}`);
 }
 
 function select(p) {
   sel = p;
-  [...rows.children].forEach((tr, i) => tr.classList.toggle('sel', entries[i].path === p));
+  [...rows.querySelectorAll('tr[data-path]')].forEach(row => row.classList.toggle('sel', row.dataset.path === p));
 }
 const current = () => entries.find(e => e.path === sel);
 const activate = en => (en.type === 'dir' ? go(en.path) : os.openFile(en.path).catch(e => say(e.message)));
@@ -57,6 +72,8 @@ async function act(fn) { try { await fn(); } catch (e) { say(e.message); } }
 $('up').onclick = () => go(cwd.split('/').slice(0, -1).join('/') || '/');
 $('refresh').onclick = () => go(cwd);
 addr.onkeydown = e => { if (e.key === 'Enter') go(addr.value.trim() || '/'); };
+searchInput.oninput = render;
+sortSelect.onchange = render;
 document.querySelectorAll('#places [data-place]').forEach(button => {
   button.onclick = () => {
     const place = button.dataset.place;
@@ -102,12 +119,22 @@ $('empty-trash').onclick = async () => {
 };
 $('upload').onclick = () => fileInput.click();
 fileInput.onchange = async () => {
-  const file = fileInput.files?.[0];
-  if (!file) return;
-  try {
-    const content = file.type.startsWith('image/') ? await readAsDataUrl(file) : await file.text();
-    await os.fs.write(join(cwd, file.name), content, file.type || undefined);
-  } catch (error) { say(error.message); }
+  const files = [...(fileInput.files ?? [])];
+  if (!files.length) return;
+  let imported = 0;
+  const failures = [];
+  for (const file of files) {
+    try {
+      const path = join(cwd, file.name);
+      if (await os.fs.exists(path)) {
+        const replace = await os.dialog.confirm({ title: 'Substituir ficheiro?', message: `Já existe "${file.name}". Queres substituir?`, okLabel: 'Substituir', danger: true });
+        if (!replace) continue;
+      }
+      await os.fs.write(path, file, file.type || 'application/octet-stream');
+      imported++;
+    } catch (error) { failures.push(`${file.name}: ${error.message}`); }
+  }
+  say(failures.length ? `${imported} importado(s); ${failures.length} falha(s): ${failures.join(' · ')}` : `${imported} ${imported === 1 ? 'ficheiro importado.' : 'ficheiros importados.'}`);
   fileInput.value = '';
 };
 $('download').onclick = async () => {
@@ -115,26 +142,18 @@ $('download').onclick = async () => {
   if (!en || en.type !== 'file') return say('Seleciona um ficheiro primeiro.');
   try {
     const content = await os.fs.read(en.path);
-    const dataUrl = typeof content === 'string' && content.startsWith('data:');
-    const blob = dataUrl
-      ? dataUrlToBlob(content)
-      : new Blob([content], { type: en.mime });
+    const blob = content instanceof Blob
+      ? content
+      : typeof content === 'string' && content.startsWith('data:')
+        ? dataUrlToBlob(content)
+        : new Blob([content], { type: en.mime });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = en.name;
     link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   } catch (e) { say(e.message); }
 };
-
-function readAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(reader.error || new Error('Não foi possível ler o ficheiro.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 function dataUrlToBlob(value) {
   const match = value.match(/^data:([^,]*),(.*)$/s);

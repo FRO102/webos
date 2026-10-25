@@ -2,6 +2,7 @@
   "id": "settings",
   "name": "Definições",
   "version": "1.0.0",
+  "category": { "id": "system", "name": "Sistema", "nameEn": "System" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 460, "height": 540, "minWidth": 340, "minHeight": 320 },

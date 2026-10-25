@@ -1,7 +1,8 @@
 const ta = document.getElementById('text');
 const status = document.getElementById('status');
 let path = null, dirty = false;
-const dirOf = p => (p ? p.split('/').slice(0, -1).join('/') || '/' : '/home/user/Documentos');
+let home = '/home/user';
+const dirOf = p => (p ? p.split('/').slice(0, -1).join('/') || '/' : `${home}/Documentos`);
 
 const say = msg => { status.textContent = msg; };
 const title = () => os.window.setTitle(`${dirty ? '• ' : ''}${path ? path.split('/').pop() : 'Sem título'} — Bloco de Notas`);
@@ -32,4 +33,7 @@ document.getElementById('saveas').onclick = () => save(true);
 ta.addEventListener('input', () => { if (!dirty) { dirty = true; title(); } });
 addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(false); } });
 
-os.args().then(a => (a?.path ? load(a.path) : title()));
+Promise.all([os.fs.home(), os.args()]).then(([userHome, args]) => {
+  home = userHome;
+  return args?.path ? load(args.path) : title();
+});

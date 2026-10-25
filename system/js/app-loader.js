@@ -9,6 +9,8 @@ const apps = new Map();      // appId -> { manifest, base }
 const running = new Map();   // winId -> appId
 const recent = [];
 const permissions = new Set(['fs.read', 'fs.write', 'apps.launch', 'settings.write', 'notifications', 'clipboard', 'external.open', 'profile.backup']);
+const DEFAULT_CATEGORY = { id: 'applications', name: 'Aplicações', nameEn: 'Applications' };
+const CATEGORY_IDS = new Set(['system', 'applications', 'games']);
 
 bus.on('window:closed', ({ id }) => running.delete(id));
 
@@ -21,6 +23,10 @@ export async function loadRegistry() {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const manifest = await response.json();
       if (manifest.id !== id || !manifest.name || !manifest.version || !manifest.icon || !manifest.entry) throw new Error('campos obrigatórios em falta ou id diferente do nome da pasta');
+      if (manifest.category === undefined) manifest.category = DEFAULT_CATEGORY;
+      if (!manifest.category || !CATEGORY_IDS.has(manifest.category.id)
+        || typeof manifest.category.name !== 'string' || !manifest.category.name.trim()
+        || typeof manifest.category.nameEn !== 'string' || !manifest.category.nameEn.trim()) throw new Error('categoria inválida');
       for (const path of [manifest.icon, manifest.entry]) {
         if (path.startsWith('/') || path.split(/[\\/]/).includes('..')) throw new Error('caminho de ficheiro inválido');
       }
@@ -87,7 +93,9 @@ export function launchApp(appId, args = null) {
 }
 
 export const getRecentApps = () => [...recent];
-export const getApps = () => [...apps.values()].map(({ manifest: m, base }) => ({ id: m.id, name: m.name, version: m.version, icon: new URL(base + m.icon, document.baseURI).href, category: m.category ?? 'Sistema' }));
+export const getApps = () => [...apps.values()].map(({ manifest: m, base }) => {
+  return { id: m.id, name: m.name, version: m.version, icon: new URL(base + m.icon, document.baseURI).href, category: { ...m.category } };
+});
 
 const ext = p => (p.match(/\.[^./]+$/)?.[0] ?? '').toLowerCase();
 bus.on('file:open', ({ path, appId }) => {

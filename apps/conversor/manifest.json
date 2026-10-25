@@ -2,6 +2,7 @@
   "id": "conversor",
   "name": "Conversor de Unidades",
   "version": "1.0.0",
+  "category": { "id": "applications", "name": "Aplicações", "nameEn": "Applications" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 720, "height": 570, "minWidth": 480, "minHeight": 420 },

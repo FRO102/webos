@@ -1,14 +1,12 @@
 import { store, req, tx } from './storage.js';
 import { bus } from './event-bus.js';
+import { normalizeFsPath } from './fs-paths.js';
+import { fileContentSize, isBinaryFileContent } from './fs-content.js';
 
-const norm = p => {
-  const out = [];
-  for (const s of String(p).split('/')) { if (!s || s === '.') continue; s === '..' ? out.pop() : out.push(s); }
-  return '/' + out.join('/');
-};
+const norm = normalizeFsPath;
 const parentOf = p => (p === '/' ? null : norm(p + '/..'));
 const get = async p => req((await store('fs')).get(p));
-const meta = n => ({ path: n.path, name: n.path.split('/').pop() || '/', type: n.type, mime: n.mime ?? (n.type === 'file' ? 'text/plain' : 'inode/directory'), size: n.type === 'file' ? n.content.length : 0, ctime: n.ctime ?? n.mtime, mtime: n.mtime });
+const meta = n => ({ path: n.path, name: n.path.split('/').pop() || '/', type: n.type, mime: n.mime ?? (n.type === 'file' ? 'text/plain' : 'inode/directory'), size: n.type === 'file' ? fileContentSize(n.content) : 0, ctime: n.ctime ?? n.mtime, mtime: n.mtime });
 const changed = p => bus.emit('fs:changed', { path: p });
 
 async function assertParent(p) {
@@ -60,7 +58,8 @@ export async function write(p, content, mime = null) {
   await assertParent(p);
   if ((await get(p))?.type === 'dir') throw new Error(`${p} é uma pasta.`);
   const previous = await get(p), now = Date.now();
-  await tx('fs', s => s.put({ path: p, parent: parentOf(p), type: 'file', content: String(content), mime: mime ?? previous?.mime ?? 'text/plain', ctime: previous?.ctime ?? now, mtime: now }));
+  if (content === null || content === undefined || (!isBinaryFileContent(content) && typeof content !== 'string')) throw new Error('Conteúdo de ficheiro inválido.');
+  await tx('fs', s => s.put({ path: p, parent: parentOf(p), type: 'file', content, mime: mime ?? previous?.mime ?? 'text/plain', ctime: previous?.ctime ?? now, mtime: now }));
   changed(p);
 }
 
@@ -132,6 +131,7 @@ export async function move(from, to) {
     s.put({ ...n, path, parent: parentOf(path) });
   }));
   changed(from);
+  changed(to);
 }
 
 export async function ensureUserHome(userId) {
@@ -144,10 +144,10 @@ export async function ensureUserHome(userId) {
 
 export async function initFS() {
   if (await get('/')) {
-    for (const d of ['/.Trash', '/home', '/home/user', '/home/user/Documentos', '/home/user/Imagens', '/home/user/Música', '/home/user/Vídeos', '/home/user/Downloads']) if (!(await get(d))) await mkdir(d);
+    for (const d of ['/.Trash', '/home', '/home/user', '/home/user/Desktop', '/home/user/Documentos', '/home/user/Imagens', '/home/user/Música', '/home/user/Vídeos', '/home/user/Downloads']) if (!(await get(d))) await mkdir(d);
     return;
   }
   await tx('fs', s => s.put({ path: '/', type: 'dir', mtime: Date.now() }));
-  for (const d of ['/.Trash', '/home', '/home/user', '/home/user/Documentos', '/home/user/Imagens', '/home/user/Música', '/home/user/Vídeos', '/home/user/Downloads']) await mkdir(d);
+  for (const d of ['/.Trash', '/home', '/home/user', '/home/user/Desktop', '/home/user/Documentos', '/home/user/Imagens', '/home/user/Música', '/home/user/Vídeos', '/home/user/Downloads']) await mkdir(d);
   await write('/home/user/Documentos/leia-me.txt', 'Bem-vindo ao WebOS!\n\nEste ficheiro vive no sistema de ficheiros virtual (IndexedDB).\nEdita-o, guarda-o e abre-o no Explorador de Ficheiros.\n');
 }

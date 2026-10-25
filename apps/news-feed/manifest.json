@@ -2,6 +2,7 @@
   "id": "news-feed",
   "name": "Feed de Notícias",
   "version": "2.0.0",
+  "category": { "id": "applications", "name": "Aplicações", "nameEn": "Applications" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": {

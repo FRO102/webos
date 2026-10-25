@@ -16,6 +16,14 @@ jobs:
         run: node tests/validate-manifests.mjs
       - name: Smoke test
         run: node tests/smoke.mjs
+      - name: Filesystem path tests
+        run: node tests/filesystem-paths.mjs
+      - name: Filesystem content tests
+        run: node tests/filesystem-content.mjs
+      - name: Localization tests
+        run: node tests/i18n.mjs
+      - name: Sudoku logic tests
+        run: node tests/sudoku.mjs
       - name: Check JavaScript syntax
         shell: bash
         run: |

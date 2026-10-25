@@ -8,22 +8,19 @@ Um ambiente de trabalho virtual que corre no browser. O WebOS reúne janelas, á
 
 - Ambiente de trabalho com janelas redimensionáveis, minimizáveis e encaixáveis.
 - Menu Iniciar, barra de tarefas, quatro áreas de trabalho e alternador de janelas.
-- Sistema de ficheiros virtual persistente no browser, com Pasta pessoal, Desktop e Lixeira.
+- Sistema de ficheiros virtual persistente no browser, com Pasta pessoal, Desktop e Lixeira; os itens em `User/Desktop` aparecem como ícones na área de trabalho.
+- O filesystem fica no IndexedDB local do browser; Cloudflare Pages serve a aplicação estática, sem disco remoto nem sincronização entre dispositivos.
 - Definições de tema, papel de parede, acessibilidade e idioma.
 - Opção para colocar o WebOS em ecrã inteiro através das Definições.
-- Notificações, perfis de utilizador e cópia de segurança/restauro de dados do perfil.
+- Notificações, perfil único `User` e cópia de segurança/restauro dos dados desse perfil.
 - Aplicações executadas em iframes sandbox e integradas com o sistema através de um SDK próprio.
 - Interface em Português e Inglês. Textos ainda sem tradução mantêm a língua de origem.
 
 ## Aplicações
 
-O projeto inclui 21 aplicações:
+O projeto inclui 35 aplicações, organizadas em três secções no Menu Iniciar e na app Aplicações: **Sistema**, **Aplicações** e **Jogos**. Cada app declara uma destas categorias no próprio manifest.
 
-| Sistema e produtividade | Ferramentas e conteúdo |
-| --- | --- |
-| Definições, Aplicações, Ficheiros, Terminal | Calculadora, Calendário, Relógio, Snake |
-| Navegador, Gestor de Tarefas, Gestor de Downloads | Diagramas, Despesas, Conversor de Unidades |
-| Backup e Restauro, Portefolio Terminal | Códigos QR, Paleta de Cores, Imagens, Leitor Multimédia, Bloco de Notas |
+O Desktop inclui atalhos para a Lixeira, Pasta pessoal, Jogos e Sistema, além dos ficheiros e pastas guardados em `User/Desktop`. O Sudoku inclui notas, dicas, contador de erros e controlos de teclado. O Terminal trabalha apenas com ficheiros e serviços do WebOS: `rm` envia itens para a Lixeira e `purge` pede confirmação antes de os apagar permanentemente.
 
 Cada aplicação vive na sua própria pasta dentro de [`apps/`](apps/).
 
@@ -78,6 +75,9 @@ Executa a partir da raiz do projeto:
 node tests/validate-manifests.mjs
 node tests/smoke.mjs
 node tests/i18n.mjs
+node tests/filesystem-paths.mjs
+node tests/filesystem-content.mjs
+node tests/sudoku.mjs
 ```
 
 Para verificar a sintaxe dos scripts JavaScript em PowerShell:
@@ -89,6 +89,8 @@ Get-ChildItem -Path . -Recurse -Filter *.js | ForEach-Object { node --check $_.F
 ## Criar uma aplicação
 
 Adiciona uma pasta `apps/<id>/` com um `manifest.json` e os ficheiros da aplicação. O `id` do manifest tem de corresponder ao nome da pasta.
+
+Cada manifest também declara `category` com um ID estável e os nomes em Português e inglês, por exemplo `"category": { "id": "games", "name": "Jogos", "nameEn": "Games" }`. Assim, a app é agrupada automaticamente no Menu Iniciar e em Aplicações.
 
 Quando publicares em Cloudflare Pages, atualiza também o ficheiro [`apps/registry.json`](apps/registry.json) com o `id` da nova app; esse registry é a fonte de verdade em produção.
 

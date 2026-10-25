@@ -2,6 +2,7 @@
   "id": "codigos-qr",
   "name": "Códigos QR",
   "version": "1.0.0",
+  "category": { "id": "applications", "name": "Aplicações", "nameEn": "Applications" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 660, "height": 610, "minWidth": 480, "minHeight": 460 },

@@ -2,6 +2,7 @@
   "id": "snake",
   "name": "Snake",
   "version": "1.0.0",
+  "category": { "id": "games", "name": "Jogos", "nameEn": "Games" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 440, "height": 500, "minWidth": 300, "minHeight": 360 },

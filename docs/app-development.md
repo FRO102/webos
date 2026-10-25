@@ -8,6 +8,15 @@
 Regras:
 - O `id` do manifest deve ser igual ao nome da pasta e conter apenas letras, números e hífen.
 - O `id` deve usar apenas minúsculas, números e hífen.
+- Cada manifest deve declarar uma das três categorias visuais: `system` (Sistema), `applications` (Aplicações) ou `games` (Jogos). Os nomes são apresentados conforme o idioma ativo.
+- Exemplo de categoria no manifest:
+
+  ```json
+  "category": { "id": "applications", "name": "Aplicações", "nameEn": "Applications" }
+  ```
+
+- Todas as apps que usem o mesmo `category.id` devem declarar exatamente os mesmos `name` e `nameEn`. Não declares IDs adicionais: o loader e o validador rejeitam categorias fora das três secções suportadas.
+- `os.shell.apps()` expõe a categoria como `{ id, name, nameEn }`. Não mantenhas um catálogo de categorias separado.
 - Em Cloudflare Pages, o `id` também tem de aparecer em [`apps/registry.json`](apps/registry.json) para a app ser carregada.
 - Todos os ficheiros e imagens específicos da app devem ficar dentro da própria pasta `apps/<id>/`.
 - O `icon` e o `entry` são caminhos relativos à pasta da app.
@@ -21,7 +30,7 @@ Regras:
 - `external.open` permite abrir URLs `http`, `https` e `mailto` através do SDK.
 
 ## API (fase 5)
-- `os.fs.list/read/stat/exists/write/mkdir/remove/move` (`exists` requer `fs.read`; as operações de leitura requerem `fs.read` e as de alteração requerem `fs.write`)
+- `os.fs.list/read/stat/exists/write/mkdir/remove/move` (`exists` requer `fs.read`; as operações de leitura requerem `fs.read` e as de alteração requerem `fs.write`). `read` devolve texto como string e conteúdos binários como `Blob`; `write` aceita string, `Blob`, `ArrayBuffer` e `TypedArray`. `stat.size` é medido em bytes.
 - `os.storage.get/set/remove` — armazenamento privado da app, sem permissão
 - `os.args()` — argumentos de arranque, ex.: `{ path }` quando a app é aberta a partir de um ficheiro
 - `os.shell.isFullscreen()` / `os.shell.toggleFullscreen()` — consultar ou alternar o modo ecrã inteiro do WebOS. A chamada para entrar deve partir diretamente de uma ação do utilizador e pode ser recusada pelas políticas do browser.
@@ -42,6 +51,10 @@ Ao adicionar rótulos novos à interface, incluir a tradução inglesa no catál
 - `os.storage` pertence à app identificada pelo manifest. Usa-o para dados privados e preferências específicas da app; as chaves não são partilhadas com outras apps.
 - `os.settings` pertence ao perfil/shell. Usa-o apenas para preferências globais, como tema, idioma e papel de parede. Não guardes ali dados de domínio de uma app.
 - `os.fs` contém ficheiros do utilizador no filesystem virtual. Guarda documentos que o utilizador espera encontrar no Explorador ou abrir noutra app.
+- A pasta `/home/user/Desktop` é criada pelo filesystem e os seus ficheiros/pastas aparecem também como ícones no Desktop do WebOS. O shell atualiza os ícones quando essa pasta muda.
+- O filesystem é local ao browser/perfil e guardado em IndexedDB; o alojamento estático no Cloudflare Pages não fornece um disco remoto nem sincroniza ficheiros entre dispositivos. `apps/registry.json` continua a servir apenas para descobrir apps.
+- Esta configuração WebOS usa um único perfil chamado `User`; os dados antigos que eventualmente existam sob outros IDs não são apagados automaticamente pela inicialização.
+- `os.fs.write(path, content, mime)` preserva conteúdo binário quando recebe `Blob`, `ArrayBuffer` ou `TypedArray`. `os.fs.read(path)` devolve strings para conteúdo textual e `Blob` para conteúdo binário; `os.fs.stat(path).size` é sempre em bytes. Ficheiros antigos em Data URL e texto continuam legíveis.
 - A app **Backup e Restauro** exporta/restaura as definições globais, chaves privadas das apps e pasta pessoal do perfil ativo. Não inclui contas, credenciais, auditoria, notificações nem a Lixeira. A permissão `profile.backup` é reservada pelo shell ao ID `backup-restauro`; apps comuns não devem declará-la.
 - Não criar APIs globais de partilha de dados até existir um fluxo concreto que não possa ser resolvido por exportação/importação de ficheiros.
 

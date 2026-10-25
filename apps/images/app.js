@@ -1,7 +1,8 @@
 const $ = id => document.getElementById(id);
 const img = $('img'), stage = $('stage'), empty = $('empty'), status = $('status');
-const DEFAULT_DIR = '/home/user/Imagens', MAX = 5 * 1024 * 1024;
-let dir = DEFAULT_DIR, files = [], idx = -1;
+const MAX = 5 * 1024 * 1024;
+let DEFAULT_DIR = '/home/user/Imagens', dir = DEFAULT_DIR, files = [], idx = -1;
+let currentObjectUrl = null;
 
 const say = m => { status.textContent = m; };
 const isImg = n => /\.(png|jpe?g|gif|webp|svg)$/i.test(n);
@@ -22,7 +23,13 @@ async function show(i) {
   if (!f) return;
   try {
     const c = await os.fs.read(f.path);
-    img.src = c.startsWith('data:') ? c : 'data:image/svg+xml;utf8,' + encodeURIComponent(c);
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    if (c instanceof Blob) {
+      currentObjectUrl = URL.createObjectURL(c);
+      img.src = currentObjectUrl;
+    } else {
+      img.src = c.startsWith('data:') ? c : 'data:image/svg+xml;utf8,' + encodeURIComponent(c);
+    }
     say(f.path);
   } catch (e) { say(e.message); }
 }
@@ -36,8 +43,7 @@ $('file').onchange = async e => {
   let last = null;
   for (const f of e.target.files) {
     if (f.size > MAX) { say(`${f.name}: maior que 5 MB.`); continue; }
-    const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
-    try { await os.fs.write(join(dir, f.name), data); last = f.name; } catch (err) { say(err.message); }
+    try { await os.fs.write(join(dir, f.name), f, f.type || 'application/octet-stream'); last = f.name; } catch (err) { say(err.message); }
   }
   e.target.value = '';
   await scan(dir);
@@ -45,9 +51,12 @@ $('file').onchange = async e => {
 };
 
 os.on('fs:changed', async () => { const cur = files[idx]?.path; await scan(dir); show(Math.max(files.findIndex(f => f.path === cur), 0)); });
+addEventListener('pagehide', () => { if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl); });
 
 (async () => {
-  const a = await os.args();
+  const [home, a] = await Promise.all([os.fs.home(), os.args()]);
+  DEFAULT_DIR = `${home}/Imagens`;
+  dir = DEFAULT_DIR;
   if (a?.path) {
     await scan(a.path.split('/').slice(0, -1).join('/') || '/');
     show(files.findIndex(f => f.path === a.path));

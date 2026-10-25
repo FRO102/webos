@@ -89,7 +89,15 @@
       $('.ok').textContent = mode === 'open' ? 'Abrir' : 'Guardar';
       name.value = o.defaultName || '';
       if (mode === 'open') { name.readOnly = true; name.placeholder = 'Seleciona um ficheiro'; } else name.placeholder = 'nome.txt';
-      let cwd = o.start || '/home/user', sel = null;
+      let cwd = o.start || '/', sel = null;
+
+      async function resolveStart() {
+        const home = await os.fs.home();
+        if (!o.start) return home;
+        if (o.start === '/home/user') return home;
+        if (o.start.startsWith('/home/user/')) return home + o.start.slice('/home/user'.length);
+        return o.start;
+      }
 
       async function go(p) {
         let items;
@@ -143,9 +151,9 @@
       $('.ok').onclick = confirmOk;
       pathIn.onkeydown = e => { if (e.key === 'Enter') go(pathIn.value.trim() || '/'); };
       name.onkeydown = e => { if (e.key === 'Enter') confirmOk(); };
-      go(cwd).then(() => {
+      resolveStart().then(go).then(() => {
         if (mode === 'save') { name.focus(); name.select(); } else (list.querySelector('button') ?? $('.cancel')).focus();
-      });
+      }).catch(() => go('/').then(() => (list.querySelector('button') ?? $('.cancel')).focus()));
     });
   }
 

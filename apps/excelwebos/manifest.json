@@ -2,6 +2,7 @@
   "id": "excelwebos",
   "name": "ExcelWebos",
   "version": "1.0.0",
+  "category": { "id": "applications", "name": "Aplicações", "nameEn": "Applications" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": {

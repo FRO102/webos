@@ -1,3 +1,5 @@
+import { decodeBackupContent, encodeBackupContent } from './fs-content.js';
+
 let dbp;
 export const DB_VERSION = 2;
 const open = () => dbp ??= new Promise((res, rej) => {
@@ -52,13 +54,13 @@ export async function createProfileBackup(user) {
     req(db.transaction('fs').objectStore('fs').getAll()),
   ]);
   const appData = keys.map((key, index) => [key, values[index]]).filter(([key]) => typeof key === 'string' && key.startsWith('app:'));
-  const homeFiles = files.filter(file => file.path === home || file.path.startsWith(home + '/')).map(file => ({
+  const homeFiles = await Promise.all(files.filter(file => file.path === home || file.path.startsWith(home + '/')).map(async file => ({
     path: file.path === home ? '/' : file.path.slice(home.length), type: file.type,
-    ...(file.type === 'file' ? { content: file.content, mime: file.mime ?? 'text/plain' } : {}),
+    ...(file.type === 'file' ? { content: await encodeBackupContent(file.content), mime: file.mime ?? 'text/plain' } : {}),
     ctime: file.ctime ?? file.mtime, mtime: file.mtime,
-  }));
+  })));
   const backup = {
-    format: 'webos-profile-backup', version: 1, createdAt: new Date().toISOString(),
+    format: 'webos-profile-backup', version: 2, createdAt: new Date().toISOString(),
     profile: { id: user.id, name: user.name }, settings: await kv.get('system:settings'), appData, files: homeFiles,
   };
   const encoded = JSON.stringify(backup);
@@ -67,7 +69,7 @@ export async function createProfileBackup(user) {
 }
 
 export async function restoreProfileBackup(backup, user) {
-  if (!backup || backup.format !== 'webos-profile-backup' || backup.version !== 1) throw new Error('Formato de backup não suportado.');
+  if (!backup || backup.format !== 'webos-profile-backup' || ![1, 2].includes(backup.version)) throw new Error('Formato de backup não suportado.');
   if (!Array.isArray(backup.appData) || !Array.isArray(backup.files) || backup.appData.length > 10000 || backup.files.length > 10000) throw new Error('O backup contém dados inválidos ou excede os limites permitidos.');
   if (JSON.stringify(backup).length > 50 * 1024 * 1024) throw new Error('O backup excede o limite de 50 MB.');
   const home = `/home/${user.id}`, paths = new Set();
@@ -77,8 +79,13 @@ export async function restoreProfileBackup(backup, user) {
     const path = file.path === '/' ? home : home + file.path;
     if (paths.has(path) || !['dir', 'file'].includes(file.type)) throw new Error('O backup contém caminhos repetidos ou tipos inválidos.');
     paths.add(path);
-    if (file.type === 'file' && typeof file.content !== 'string') throw new Error('O backup contém um ficheiro inválido.');
-    return { path, type: file.type, ...(file.type === 'file' ? { content: file.content, mime: String(file.mime ?? 'text/plain').slice(0, 120) } : {}), ctime: Number(file.ctime) || Date.now(), mtime: Number(file.mtime) || Date.now() };
+    const mime = String(file.mime ?? 'text/plain').slice(0, 120);
+    let content;
+    if (file.type === 'file') {
+      if (backup.version === 1 && typeof file.content !== 'string') throw new Error('O backup contém um ficheiro inválido.');
+      content = decodeBackupContent(file.content, mime);
+    }
+    return { path, type: file.type, ...(file.type === 'file' ? { content, mime } : {}), ctime: Number(file.ctime) || Date.now(), mtime: Number(file.mtime) || Date.now() };
   });
   if (!records.some(file => file.path === home && file.type === 'dir')) throw new Error('O backup não contém a pasta pessoal.');
   for (const file of records) {

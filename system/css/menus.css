@@ -13,6 +13,13 @@
 }
 #start-menu input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 #start-menu ul { flex: 1; margin: 0; padding: 0; list-style: none; overflow: auto; }
+#start-menu li.section-heading { padding: 10px 10px 4px; color: var(--task-muted, rgba(255, 255, 255, .65)); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+#start-menu li.category-group { padding: 2px 0; }
+#start-menu li.category-group details > summary { padding: 8px 10px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; list-style-position: inside; }
+#start-menu li.category-group details > summary:hover, #start-menu li.category-group details > summary:focus-visible { background: rgba(255, 255, 255, .1); outline: none; }
+#start-menu li.category-group ul { flex: none; padding-left: 8px; overflow: visible; }
+#start-menu li.category-group li button { padding-block: 6px; font-size: 13px; }
+#start-menu li.category-group li button img { width: 28px; height: 28px; }
 #start-menu li button {
   display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px;
   border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; font-size: 14px; text-align: left;

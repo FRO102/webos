@@ -2,6 +2,7 @@
   "id": "app-store",
   "name": "Aplicações",
   "version": "1.0.0",
+  "category": { "id": "system", "name": "Sistema", "nameEn": "System" },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": { "width": 640, "height": 500, "minWidth": 460, "minHeight": 320 },

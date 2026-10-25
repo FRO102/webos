@@ -1,3 +1,23 @@
+const SudokuLogic = (() => {
+  const isSafe = (board, row, col, num) => {
+    for (let index = 0; index < 9; index++) {
+      if ((index !== col && board[row][index] === num) || (index !== row && board[index][col] === num)) return false;
+    }
+    const startRow = row - row % 3;
+    const startCol = col - col % 3;
+    for (let r = startRow; r < startRow + 3; r++) {
+      for (let c = startCol; c < startCol + 3; c++) {
+        if ((r !== row || c !== col) && board[r][c] === num) return false;
+      }
+    }
+    return true;
+  };
+  return { isSafe };
+})();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = SudokuLogic;
+
+if (typeof document !== 'undefined') {
 (function () {
   'use strict';
 
@@ -10,7 +30,10 @@
     startTime: null,
     timerInterval: null,
     elapsedSeconds: 0,
-    hasUserAction: false
+    hasUserAction: false,
+    notes: [],
+    notesMode: false,
+    mistakes: 0
   };
 
   const els = {};
@@ -32,11 +55,17 @@
     els.winOverlay = document.getElementById('win-overlay');
     els.winTime = document.getElementById('win-time');
     els.btnPlayAgain = document.getElementById('btn-play-again');
+    els.btnNotes = document.getElementById('btn-notes');
+    els.btnHint = document.getElementById('btn-hint');
+    els.mistakes = document.getElementById('mistakes');
+    els.gameStatus = document.getElementById('game-status');
   }
 
   function bindEvents() {
     els.btnNew.addEventListener('click', startNewGame);
     els.btnPlayAgain.addEventListener('click', startNewGame);
+    els.btnNotes.addEventListener('click', toggleNotesMode);
+    els.btnHint.addEventListener('click', revealHint);
 
     els.board.addEventListener('click', e => {
       const cell = e.target.closest('.cell');
@@ -55,9 +84,11 @@
 
     document.addEventListener('keydown', e => {
       if (state.isGameOver) return;
+      const key = e.key;
+      if (key.toLowerCase() === 'n') { toggleNotesMode(); return; }
+      if (key.toLowerCase() === 'h') { revealHint(); return; }
       if (!state.selectedCell) return;
 
-      const key = e.key;
       if (key >= '1' && key <= '9') {
         inputNumber(parseInt(key, 10));
       } else if (key === 'Backspace' || key === 'Delete' || key === '0') {
@@ -102,17 +133,7 @@
   }
 
   function isSafe(board, row, col, num) {
-    for (let i = 0; i < 9; i++) {
-      if (board[row][i] === num || board[i][col] === num) return false;
-    }
-    const sr = row - row % 3;
-    const sc = col - col % 3;
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (board[sr + i][sc + j] === num) return false;
-      }
-    }
-    return true;
+    return SudokuLogic.isSafe(board, row, col, num);
   }
 
   function shuffle(array) {
@@ -156,11 +177,15 @@
     state.selectedCell = null;
     state.isGameOver = false;
     state.hasUserAction = false;
+    state.notes = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set()));
+    state.notesMode = false;
+    state.mistakes = 0;
     state.elapsedSeconds = 0;
     state.startTime = Date.now();
 
     els.winOverlay.hidden = true;
     updateTimerDisplay();
+    updateGameStatus();
 
     state.timerInterval = setInterval(() => {
       state.elapsedSeconds++;
@@ -199,12 +224,56 @@
     const { row, col } = state.selectedCell;
     if (state.initial[row][col] !== 0) return;
 
+    if (state.notesMode && num !== 0) {
+      const notes = state.notes[row][col];
+      if (notes.has(num)) notes.delete(num);
+      else notes.add(num);
+      state.hasUserAction = true;
+      renderBoard();
+      updateHighlights();
+      return;
+    }
+
+    if (num > 0 && state.board[row][col] !== num && num !== state.solution[row][col]) state.mistakes++;
     state.board[row][col] = num;
+    state.notes[row][col].clear();
     state.hasUserAction = true;
 
     renderBoard();
     updateHighlights();
+    updateGameStatus();
     checkWinCondition();
+  }
+
+  function toggleNotesMode() {
+    state.notesMode = !state.notesMode;
+    els.btnNotes.setAttribute('aria-pressed', String(state.notesMode));
+    els.btnNotes.classList.toggle('active', state.notesMode);
+    els.btnNotes.textContent = state.notesMode ? 'Notas: ligadas' : 'Notas: desligadas';
+  }
+
+  function revealHint() {
+    if (state.isGameOver) return;
+    if (!state.selectedCell) {
+      els.gameStatus.textContent = 'Seleciona primeiro uma célula vazia.';
+      return;
+    }
+    const { row, col } = state.selectedCell;
+    if (state.initial[row][col] !== 0) {
+      els.gameStatus.textContent = 'Escolhe uma célula que não esteja fixa.';
+      return;
+    }
+    state.board[row][col] = state.solution[row][col];
+    state.notes[row][col].clear();
+    state.hasUserAction = true;
+    els.gameStatus.textContent = 'Dica preenchida.';
+    renderBoard();
+    updateHighlights();
+    checkWinCondition();
+  }
+
+  function updateGameStatus() {
+    els.mistakes.textContent = `Erros: ${state.mistakes}`;
   }
 
   // ---------------------------------------------------------------- Render
@@ -217,6 +286,12 @@
           cell.className = 'cell';
           cell.dataset.row = r;
           cell.dataset.col = c;
+          cell.setAttribute('role', 'gridcell');
+          const value = document.createElement('span');
+          value.className = 'cell-value';
+          const notes = document.createElement('span');
+          notes.className = 'cell-notes';
+          cell.append(value, notes);
           els.board.appendChild(cell);
         }
       }
@@ -226,12 +301,21 @@
       for (let c = 0; c < 9; c++) {
         const cell = els.board.children[r * 9 + c];
         const val = state.board[r][c];
-        cell.textContent = val > 0 ? val : '';
+        cell.querySelector('.cell-value').textContent = val > 0 ? val : '';
+        const noteGrid = cell.querySelector('.cell-notes');
+        noteGrid.replaceChildren();
+        if (val === 0) {
+          for (let note = 1; note <= 9; note++) {
+            const noteEl = document.createElement('span');
+            noteEl.textContent = state.notes[r][c].has(note) ? note : '';
+            noteGrid.append(noteEl);
+          }
+        }
 
         if (state.initial[r][c] !== 0) cell.classList.add('fixed');
         else cell.classList.remove('fixed');
 
-        if (val > 0 && !isSafe(state.board, r, c, val) && state.initial[r][c] === 0) {
+        if (val > 0 && state.initial[r][c] === 0 && (val !== state.solution[r][c] || !isSafe(state.board, r, c, val))) {
           cell.classList.add('error');
         } else {
           cell.classList.remove('error');
@@ -294,3 +378,4 @@
     }
   }
 })();
+}

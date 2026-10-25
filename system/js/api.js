@@ -7,6 +7,7 @@ import { logger } from './logger.js';
 import { listApps, openApp } from './shell-registry.js';
 import { getCurrentUser } from './users.js';
 import { localeData } from './i18n.js';
+import { resolveScopedFsPath } from './fs-paths.js';
 
 const clients = new Map(); // contentWindow -> { appId, winId, manifest }
 const apiError = error => {
@@ -20,11 +21,8 @@ const apiError = error => {
   return { code, message };
 };
 const scopedPath = path => {
-  const value = String(path ?? '/');
-  const home = `/home/${getCurrentUser()?.id || 'user'}`;
-  if (value === '/' || value === '/home') return home;
-  if (value === '/.Trash' || value.startsWith('/.Trash/') || value === home || value.startsWith(home + '/')) return value;
-  throw new Error('A aplicação só pode aceder à pasta do utilizador.');
+  const userId = String(getCurrentUser()?.id || 'user').replace(/[^a-z0-9-]/gi, '') || 'user';
+  return resolveScopedFsPath(path, `/home/${userId}`);
 };
 const scopedMove = (from, to) => [scopedPath(from), scopedPath(to)];
 

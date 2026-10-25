@@ -3,7 +3,7 @@ const fileInput = $('backup-file');
 let backupFile = null, backupData = null;
 
 function inspectBackup(value) {
-  if (!value || value.format !== 'webos-profile-backup' || value.version !== 1) throw new Error('Este ficheiro não é um backup WebOS compatível.');
+  if (!value || value.format !== 'webos-profile-backup' || ![1, 2].includes(value.version)) throw new Error('Este ficheiro não é um backup WebOS compatível.');
   if (!value.profile || typeof value.profile.name !== 'string' || !Array.isArray(value.files) || !Array.isArray(value.appData) || !value.settings) throw new Error('O backup está incompleto ou mal formado.');
   if (value.files.length > 10000 || value.appData.length > 10000) throw new Error('O backup excede o limite de registos.');
   return { files: value.files.length, appKeys: value.appData.length, sourceName: value.profile.name, createdAt: value.createdAt };

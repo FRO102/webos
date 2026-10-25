@@ -1,15 +1,23 @@
 const $ = id => document.getElementById(id);
 const out = $('out'), input = $('in'), promptEl = $('prompt');
-const HOME = '/home/user';
 const VERSION = 'WebOS Terminal 1.0';
-let cwd = HOME, hi = 0;
-const hist = [];
+const HISTORY_KEY = 'terminal-history-v1';
+let HOME = '/home/user', cwd = HOME, hi = 0;
+let hist = [];
 const aliases = { ll: 'ls -l', la: 'ls -la', cls: 'clear' };
 
 const norm = p => { const o = []; for (const s of p.split('/')) { if (!s || s === '.') continue; s === '..' ? o.pop() : o.push(s); } return '/' + o.join('/'); };
 const resolve = p => norm(p === '~' || p.startsWith('~/') ? HOME + p.slice(1) : p.startsWith('/') ? p : cwd + '/' + p);
 const shown = () => (cwd === HOME ? '~' : cwd.startsWith(HOME + '/') ? '~' + cwd.slice(HOME.length) : cwd);
-const setPrompt = () => { promptEl.textContent = `user@webos:${shown()}$`; };
+const setPrompt = () => { promptEl.textContent = `User@WebOS:${shown()}$`; };
+
+async function readText(path) {
+  const content = await os.fs.read(path);
+  if (typeof content === 'string') return content;
+  const metadata = await os.fs.stat(path);
+  if (metadata.mime.startsWith('text/') || /\/(json|xml|javascript|x-javascript)$/.test(metadata.mime)) return content.text();
+  throw new Error(`${path}: ficheiro binário (${metadata.mime}); não pode ser lido como texto.`);
+}
 
 function print(text, cls) {
   const d = document.createElement('div');
@@ -45,7 +53,7 @@ const HELP = `Comandos:
   tree [pasta]        mostra a árvore       find texto        pesquisa ficheiros
   grep texto f...     procura dentro de ficheiros  stat f  metadados
   mkdir p...          cria pastas           touch f...        cria ficheiros vazios
-  rm [-r] p...        apaga                 mv origem dest    move/renomeia
+  rm [-r] p...        move para a Lixeira  purge p...         apaga definitivamente
   cp origem dest      copia ficheiros       echo txt [> f]    escreve (> ou >>)
   trash f...          move para a Lixeira  restore f         restaura da Lixeira
   open ficheiro       abre na app certa     apps              lista aplicações
@@ -59,7 +67,7 @@ const cmds = {
   help: () => print(HELP),
   pwd: () => print(cwd),
   clear: () => out.replaceChildren(),
-  whoami: () => print('user'),
+  whoami: () => print('User'),
   date: () => print(new Date().toLocaleString('pt-PT')),
   version: () => print(VERSION),
   uname: () => print('WebOS browser-shell x86_64'),
@@ -71,12 +79,12 @@ const cmds = {
     if (i < 0) return print(a.join(' '));
     if (!a[i + 1]) throw new Error('falta o ficheiro de destino.');
     const p = resolve(a[i + 1]);
-    const prev = a[i] === '>>' ? await os.fs.read(p).catch(() => '') : '';
+    const prev = a[i] === '>>' && await os.fs.exists(p) ? await readText(p) : '';
     await os.fs.write(p, prev + a.slice(0, i).join(' ') + '\n');
   },
   async ls(a) {
     const long = a.some(x => x === '-l' || x === '-la' || x === '-al');
-    const p = resolve(a.find(x => x !== '-l') ?? '.');
+    const p = resolve(a.find(x => !['-l', '-la', '-al'].includes(x)) ?? '.');
     const st = await os.fs.stat(p);
     printLs(st.type === 'dir' ? await os.fs.list(p) : [st], long);
   },
@@ -87,7 +95,7 @@ const cmds = {
   },
   async cat(a) {
     if (!a.length) throw new Error('indica um ficheiro.');
-    for (const f of a) print(await os.fs.read(resolve(f)));
+    for (const f of a) print(await readText(resolve(f)));
   },
   async head(a) { return printLines(a, 10, false); },
   async tail(a) { return printLines(a, 10, true); },
@@ -95,11 +103,11 @@ const cmds = {
     const root = resolve(a[0] ?? '.');
     const walk = async (path, prefix = '') => {
       const items = await os.fs.list(path);
-      items.forEach((item, index) => {
+      for (const [index, item] of items.entries()) {
         const last = index === items.length - 1;
         print(`${prefix}${last ? '└─' : '├─'} ${item.name}${item.type === 'dir' ? '/' : ''}`);
-        if (item.type === 'dir') walk(`${path === '/' ? '' : path}/${item.name}`, prefix + (last ? '  ' : '│ '));
-      });
+        if (item.type === 'dir') await walk(`${path === '/' ? '' : path}/${item.name}`, prefix + (last ? '  ' : '│ '));
+      }
     };
     print(root); await walk(root);
   },
@@ -113,7 +121,7 @@ const cmds = {
     if (a.length < 2) throw new Error('uso: grep texto ficheiro...');
     const query = a.shift().toLowerCase();
     for (const file of a) {
-      const path = resolve(file), lines = (await os.fs.read(path)).split(/\r?\n/);
+      const path = resolve(file), lines = (await readText(path)).split(/\r?\n/);
       lines.forEach((line, index) => { if (line.toLowerCase().includes(query)) print(`${file}:${index + 1}:${line}`); });
     }
   },
@@ -130,8 +138,13 @@ const cmds = {
     for (const f of a.filter(x => x !== '-r')) {
       const p = resolve(f);
       if ((await os.fs.stat(p)).type === 'dir' && !rec) throw new Error(`${f} é uma pasta (usa rm -r)`);
-      await os.fs.remove(p);
+      await os.fs.trash(p);
     }
+  },
+  async purge(a) {
+    if (!a.length) throw new Error('uso: purge caminho...');
+    if (!await os.dialog.confirm({ title: 'Apagar definitivamente?', message: `Apagar ${a.length} item(ns)? Esta ação não pode ser anulada.`, okLabel: 'Apagar', danger: true })) return;
+    for (const path of a) await os.fs.remove(resolve(path));
   },
   async trash(a) { if (!a.length) throw new Error('indica um caminho.'); for (const file of a) await os.fs.trash(resolve(file)); },
   async restore(a) { if (!a.length) throw new Error('indica um item da Lixeira.'); for (const file of a) await os.fs.restore(resolve(file)); },
@@ -143,8 +156,9 @@ const cmds = {
   async cp(a) {
     if (a.length !== 2) throw new Error('uso: cp origem destino');
     const src = resolve(a[0]);
-    if ((await os.fs.stat(src)).type !== 'file') throw new Error('só copia ficheiros.');
-    await os.fs.write(await destPath(src, a[1]), await os.fs.read(src));
+    const metadata = await os.fs.stat(src);
+    if (metadata.type !== 'file') throw new Error('só copia ficheiros.');
+    await os.fs.write(await destPath(src, a[1]), await os.fs.read(src), metadata.mime);
   },
   async open(a) {
     if (!a[0]) throw new Error('indica um ficheiro.');
@@ -178,7 +192,7 @@ async function printLines(args, defaultCount, fromEnd) {
   if (n >= 0) { count = Number(filtered[n + 1]); filtered.splice(n, 2); }
   const file = filtered[0];
   if (!file || !Number.isFinite(count)) throw new Error('uso: head/tail [-n N] ficheiro');
-  const lines = (await os.fs.read(resolve(file))).split(/\r?\n/);
+  const lines = (await readText(resolve(file))).split(/\r?\n/);
   print((fromEnd ? lines.slice(-count) : lines.slice(0, count)).join('\n'));
 }
 
@@ -210,7 +224,12 @@ input.addEventListener('keydown', async e => {
   if (e.key === 'Enter') {
     const line = input.value;
     input.value = '';
-    if (line.trim()) { hist.push(line); hi = hist.length; }
+    if (line.trim()) {
+      hist.push(line);
+      hist = hist.slice(-200);
+      hi = hist.length;
+      os.storage.set(HISTORY_KEY, hist).catch(() => {});
+    }
     await run(line);
     setPrompt();
     out.scrollTop = out.scrollHeight;
@@ -221,6 +240,14 @@ input.addEventListener('keydown', async e => {
 });
 document.body.addEventListener('click', () => { if (!getSelection().toString()) input.focus(); });
 
-setPrompt();
-print('WebOS Terminal — escreve "help" para ver os comandos.');
-input.focus();
+Promise.all([os.fs.home(), os.storage.get(HISTORY_KEY)]).then(([home, savedHistory]) => {
+  HOME = home;
+  cwd = home;
+  if (Array.isArray(savedHistory)) hist = savedHistory.filter(line => typeof line === 'string').slice(-200);
+  setPrompt();
+  print('WebOS Terminal — escreve "help" para ver os comandos.');
+  input.focus();
+}).catch(() => {
+  setPrompt();
+  print('WebOS Terminal — escreve "help" para ver os comandos.');
+});

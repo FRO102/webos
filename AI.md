@@ -4,7 +4,7 @@
 
 O WebOS é um simulador de sistema operativo executado no navegador. Todo o projeto deve ser feito apenas com HTML, CSS e JavaScript, sem frameworks obrigatórios e sem backend necessário em runtime.
 
-O sistema fornece um desktop, janelas, barra de tarefas, áreas de trabalho virtuais, menu Iniciar, filesystem virtual, notificações, sessões de utilizador e um SDK para aplicações isoladas.
+O sistema fornece um Desktop, janelas, barra de tarefas, áreas de trabalho virtuais, menu Iniciar, filesystem virtual, notificações, um perfil único (`User`) e um SDK para aplicações isoladas.
 
 ## Regra principal
 
@@ -47,6 +47,11 @@ Exemplo mínimo:
   "id": "to-do",
   "name": "To-Do List",
   "version": "1.0.0",
+  "category": {
+    "id": "applications",
+    "name": "Aplicações",
+    "nameEn": "Applications"
+  },
   "icon": "icon.svg",
   "entry": "index.html",
   "window": {
@@ -66,6 +71,8 @@ Regras:
 - `id` deve ser igual ao nome da pasta.
 - `id` deve usar apenas letras minúsculas, números e hífen (`^[a-z0-9][a-z0-9-]*$`).
 - `name`, `version`, `icon` e `entry` são obrigatórios.
+- `category` deve incluir `id`, `name` em Português e `nameEn` em inglês. O Menu Iniciar e a app Aplicações descobrem os grupos diretamente dos manifests; um ID novo não requer alteração ao shell.
+- Apps com o mesmo `category.id` devem declarar exatamente os mesmos nomes. `os.shell.apps()` disponibiliza `category: { id, name, nameEn }`.
 - `icon` e `entry` são relativos à pasta da app.
 - `permissions` é obrigatório e deve ser sempre um array, mesmo quando vazio.
 - `window` é opcional; sem ele o shell usa `width: 480`, `height: 320`, `minWidth: 240` e `minHeight: 140` pixels.
@@ -129,13 +136,14 @@ Cada aplicação é carregada num `iframe` sandbox. A app nunca deve manipular d
 
 ### Desktop
 
-`system/js/desktop.js` cria atualmente apenas estes ícones fixos:
+`system/js/desktop.js` apresenta atalhos e o conteúdo da pasta virtual do utilizador:
 
-- Lixeira;
-- Pasta pessoal;
-- Navegador.
+- Lixeira e Pasta pessoal;
+- pastas visuais Jogos e Sistema, preenchidas a partir das categorias dos manifests;
+- atalhos fixos para Aplicações, Navegador e Portefolio Terminal;
+- itens de `/home/user/Desktop`, atualizados quando o filesystem emite `fs:changed`.
 
-Os outros programas continuam disponíveis pelo Menu Iniciar e pela Loja. As posições dos ícones são guardadas em `localStorage`.
+Os outros programas continuam disponíveis pelo Menu Iniciar e pela app Aplicações. As posições dos ícones são guardadas em `localStorage`. Um clique seleciona o ícone; duplo clique abre-o. Os itens reais de `User/Desktop` abrem pastas no Explorador e ficheiros na app associada.
 
 ### Barra de tarefas
 
@@ -155,6 +163,7 @@ Os outros programas continuam disponíveis pelo Menu Iniciar e pela Loja. As pos
 - pesquisa de aplicações;
 - pesquisa de ficheiros;
 - aplicações recentes;
+- grupos de aplicações recolhíveis, derivados da categoria do manifest;
 - navegação por teclado;
 - fechar janelas;
 - bloquear sessão;
@@ -190,6 +199,12 @@ Eventos importantes:
 
 `settings:changed` é um evento interno do shell. `theme:changed` é o evento público recebido pelas apps através de `os.on()`.
 
+### Terminal e Sudoku
+
+O Terminal (`apps/terminal/`) implementa comandos limitados ao WebOS, sem executar programas do sistema anfitrião. Usa o home devolvido por `os.fs.home()`, guarda o histórico no armazenamento privado da app, envia `rm` para a Lixeira e exige confirmação em `purge` para apagar permanentemente. Leituras textuais identificam e recusam conteúdo binário.
+
+O Sudoku (`apps/sudoku/`) oferece níveis de dificuldade, cronómetro, notas/candidatos (`N`), dica (`H`), contagem de erros e realce de conflitos. A lógica de regras pode ser testada em Node sem DOM através de `tests/sudoku.mjs`.
+
 ### Alternador de janelas
 
 `system/js/switcher.js` implementa o alternador de janelas ativado por `Alt+Q`. Mantém `Alt` pressionado e repete `Q` para percorrer as janelas; `Shift` inverte a direção. `Alt+setas` faz snap ou restaura a janela ativa. Apps em iframe reenviam as teclas através do método interno `shell.key` do SDK.
@@ -199,7 +214,7 @@ Eventos importantes:
 O shell cria cada app com:
 
 ```js
-frame.sandbox = 'allow-scripts allow-forms allow-modals';
+frame.sandbox = 'allow-scripts allow-forms allow-modals allow-popups allow-downloads';
 ```
 
 Decisões importantes:
@@ -212,7 +227,7 @@ Decisões importantes:
 
 A API identifica o cliente através de `event.source` e do `contentWindow` registado. Como o sandbox sem `allow-same-origin` produz uma origem opaca, a política atual não usa `event.origin` como controlo principal. Não adicionar `allow-same-origin` apenas para facilitar essa verificação.
 
-As permissões atuais são capacidades globais dentro do espaço permitido. `fs.read` e `fs.write` restringem a app à pasta do utilizador atual e à Lixeira, mas ainda não têm escopo por subpasta. Isto é isolamento funcional de um simulador, não uma fronteira de segurança contra código malicioso.
+As permissões atuais são capacidades globais dentro do espaço permitido. `fs.read` e `fs.write` restringem a app à pasta do perfil `User` e à Lixeira, mas ainda não têm escopo por subpasta. Isto é isolamento funcional de um simulador, não uma fronteira de segurança contra código malicioso.
 
 Ainda não existem CSP específica por app, quotas de recursos, timeout de RPC ou limites centrais de payload. São evoluções futuras, não contratos atuais.
 
@@ -287,6 +302,7 @@ await os.fs.search(query, path);
 - Operações de escrita exigem `fs.write`.
 - O shell limita o acesso da app à pasta do utilizador e à Lixeira.
 - `/` e `/home` são interpretados como a pasta pessoal pelo SDK.
+- `os.fs.read()` devolve texto como string e conteúdo binário como `Blob`; `os.fs.write()` aceita string, `Blob`, `ArrayBuffer` e `TypedArray`. `os.fs.stat().size` é medido em bytes.
 - O filesystem real do computador não é exposto diretamente.
 
 ### Armazenamento privado
@@ -416,6 +432,7 @@ Object stores:
 /
 ├── .Trash/
 └── home/user/
+  ├── Desktop/
     ├── Documentos/
     ├── Imagens/
     ├── Música/
@@ -425,17 +442,16 @@ Object stores:
 
 As alterações ao schema devem ser feitas com incremento de `DB_VERSION` e migração em `onupgradeneeded`. Nunca apagar stores existentes sem uma migração explícita.
 
-## Utilizadores e sessão
+## Perfil e sessão
 
-`system/js/users.js` gere perfis persistentes. `system/js/boot.js` gere:
+`system/js/users.js` expõe apenas o perfil persistente `User` (ID `user`). Registos antigos de outros IDs não são apagados automaticamente. `system/js/boot.js` gere:
 
 - login;
-- seleção de perfil;
 - logout;
 - bloqueio de sessão;
 - reinício visual.
 
-O sistema atual tem perfis e sessão, mas não implementa autenticação por palavra-passe. Não documentar isto como segurança real.
+O login não usa palavra-passe e não constitui uma fronteira de segurança.
 
 ## Notificações e diagnóstico
 
@@ -492,9 +508,9 @@ O runtime deve degradar graciosamente quando uma capacidade opcional não existi
 5. Declarar apenas as permissões necessárias.
 6. Usar `os.storage` para dados privados.
 7. Usar `os.fs` apenas com permissões e caminhos permitidos.
-8. Confirmar que o servidor lista `apps/`.
+8. Adicionar o ID a `apps/registry.json` (obrigatório em Cloudflare Pages; não depender de listagem de diretórios em produção).
 9. Reiniciar/recarregar o WebOS.
-10. Executar a validação de manifestos e o smoke test.
+10. Executar a validação de manifests, smoke, localização, filesystem e Sudoku.
 
 ## Validação local
 
@@ -504,6 +520,9 @@ A partir da raiz do projeto:
 node .\tests\validate-manifests.mjs
 node .\tests\smoke.mjs
 node .\tests\i18n.mjs
+node .\tests\filesystem-paths.mjs
+node .\tests\filesystem-content.mjs
+node .\tests\sudoku.mjs
 ```
 
 Validar sintaxe de todos os scripts:
