@@ -137,9 +137,20 @@
     <div class="tagline" id="lifetime-stats">TOTAL: 0 KILLS | 0 RUNS | 0 ACHIEVEMENTS</div>
     <div class="menu-actions">
       <button class="btn" id="start-btn">▶ ENTER THE DARK</button>
+      <button class="btn" id="safehouse-btn">⚙️ SAFEHOUSE</button>
       <button class="btn" id="customize-btn">CUSTOMIZE SURVIVOR</button>
       <button class="btn" id="achievements-btn">🏆 ACHIEVEMENTS</button>
       <button class="btn" id="fullscreen-btn">FULLSCREEN: OFF</button>
+    </div>
+  </div>
+
+  <!-- SAFEHOUSE SCREEN -->
+  <div class="screen hidden" id="safehouse-screen">
+    <h1 class="title" style="font-size:34px;">SAFEHOUSE</h1>
+    <div class="tagline">SCRAP AVAILABLE: <span id="safehouse-scrap-count" class="num">0</span></div>
+    <div id="safehouse-upgrades-list"></div>
+    <div class="menu-actions" style="margin-top:12px;">
+      <button class="btn" id="back-safehouse-btn">BACK</button>
     </div>
   </div>
 
@@ -280,6 +291,6 @@
 </div>
 
 <script src="../../system/sdk/os-sdk.js"></script>
-<script src="game.bundle.js" defer></script>
+<script type="module" src="main.js"></script>
 </body>
 </html>

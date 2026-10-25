@@ -12,21 +12,22 @@ import { checkAchievements } from './achievements.js';
 
 // Funções de acesso ao estado do jogador
 export function resetPlayerState(classMod) {
+  const upg = state.safehouseUpgrades || { armor: 0, speed: 0, damage: 0, medkit: 0 };
   state.player.x = 900;
   state.player.y = 600;
-  state.player.speed = 150 + classMod.speedBonus;
-  state.player.sprintSpeed = 245 + classMod.speedBonus;
+  state.player.speed = 150 + classMod.speedBonus + (upg.speed * 8);
+  state.player.sprintSpeed = 245 + classMod.speedBonus + (upg.speed * 8);
   state.player.maxHp = 100;
   state.player.maxStamina = 100;
-  state.player.maxArmor = 100 + (classMod.armorBonus || 0);
-  state.player.armor = classMod.armorBonus ? classMod.armorBonus : 0;
+  state.player.maxArmor = 100 + (classMod.armorBonus || 0) + (upg.armor * 15);
+  state.player.armor = state.player.maxArmor;
   state.player.hp = state.player.maxHp;
   state.player.stamina = state.player.maxStamina;
   state.player.pickupRadius = 12;
   state.player.level = 1;
   state.player.xp = 0;
   state.player.nextXp = 40;
-  state.player.dmgMul = classMod.dmgMul;
+  state.player.dmgMul = classMod.dmgMul * (1 + upg.damage * 0.06);
   state.player.alive = true;
   state.player.invuln = 0;
   state.player.weaponIdx = 0;
@@ -44,7 +45,7 @@ export function resetPlayerState(classMod) {
   state.player.undyingReady = true;
   state.player.hasBerserker = false;
   state.ammoState = WEAPONS.map(w => ({ mag: w.mag, reserve: Math.round(w.reserve * classMod.ammoMul) }));
-  state.medkits = classMod.startMedkits;
+  state.medkits = classMod.startMedkits + upg.medkit;
   state.dashCooldown = 0;
   state.dashDuration = 0;
   state.dashMaxCooldown = 2.8 * classMod.dashCdMul;

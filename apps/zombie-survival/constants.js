@@ -264,6 +264,15 @@ export const SETTINGS_STORAGE_KEY = 'nightnine-settings-v1';
 export const ACHIEVEMENTS_STORAGE_KEY = 'nightnine-achievements-v1';
 export const STATS_STORAGE_KEY = 'nightnine-lifetime-stats-v1';
 export const MAP_STORAGE_KEY = 'nightnine-selected-map-v1';
+export const SCRAP_STORAGE_KEY = 'nightnine-scrap-v1';
+export const UPGRADES_STORAGE_KEY = 'nightnine-upgrades-v1';
+
+export const SAFEHOUSE_UPGRADES = [
+  { id: 'armor', name: 'Reinforced Plating', desc: '+15 Max Armor', costBase: 35, costScale: 1.5, maxLevel: 5 },
+  { id: 'speed', name: 'Adrenaline Pump', desc: '+8 Move Speed', costBase: 45, costScale: 1.6, maxLevel: 5 },
+  { id: 'damage', name: 'Hardened Rounds', desc: '+6% Damage', costBase: 50, costScale: 1.7, maxLevel: 5 },
+  { id: 'medkit', name: 'Trauma Kit', desc: '+1 Starting Medkit', costBase: 70, costScale: 2.0, maxLevel: 3 }
+];
 
 export const WORLD_W = 1800;
 export const WORLD_H = 1200;

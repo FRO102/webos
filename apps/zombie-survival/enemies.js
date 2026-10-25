@@ -1,11 +1,16 @@
-import { ZTYPES, BOSS_VARIANTS, WORLD_W, WORLD_H } from './constants.js';
+import { ZTYPES, BOSS_VARIANTS, WORLD_W, WORLD_H, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY } from './constants.js';
 import { rand, clamp, angleTo, dist } from './utils.js';
 import { state } from './state.js';
+import { setStoredValue } from './persistence.js';
+
 import { spawnBloodSplat, spawnFloatText, dropPickup } from './pickups.js';
 import { playSound } from './audio.js';
 import { applyIncomingDamage, gainXP, onKillLifesteal } from './player.js';
 import { explodeAt, enemyProjectiles } from './projectiles.js';
 import { checkAchievements } from './achievements.js';
+// alias setStoredValue already available above
+
+
 
 export function resetEnemies() {
   state.zombies.length = 0;
@@ -87,6 +92,12 @@ function trackWeaponKill(z) {
 export function killZombie(z, opts) {
   opts = opts || {};
   z.hp = 0;
+  // keep persistence in enemies module itself using setStoredValue (no circular import)
+  const saveScrapSoon = (typeof setStoredValue === 'function') ? () => setStoredValue(SCRAP_STORAGE_KEY, String(state.scrap)) : null;
+  const scrapEarned = z.type === 'boss' ? 20 : (z.type === 'tank' || z.type === 'juggernaut' ? 5 : 1);
+  state.scrap = (state.scrap || 0) + scrapEarned;
+  // sync the scrap value every kill by writing to storage at safe time (after game ticks)
+  if (saveScrapSoon) saveScrapSoon();
   if (z.type === 'exploder' || z.type === 'bomber') {
     explodeAt(z.x, z.y, z.type === 'bomber' ? 120 : 95, z.type === 'bomber' ? 80 : 62);
   }

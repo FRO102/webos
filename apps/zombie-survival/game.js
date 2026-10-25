@@ -1,4 +1,4 @@
-import { MAPS, WEAPONS, PERKS, PERK_RARITY_WEIGHTS, RARITY_COLOR, WORLD_W, WORLD_H, STORAGE_KEY, DIFFICULTY_MODS, CLASS_MODS } from './constants.js';
+import { MAPS, WEAPONS, PERKS, PERK_RARITY_WEIGHTS, RARITY_COLOR, WORLD_W, WORLD_H, STORAGE_KEY, DIFFICULTY_MODS, CLASS_MODS, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY, SAFEHOUSE_UPGRADES } from './constants.js';
 import { clamp, rand, randInt } from './utils.js';
 import { initAudioIfNeeded, playSound, resumeAudio } from './audio.js';
 import { keys, mouseDown, touchFiring, rightMouseDown, joystickVec, mouseX, mouseY } from './input.js';
@@ -55,6 +55,71 @@ export function loadSettings() {
   } catch (err) { }
 }
 
+export function loadScrapAndUpgrades() {
+  try {
+    const rawScrap = getStoredValue(SCRAP_STORAGE_KEY);
+    if (rawScrap !== null && rawScrap !== undefined) {
+      state.scrap = parseInt(rawScrap, 10) || 0;
+    }
+    const rawUpg = getStoredValue(UPGRADES_STORAGE_KEY);
+    if (rawUpg) {
+      const parsed = JSON.parse(rawUpg);
+      if (parsed && typeof parsed === 'object') {
+        for (const k of Object.keys(state.safehouseUpgrades)) {
+          if (Number.isFinite(parsed[k])) state.safehouseUpgrades[k] = parsed[k];
+        }
+      }
+    }
+  } catch (err) {}
+}
+
+export function saveScrapAndUpgrades() {
+  setStoredValue(SCRAP_STORAGE_KEY, String(state.scrap));
+  setStoredValue(UPGRADES_STORAGE_KEY, JSON.stringify(state.safehouseUpgrades));
+}
+
+export function renderSafehouseScreen() {
+  const container = document.getElementById('safehouse-upgrades-list');
+  const scrapEl = document.getElementById('safehouse-scrap-count');
+  if (!container || !scrapEl) return;
+  scrapEl.textContent = state.scrap;
+  container.innerHTML = '';
+  
+  SAFEHOUSE_UPGRADES.forEach(u => {
+    const lvl = state.safehouseUpgrades[u.id] || 0;
+    const cost = Math.round(u.costBase * Math.pow(u.costScale, lvl));
+    const isMax = lvl >= u.maxLevel;
+    
+    const row = document.createElement('div');
+    row.className = 'ach-row';
+    row.innerHTML = `
+      <div class="ach-icon">⚙️</div>
+      <div class="ach-text">
+        <div class="ach-name">${u.name} (Lvl ${lvl}/${u.maxLevel})</div>
+        <div class="ach-desc">${u.desc}</div>
+      </div>
+      <div>
+        <button class="btn" style="padding:6px 12px;font-size:12px;" ${isMax || state.scrap < cost ? 'disabled' : ''}>
+          ${isMax ? 'MAX' : 'BUY (' + cost + ' SCRAP)'}
+        </button>
+      </div>
+    `;
+    const btn = row.querySelector('button');
+    if (!isMax) {
+      btn.addEventListener('click', () => {
+        if (state.scrap >= cost) {
+          state.scrap -= cost;
+          state.safehouseUpgrades[u.id] = lvl + 1;
+          saveScrapAndUpgrades();
+          renderSafehouseScreen();
+          playSound(600, 0.1, 'triangle', 0.05);
+        }
+      });
+    }
+    container.appendChild(row);
+  });
+}
+
 export function applyGameSettings() {
   const diff = document.getElementById('difficulty-select').value;
   const cls = document.getElementById('class-select').value;
@@ -107,6 +172,7 @@ export function onPlayerDeath() {
   state.player.alive = false;
   state.gameRunning = false;
   playSound(55, 0.3, 'sawtooth', 0.1);
+  saveScrapAndUpgrades();
   const isBest = state.killCount > state.bestRun.kills || (state.killCount === state.bestRun.kills && state.wave > state.bestRun.wave);
   if (isBest) {
     state.bestRun = { kills: state.killCount, wave: state.wave, level: state.player.level };
@@ -249,6 +315,8 @@ export function updateWaveLogic(dt) {
     state.waveActive = false;
     state.waveTransitionTimer = 2.5;
     state.medkits += 1;
+    state.scrap += 15;
+    saveScrapAndUpgrades();
     state.player.armor = clamp(state.player.armor + 20, 0, state.player.maxArmor);
     state.player.undyingReady = true; // Undying recarrega no fim de cada night
     spawnFloatText(state.player.x, state.player.y - 26, '+WAVE SUPPLIES', '#d8cfa8');
@@ -441,6 +509,7 @@ export function initGame(canvasEl, ctx2d, width, height) {
   initCharacter();
   loadBestRun();
   loadSettings();
+  loadScrapAndUpgrades();
   loadCharacterLook();
   loadAchievements();
   loadLifetimeStats();

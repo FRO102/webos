@@ -99,6 +99,10 @@ export const state = {
   // Melhor pontuação
   bestRun: { kills: 0, wave: 0, level: 1 },
 
+  // Meta-progresso (Safehouse / Scrap)
+  scrap: 0,
+  safehouseUpgrades: { armor: 0, speed: 0, damage: 0, medkit: 0 },
+
   // Estatísticas ao longo da vida (para achievements / ecrã inicial)
   lifetimeStats: {
     totalKills: 0,

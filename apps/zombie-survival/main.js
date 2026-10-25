@@ -1,4 +1,4 @@
-import { initGame, resetGame, initGameState, loop, togglePause, applyGameSettings, choosePerk, refreshWeaponSlots, syncBestRunUI } from './game.js';
+import { initGame, resetGame, initGameState, loop, togglePause, applyGameSettings, choosePerk, refreshWeaponSlots, syncBestRunUI, renderSafehouseScreen } from './game.js';
 import { loadCharacterLook, applyCharacterLook, applyCharacterLookFromInputs, drawCharacterPreview, initCharacter } from './character.js'; // <-- adicionado initCharacter
 import { initAudioIfNeeded, setAudioVolume, setAudioMuted, resumeAudio } from './audio.js';
 import { setupInput } from './input.js';
@@ -7,7 +7,7 @@ import { initRenderer } from './render.js';
 import { buildGround, buildDebris, buildObstacles, initAmbient } from './world.js';
 import { state } from './state.js';
 import { renderAchievementsScreen } from './achievements.js';
-import { MAPS, MAP_STORAGE_KEY } from './constants.js';
+import { MAPS, MAP_STORAGE_KEY, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY } from './constants.js';
 import { initAppStorage, getStoredValue, setStoredValue } from './persistence.js';
 
 async function startGame() {
@@ -17,7 +17,9 @@ await initAppStorage([
   'nightnine-settings-v1',
   'nightnine-character-v1',
   'nightnine-achievements-v1',
-  'nightnine-lifetime-stats-v1'
+  'nightnine-lifetime-stats-v1',
+  SCRAP_STORAGE_KEY,
+  UPGRADES_STORAGE_KEY
 ]);
 
 // ... resto do código igual
@@ -109,6 +111,22 @@ document.getElementById('achievements-btn').addEventListener('click', () => {
 document.getElementById('back-achievements-btn').addEventListener('click', () => {
   document.getElementById('achievements-screen').classList.add('hidden');
 });
+
+const safehouseBtn = document.getElementById('safehouse-btn');
+if (safehouseBtn) {
+  safehouseBtn.addEventListener('click', () => {
+    renderSafehouseScreen();
+    const screen = document.getElementById('safehouse-screen');
+    if (screen) screen.classList.remove('hidden');
+  });
+}
+const backSafehouseBtn = document.getElementById('back-safehouse-btn');
+if (backSafehouseBtn) {
+  backSafehouseBtn.addEventListener('click', () => {
+    const screen = document.getElementById('safehouse-screen');
+    if (screen) screen.classList.add('hidden');
+  });
+}
 
 document.getElementById('fullscreen-btn').addEventListener('click', () => toggleFullscreen());
 document.getElementById('pause-fullscreen-btn').addEventListener('click', () => toggleFullscreen());
