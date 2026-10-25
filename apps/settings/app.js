@@ -10,7 +10,7 @@ function render() {
   $('animations').checked = st.animations;
   $('sounds').checked = st.sounds;
   $('language').value = st.language;
-  $('language-status').textContent = st.language === 'en' ? 'English' : 'Português';
+  $('language-status').textContent = st.language === 'en' ? 'English (UK)' : 'Português de Portugal';
   updateFullscreenUI();
   $('custom').value = st.accent;
   $('accents').replaceChildren(...ACCENTS.map(c => {

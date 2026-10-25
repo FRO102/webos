@@ -366,7 +366,7 @@ async function openCommentsModal(story) {
   const titleEl = document.getElementById("modal-title");
   const bodyEl = document.getElementById("modal-body");
 
-  titleEl.textContent = `Comentários: ${story.title}`;
+  titleEl.textContent = `${os.i18n.t('Comentários:')} ${story.title}`;
   bodyEl.innerHTML = `<p style="color: var(--os-muted);">A carregar comentários...</p>`;
   modal.style.display = 'flex';
 

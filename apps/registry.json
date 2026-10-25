@@ -35,5 +35,6 @@
   "sudoku",
   "chess",
   "puzzle",
-  "pacman"
+  "pacman",
+  "tetris"
 ]

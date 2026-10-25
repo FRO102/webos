@@ -45,7 +45,7 @@ const translations = {
   'Serviços gratuitos para programadores': 'Free services for developers',
   'Estatísticas mundiais em tempo real': 'Real-time world statistics', 'Planeamento e notas': 'Planning and notes',
   'A disponibilidade e algumas funções dependem do site. Podes também introduzir qualquer endereço na barra acima.': 'Availability and some features depend on the site. You can also enter any address above.',
-  'Recuar': 'Back', 'Avançar': 'Forward', 'Recarregar': 'Reload', 'Início': 'Home', 'Endereço': 'Address',
+  'Recuar': 'Back', 'Avançar': 'Forward', 'Recarregar': 'Reload', 'Página inicial': 'Home', 'Endereço': 'Address',
   'Ligar formas': 'Connect shapes', 'Cancelar ligação': 'Cancel connection', 'Editar forma': 'Edit shape',
   'Editar ligação': 'Edit connection', 'Inverter': 'Reverse', 'Guardar': 'Save', 'Guardar como': 'Save as',
   'Novo diagrama': 'New diagram', 'Nenhuma seleção': 'Nothing selected', 'Ligação criada.': 'Connection created.',
@@ -99,7 +99,7 @@ const translations = {
   'Não existe um perfil ativo.': 'There is no active profile.', 'Utilizador não encontrado.': 'User not found.',
   'Indica um nome para o utilizador.': 'Enter a user name.', 'Esse utilizador já existe.': 'That user already exists.',
   'Lixeira': 'Trash', 'Pasta pessoal': 'Home', 'Início': 'Start',
-  'Página inicial': 'Home page', 'Explorar na Web': 'Explore the Web',
+  'Explorar na Web': 'Explore the Web',
   'A app não encontrou ficheiros.': 'The app could not find any files.',
   'Nenhum resultado encontrado.': 'No results found.', 'Sem resultados.': 'No results.',
   'Todos': 'All', 'Entrada': 'Income', 'Despesa': 'Expense', 'Total': 'Total', 'Saldo': 'Balance',
@@ -124,7 +124,7 @@ const translations = {
   'Indica um endereço http, https ou mailto.': 'Enter an http, https, or mailto address.',
   'Conteúdo demasiado longo para este nível de correção. Reduz o texto ou escolhe correção baixa.': 'Content is too long for this error-correction level. Shorten it or choose low correction.',
   'Não foi possível gerar o código QR.': 'Could not generate the QR code.',
-  'Área': 'Area', 'Dados': 'Data', 'Metro': 'Meter', 'Quilómetro': 'Kilometer', 'Centímetro': 'Centimeter', 'Milímetro': 'Millimeter',
+  'Área': 'Area', 'Área de trabalho': 'Workspace', 'Dados': 'Data', 'Metro': 'Meter', 'Quilómetro': 'Kilometer', 'Centímetro': 'Centimeter', 'Milímetro': 'Millimeter',
   'Milha': 'Mile', 'Jarda': 'Yard', 'Pé': 'Foot', 'Polegada': 'Inch', 'Quilograma': 'Kilogram', 'Grama': 'Gram', 'Miligrama': 'Milligram',
   'Tonelada': 'Metric ton', 'Libra': 'Pound', 'Onça': 'Ounce', 'Metro quadrado': 'Square meter', 'Quilómetro quadrado': 'Square kilometer',
   'Centímetro quadrado': 'Square centimeter', 'Hectare': 'Hectare', 'Galão (EUA)': 'Gallon (US)', 'Chávena (EUA)': 'Cup (US)', 'Pinta (EUA)': 'Pint (US)',
@@ -152,7 +152,7 @@ const translations = {
   'Renomear coleção': 'Rename collection', 'Esta coleção ainda não tem cores.': 'This collection has no colors yet.', 'Código HEX inválido.': 'Invalid HEX code.',
   'A cópia não está disponível.': 'Copy is unavailable.', 'Esta cor já existe na coleção.': 'This color is already in the collection.', 'Mantém pelo menos uma coleção.': 'Keep at least one collection.',
   'Jogo Snake': 'Snake game', 'Setas/WASD · Espaço pausa': 'Arrow keys/WASD · Space pauses', 'A carregar...': 'Loading...', 'Nenhuma janela aberta.': 'No open windows.',
-  'Aplicação': 'Application', 'Área': 'Workspace', 'Estado': 'Status', 'Ações': 'Actions', 'Focar': 'Focus', 'Minimizada': 'Minimized', 'Maximizada': 'Maximized', 'Ativa': 'Active',
+  'Aplicação': 'Application', 'Estado': 'Status', 'Ações': 'Actions', 'Focar': 'Focus', 'Minimizada': 'Minimized', 'Maximizada': 'Maximized', 'Ativa': 'Active',
   'Comando': 'Command', 'Comandos:': 'Commands:', 'Atalhos: Tab completa, ↑/↓ histórico, Ctrl+L limpa.': 'Shortcuts: Tab completes, ↑/↓ history, Ctrl+L clears.',
   'lista ficheiros': 'list files', 'muda de pasta': 'change directory', 'pasta atual': 'current directory', 'mostra ficheiros': 'display files',
   'primeiras linhas / últimas linhas': 'first lines / last lines', 'pesquisa ficheiros': 'search files', 'cria pastas / cria ficheiros vazios': 'create directories / create empty files',
@@ -173,6 +173,37 @@ const translations = {
   'Paleta de Cores': 'Color Palette', 'Definições': 'Settings', 'Gestor de Tarefas': 'Task Manager',
   'Terminal': 'Terminal', 'Backup e Restauro': 'Backup and Restore', 'Ficheiros': 'Files',
   'Portefolio Terminal': 'Portfolio Terminal', 'Aplicações': 'Applications', 'Navegador': 'Browser',
+  'Meteorologia': 'Weather', 'Pesquisar cidade (ex: Lisboa, Porto)...': 'Search city (e.g. Lisbon, Porto)...',
+  'Português (Portugal)': 'Portuguese (Portugal)', 'Português de Portugal': 'Portuguese (Portugal)', 'English (UK)': 'English (UK)',
+  'Pesquisar': 'Search', 'Guardar nos favoritos': 'Save to favorites', 'A carregar...': 'Loading...',
+  'Próximos Dias': 'Upcoming days', 'Céu limpo': 'Clear sky', 'Principalmente limpo': 'Mainly clear',
+  'Parcialmente nublado': 'Partly cloudy', 'Nublado': 'Cloudy', 'Nevoeiro': 'Fog', 'Nevoeiro com geada': 'Depositing rime fog',
+  'Chuvisco leve': 'Light drizzle', 'Chuvisco moderado': 'Moderate drizzle', 'Chuvisco denso': 'Dense drizzle',
+  'Chuva fraca': 'Light rain', 'Chuva moderada': 'Moderate rain', 'Chuva forte': 'Heavy rain', 'Neve fraca': 'Light snow',
+  'Trovoada': 'Thunderstorm', 'Desconhecido': 'Unknown', 'A carregar meteorologia...': 'Loading weather...',
+  'A pesquisar cidade...': 'Searching for city...', 'Erro ao obter dados meteorológicos.': 'Could not get weather data.',
+  'Cidade não encontrada.': 'City not found.', 'Erro na pesquisa.': 'Search failed.',
+  'Esta cidade já está nos favoritos.': 'This city is already in favorites.',
+  'Adicionado {city} aos favoritos.': 'Added {city} to favorites.',
+  'Feed de Notícias': 'News Feed', 'Remover o feed RSS selecionado': 'Remove selected RSS feed',
+  'Remover RSS': 'Remove RSS', 'Ordenar: Pontuação': 'Sort: Score', 'Ordenar: Mais Recentes': 'Sort: Newest',
+  'Pesquisar...': 'Search...', 'Definições de Leitura': 'Reading Settings', 'Adicionar feed RSS ou Atom': 'Add RSS or Atom feed',
+  'Adicionar feed': 'Add feed', 'Feeds que bloqueiam pedidos do browser por CORS não podem ser lidos diretamente.': 'Feeds that block browser requests with CORS cannot be read directly.',
+  'Feed': 'Feed', 'Favoritos (⭐)': 'Saved (⭐)', 'Histórico': 'History', 'A carregar notícias...': 'Loading news...',
+  'Carregar Mais': 'Load More', 'Nenhuma notícia encontrada.': 'No stories found.', 'Ver Comentários': 'View comments',
+  'Copiar Link': 'Copy link', 'Remover dos favoritos': 'Remove from saved', 'Guardar': 'Save', 'Tudo': 'All',
+  'Sem comentários disponíveis.': 'No comments available.', 'Nenhum comentário textual encontrado.': 'No text comments found.',
+  'Erro ao carregar comentários.': 'Could not load comments.', 'Tamanho do Texto:': 'Text size:', 'Pequeno': 'Small',
+  'Normal': 'Normal', 'Grande': 'Large', 'Ativar Notificações de Notícias Virais': 'Enable viral story notifications',
+  'Guardar Preferências': 'Save preferences', 'Preferências guardadas.': 'Preferences saved.',
+  'Introduz um endereço RSS ou Atom válido (HTTP ou HTTPS).': 'Enter a valid RSS or Atom URL (HTTP or HTTPS).',
+  'O browser bloqueou este feed (CORS) ou não foi possível ligar ao servidor.': 'The browser blocked this feed (CORS) or could not connect to the server.',
+  'Falha ao carregar o feed.': 'Could not load the feed.', 'O ficheiro recebido não é XML válido.': 'The response is not valid XML.',
+  'O feed não contém artigos RSS ou Atom.': 'The feed contains no RSS or Atom articles.', 'Artigo sem título': 'Untitled article',
+  'Não foi possível abrir o link externo.': 'Could not open the external link.', 'Link copiado para a área de transferência!': 'Link copied to clipboard!',
+  'Erro ao copiar link.': 'Could not copy the link.', 'Removido dos favoritos.': 'Removed from saved.',
+  'Adicionado aos favoritos.': 'Added to saved.', 'Notícia Viral:': 'Viral story:',
+  'A carregar comentários...': 'Loading comments...', 'Comentários:': 'Comments:',
 };
 const sourceText = new WeakMap(), sourceAttributes = new WeakMap();
 
@@ -187,6 +218,8 @@ export const translate = (text, language = getSettings().language) => {
   }
   const windows = text.match(/^(\d+) janelas? abertas?$/i);
   if (windows) return `${windows[1]} open window${windows[1] === '1' ? '' : 's'}`;
+  const hoursAgo = text.match(/^há (\d+)h$/i);
+  if (hoursAgo) return `${hoursAgo[1]}h ago`;
   const workspace = text.match(/^Área (\d+)$/);
   if (workspace) return `Workspace ${workspace[1]}`;
   const day = text.match(/^Dia selecionado: (\d+) de (.+)$/);

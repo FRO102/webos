@@ -10,7 +10,7 @@ const groups = {
 let category = 'Comprimento', favorites = [], history = [];
 let historyTimer;
 const unitList = () => Object.entries(groups[category]);
-const format = value => Number(value.toPrecision(9)).toLocaleString('pt-PT', { maximumFractionDigits: 8 });
+const format = value => Number(value.toPrecision(9)).toLocaleString(os.i18n.locale, { maximumFractionDigits: 8 });
 const unitName = key => groups[category][key][0];
 function convert(value, from, to) {
   if (category !== 'Temperatura') return value * groups[category][from][1] / groups[category][to][1];
@@ -57,4 +57,5 @@ $('amount').oninput = () => record(true); $('from-unit').onchange = () => record
 $('swap').onclick = () => { const from = $('from-unit').value; $('from-unit').value = $('to-unit').value; $('to-unit').value = from; record(true); };
 $('favorite-current').onclick = async () => { const item = { category, from: $('from-unit').value, to: $('to-unit').value }; if (!favorites.some(value => value.category === item.category && value.from === item.from && value.to === item.to)) favorites.unshift(item); favorites = favorites.slice(0, 12); await os.storage.set('favorites', favorites); renderFavorites(); renderFavoriteList(); $('status').textContent = 'Conversão guardada nos favoritos.'; };
 $('clear-history').onclick = async () => { history = []; await os.storage.set('history', history); renderHistory(); };
+os.i18n.onChange(record);
 record();

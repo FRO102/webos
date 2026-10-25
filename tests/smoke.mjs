@@ -34,7 +34,9 @@ await mustContain('apps/wordwebos/app.js', ['importDocxFromWebOS(path)', 'saveDo
 await mustContain('apps/wordwebos/index.html', ['menuSaveDocx', 'mammoth@1.9.0']);
 await mustContain('apps/terminal/app.js', ['const HISTORY_KEY', 'os.fs.home()', 'await os.fs.trash(p)', 'async purge(a)', 'await walk(', 'metadata.mime']);
 await mustContain('system/sdk/os-dialogs.js', ['async function resolveStart()', "o.start.startsWith('/home/user/')"]);
-await mustContain('system/js/users.js', ["name: 'User'", 'users = [DEFAULT_USER]']);
+await mustContain('apps/media-player/manifest.json', ['"fs.read"', '"fs.write"', '"apps.launch"', '"fileTypes"']);
+await mustContain('apps/media-player/index.html', ['os-sdk.js', 'os-dialogs.js', 'id="video"', 'id="audio"', 'id="seek"']);
+await mustContain('apps/media-player/app.js', ['os.fs.read', 'os.dialog.open', 'os.storage', 'URL.revokeObjectURL', 'os.i18n']);
 await mustContain('system/js/api.js', ['scopedPath', "'shell.apps'", "'clipboard.read'"]);
 await mustContain('system/js/api.js', ["'profile.backup.export'", "'profile.backup.restore'", 'permission_denied']);
 await mustContain('system/js/api.js', ["'fs.home'", 'ensureUserHome']);

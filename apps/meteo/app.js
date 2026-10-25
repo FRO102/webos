@@ -18,7 +18,7 @@ function getWeatherDescription(code) {
     71: "Neve fraca",
     95: "Trovoada"
   };
-  return codes[code] || "Desconhecido";
+  return os.i18n.t(codes[code] || "Desconhecido");
 }
 
 async function loadFavorites() {
@@ -75,7 +75,7 @@ async function fetchWeather(lat, lon, name) {
     for (let i = 0; i < data.daily.time.length; i++) {
       const dateStr = data.daily.time[i];
       const dateObj = new Date(dateStr);
-      const dayName = dateObj.toLocaleDateString('pt-PT', { weekday: 'short' });
+      const dayName = dateObj.toLocaleDateString(os.i18n.locale, { weekday: 'short' });
       const max = Math.round(data.daily.temperature_2m_max[i]);
       const min = Math.round(data.daily.temperature_2m_min[i]);
       const code = data.daily.weather_code[i];
@@ -100,7 +100,8 @@ async function searchCity(query) {
   if (!query) return;
   try {
     os.ui.status(null, "A pesquisar cidade...", "loading");
-    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=pt&format=json`);
+    const language = os.i18n.language === 'en' ? 'en' : 'pt';
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${language}&format=json`);
     const data = await res.json();
     if (data.results && data.results.length > 0) {
       const loc = data.results[0];
@@ -137,11 +138,13 @@ document.getElementById("fav-btn").onclick = () => {
     favorites.push(currentCity);
     saveFavorites();
     renderFavorites();
-    os.notify(`Adicionado ${currentCity.name} aos favoritos.`);
+    os.notify(os.i18n.t('Adicionado {city} aos favoritos.').replace('{city}', currentCity.name));
   } else {
     os.notify("Esta cidade já está nos favoritos.");
   }
 };
+
+os.i18n.onChange(() => fetchWeather(currentCity.lat, currentCity.lon, currentCity.name));
 
 (async () => {
   await loadFavorites();

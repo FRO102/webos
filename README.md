@@ -80,6 +80,7 @@ node tests/filesystem-content.mjs
 node tests/sudoku.mjs
 node tests/excel-data.mjs
 node tests/pacman.mjs
+node tests/tetris.mjs
 ```
 
 Para verificar a sintaxe dos scripts JavaScript em PowerShell:

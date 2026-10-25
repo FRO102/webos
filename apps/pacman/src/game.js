@@ -98,14 +98,9 @@ async function readBestScore() {
     if (window.os?.storage) {
       const storedScore = Number(await window.os.storage.get('best-score')) || 0;
       if (storedScore > 0) return storedScore;
-      const legacyScore = Number(window.localStorage.getItem('mazechomp-best') || 0);
-      if (legacyScore > 0) {
-        await window.os.storage.set('best-score', legacyScore);
-        return legacyScore;
-      }
       return 0;
     }
-    return Number(window.localStorage.getItem('mazechomp-best') || 0);
+    return 0;
   } catch {
     return 0;
   }
@@ -119,7 +114,7 @@ function persistBestScore(score) {
     return;
   }
   try {
-    window.localStorage.setItem('mazechomp-best', String(score));
+    if (window.localStorage) window.localStorage.setItem('mazechomp-best', String(score));
   } catch {
     // The score remains available for the current session if storage is disabled.
   }
@@ -527,6 +522,30 @@ function collectPellet(now) {
   }
 }
 
+function resolvePlayerGhostCollisions(now) {
+  if (game.phase !== 'playing') return;
+  const powered = now < game.powerUntil;
+
+  for (let index = game.ghosts.length - 1; index >= 0; index -= 1) {
+    const ghost = game.ghosts[index];
+    if (!ghost || ghost.x !== game.player.x || ghost.y !== game.player.y) continue;
+
+    if (powered) {
+      addScore(200);
+      game.ghosts[index] = {
+        ...ghost,
+        x: ghost.home.x,
+        y: ghost.home.y,
+        dir: { x: 0, y: 0 },
+      };
+      game.ghostsFrom[index] = { x: ghost.home.x, y: ghost.home.y };
+      announce('Ghost eaten. +200');
+    } else {
+      resetAfterHit(now);
+      return;
+    }
+  }
+}
 function resetAfterHit(now) {
   game.lives = Math.max(0, game.lives - 1);
   game.player = { ...START };
@@ -548,6 +567,7 @@ function moveGhosts(now) {
   game.ghostsFrom = game.ghosts.map(({ x, y }) => ({ x, y }));
 
   for (let index = 0; index < game.ghosts.length; index += 1) {
+    if (game.phase !== 'playing') break;
     const ghost = game.ghosts[index];
     const direction = chooseGhostDirection(ghost, powered);
     if (!direction) continue;
@@ -567,6 +587,7 @@ function moveGhosts(now) {
         dir: { x: 0, y: 0 },
       };
       game.ghostsFrom[index] = { x: ghost.home.x, y: ghost.home.y };
+      announce('Ghost eaten. +200');
     } else {
       resetAfterHit(now);
       break;
@@ -582,6 +603,7 @@ function updateGame(now) {
       const movement = stepPlayer(game.player, game.direction, game.queuedDirection, isWall);
       game.player = movement.position;
       game.direction = movement.direction;
+      resolvePlayerGhostCollisions(now);
       collectPellet(now);
     }
 

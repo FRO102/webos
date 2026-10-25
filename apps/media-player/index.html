@@ -1,3 +1,69 @@
-<!doctype html>
-<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Leitor Multimédia</title><link rel="stylesheet" href="style.css"></head>
-<body><main><div class="disc">▶</div><h1>Leitor Multimédia</h1><p id="name">Nenhum ficheiro selecionado</p><input id="file" type="file" accept="audio/*,video/*"><audio id="player" controls></audio></main><script src="app.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leitor Multimédia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="mp">
+    <header class="top">
+      <div class="now">
+        <span id="statusIcon" class="disc">♪</span>
+        <div class="title">
+          <h1 id="title">Leitor Multimédia</h1>
+          <p id="sub" class="sub">Nenhum ficheiro selecionado</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <label class="btn ghost"><input id="file" type="file" accept="audio/*,video/*" multiple hidden>Importar…</label>
+        <button id="openFs" class="btn" type="button">Abrir do sistema…</button>
+      </div>
+    </header>
+
+    <section class="stage" id="stage">
+      <video id="video" class="media" hidden playsinline></video>
+      <audio id="audio" class="media"></audio>
+      <div id="empty" class="empty">
+        <div class="disc big">▶</div>
+        <p>Importa ficheiros multimédia ou abre-os a partir do Explorador de Ficheiros.</p>
+      </div>
+    </section>
+
+    <section class="transport">
+      <div class="progress-row">
+        <span id="curTime" class="time">0:00</span>
+        <input id="seek" type="range" min="0" max="0" step="0.1" value="0" aria-label="Posição de reprodução">
+        <span id="durTime" class="time">0:00</span>
+      </div>
+      <div class="btn-row">
+        <button id="prev" class="btn icon" type="button" aria-label="Faixa anterior">⏮</button>
+        <button id="play" class="btn primary" type="button" aria-label="Reproduzir / pausar">▶</button>
+        <button id="next" class="btn icon" type="button" aria-label="Faixa seguinte">⏭</button>
+        <button id="back5" class="btn small" type="button">-5s</button>
+        <button id="fwd5" class="btn small" type="button">+5s</button>
+        <div class="spacer"></div>
+        <div class="vol">
+          <button id="mute" class="btn icon" type="button" aria-label="Silenciar">🔊</button>
+          <input id="volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume">
+        </div>
+        <span id="status" class="status" role="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <aside class="playlist" id="playlistWrap">
+      <header class="pl-head">
+        <h2>Lista de reprodução <span id="count" class="count"></span></h2>
+        <button id="clearPl" class="btn small ghost" type="button">Limpar</button>
+      </header>
+      <ol id="playlist" class="pl"></ol>
+      <p id="emptyPl" class="emptypl">A lista de reprodução está vazia.</p>
+    </aside>
+  </main>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

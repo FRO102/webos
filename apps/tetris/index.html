@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>Tetris</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game" class="game">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+        <span class="brand-name">TETRIS</span>
+      </div>
+      <div class="pill" id="status-pill" aria-live="polite">Pronto</div>
+      <div class="top-actions">
+        <button class="icon" id="btn-theme" type="button" aria-label="Alternar tema" aria-pressed="true">MODO ESCURO</button>
+        <button class="icon" id="btn-sound" type="button" aria-label="Alternar som">SOM</button>
+        <button class="icon" id="btn-restart" type="button" aria-label="Reiniciar">↻</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="rail rail--left">
+        <div class="card">
+          <span class="label">Pontuação</span>
+          <strong id="score" class="big">0</strong>
+        </div>
+        <div class="card">
+          <span class="label">Recorde</span>
+          <strong id="best">0</strong>
+        </div>
+        <div class="card">
+          <span class="label">Linhas</span>
+          <strong id="lines">0</strong>
+        </div>
+        <div class="card">
+          <span class="label">Nível</span>
+          <strong id="level">1</strong>
+        </div>
+        <div class="card">
+          <span class="label">Ritmo / recorde</span>
+          <strong id="pace-best">0</strong>
+        </div>
+        <button class="hold" id="btn-hold" type="button" aria-label="Guardar peça">
+          <span class="label">Guardada</span>
+          <div id="hold-grid" class="mini-grid empty" aria-label="Peça guardada"></div>
+        </button>
+      </aside>
+
+      <section class="board-wrap">
+        <div class="board-frame" id="board-frame">
+          <canvas id="board" width="300" height="600" aria-label="Tabuleiro Tetris" tabindex="0"></canvas>
+          <div class="overlay" id="overlay" aria-live="polite">
+            <div class="overlay-box">
+              <strong id="overlay-title">Pronto?</strong>
+              <p id="overlay-copy">Encontra o ritmo e começa.</p>
+              <div class="pace" id="pace">
+                <span>Ritmo:</span>
+                <button type="button" data-pace="relaxed">Descontraído</button>
+                <button type="button" data-pace="normal" class="active">Normal</button>
+                <button type="button" data-pace="fast">Rápido</button>
+              </div>
+              <button id="btn-start" type="button" class="primary">Jogar</button>
+            </div>
+          </div>
+        </div>
+        <p class="caption">10 × 20 · BLOCK PARTY</p>
+      </section>
+
+      <aside class="rail rail--right">
+        <div class="card preview">
+          <span class="label">Próxima</span>
+          <div id="next-grid" class="next-queue" aria-label="Próximas três peças"></div>
+        </div>
+        <div class="card">
+          <span class="label">Controlos</span>
+          <div class="hint" id="controls-hint">Setas mover/rodar · C guardar · Espaço cair · P pausa · R reiniciar</div>
+          <div class="keybinds" id="keybinds" aria-label="Personalizar teclas">
+            <button type="button" data-bind="left">Esquerda: <kbd>←</kbd></button>
+            <button type="button" data-bind="right">Direita: <kbd>→</kbd></button>
+            <button type="button" data-bind="rotate">Rodar: <kbd>↑</kbd></button>
+                        <button type="button" data-bind="rotateCCW">Rodar inverso: <kbd>Z</kbd></button>
+            <button type="button" data-bind="softDrop">Descer: <kbd>↓</kbd></button>
+            <button type="button" data-bind="hold">Guardar: <kbd>C</kbd></button>
+            <button type="button" data-bind="hardDrop">Queda: <kbd>Espaço</kbd></button>
+            <button type="button" data-bind="pause">Pausa: <kbd>P</kbd></button>
+            <button type="button" data-bind="restart">Reiniciar: <kbd>R</kbd></button>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <section class="dock" aria-label="Controles">
+      <button type="button" class="key" id="btn-left" aria-label="Mover para a esquerda">←</button>
+      <button type="button" class="key" id="btn-right" aria-label="Mover para a direita">→</button>
+      <button type="button" class="key" id="btn-rotate" aria-label="Rodar peça">↻</button>
+      <button type="button" class="key" id="btn-drop" aria-label="Baixar suavemente">↓</button>
+      <button type="button" class="key" id="btn-hard" aria-label="Cair instantaneamente">⇓</button>
+      <button type="button" class="key wide" id="btn-pause" aria-label="Pausa / retomar">Pausa</button>
+    </section>
+    <div class="sr-only" id="announcer" role="status" aria-live="polite" aria-atomic="true"></div>
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
+

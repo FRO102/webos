@@ -2,12 +2,14 @@ import { store, req, tx } from './storage.js';
 import { bus } from './event-bus.js';
 import { normalizeFsPath } from './fs-paths.js';
 import { fileContentSize, isBinaryFileContent } from './fs-content.js';
+import { getSettings } from './settings.js';
 
 const norm = normalizeFsPath;
 const parentOf = p => (p === '/' ? null : norm(p + '/..'));
 const get = async p => req((await store('fs')).get(p));
 const meta = n => ({ path: n.path, name: n.path.split('/').pop() || '/', type: n.type, mime: n.mime ?? (n.type === 'file' ? 'text/plain' : 'inode/directory'), size: n.type === 'file' ? fileContentSize(n.content) : 0, ctime: n.ctime ?? n.mtime, mtime: n.mtime });
 const changed = p => bus.emit('fs:changed', { path: p });
+const locale = () => getSettings().language === 'en' ? 'en-GB' : 'pt-PT';
 
 async function assertParent(p) {
   const par = await get(parentOf(p));
@@ -34,15 +36,16 @@ export async function list(p) {
   const n = await get(p);
   if (!n || n.type !== 'dir') throw new Error(`Não é uma pasta: ${p}`);
   const kids = await req((await store('fs')).index('parent').getAll(p));
-  return kids.map(meta).sort((a, b) => a.type === b.type ? a.name.localeCompare(b.name, 'pt') : a.type === 'dir' ? -1 : 1);
+  return kids.map(meta).sort((a, b) => a.type === b.type ? a.name.localeCompare(b.name, locale()) : a.type === 'dir' ? -1 : 1);
 }
 
 export async function search(query, p = '/') {
-  const q = String(query ?? '').trim().toLocaleLowerCase('pt');
+  const currentLocale = locale();
+  const q = String(query ?? '').trim().toLocaleLowerCase(currentLocale);
   if (!q) return [];
   p = norm(p);
   const all = await req((await store('fs')).getAll());
-  return all.filter(n => !n.path.startsWith('/.Trash') && n.path.startsWith(p === '/' ? '/' : p + '/') && n.path.toLocaleLowerCase('pt').includes(q)).map(meta).slice(0, 100);
+  return all.filter(n => !n.path.startsWith('/.Trash') && n.path.startsWith(p === '/' ? '/' : p + '/') && n.path.toLocaleLowerCase(currentLocale).includes(q)).map(meta).slice(0, 100);
 }
 
 export async function read(p) {

@@ -8,6 +8,7 @@
 
   const els = {};
   const RECENT_KEY = 'recent_pdfs';
+  const formatDate = value => window.os?.i18n?.date ? os.i18n.date(value, { dateStyle: 'short' }) : new Date(value).toLocaleDateString('pt-PT');
 
   document.addEventListener('DOMContentLoaded', init);
 
@@ -109,7 +110,7 @@
     els.docName.textContent = file.name + ' (Local)';
     els.infoName.textContent = file.name;
     els.infoSize.textContent = formatBytes(file.size);
-    els.infoDate.textContent = new Date(file.lastModified).toLocaleDateString();
+    els.infoDate.textContent = formatDate(file.lastModified);
     
     if (os.window && os.window.setTitle) {
       os.window.setTitle('PDFWebos - ' + file.name);
@@ -172,7 +173,7 @@
         const stat = await os.fs.stat(path);
         if (stat) {
           els.infoSize.textContent = formatBytes(stat.size);
-          els.infoDate.textContent = new Date(stat.mtime).toLocaleDateString();
+          els.infoDate.textContent = formatDate(stat.mtime);
         }
       } catch(e) {}
       
@@ -233,7 +234,7 @@
 
     els.infoName.textContent = path.split('/').pop();
     els.infoSize.textContent = stat && stat.size ? formatBytes(stat.size) : '—';
-    els.infoDate.textContent = stat && stat.mtime ? new Date(stat.mtime).toLocaleDateString() : '—';
+    els.infoDate.textContent = stat && stat.mtime ? formatDate(stat.mtime) : '—';
 
     let url = '';
     if (content instanceof Blob) {

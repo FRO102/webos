@@ -77,7 +77,7 @@
     }
     document.documentElement.lang = language === 'en' ? 'en' : 'pt-PT';
   };
-  const applyLocale = data => { localeData = data; translateDOM(document.body); };
+  const applyLocale = data => { if (!data || typeof data !== 'object') return; localeData = data; translateDOM(document.body); };
 
   window.os = {
     errors: {

@@ -9,6 +9,12 @@ function inspectBackup(value) {
   return { files: value.files.length, appKeys: value.appData.length, sourceName: value.profile.name, createdAt: value.createdAt };
 }
 
+function renderPreview() {
+  if (!backupData || !backupFile) return;
+  const details = inspectBackup(backupData);
+  $('preview').textContent = `Backup de ${details.sourceName} · ${details.files} itens no filesystem · ${details.appKeys} registos de apps · ${os.i18n.date(details.createdAt, { dateStyle: 'medium', timeStyle: 'short' })}`;
+}
+
 $('choose-file').onclick = () => fileInput.click();
 fileInput.onchange = async () => {
   backupFile = fileInput.files?.[0] ?? null; backupData = null; $('restore').disabled = true; $('preview').hidden = true;
@@ -16,8 +22,8 @@ fileInput.onchange = async () => {
   try {
     if (backupFile.size > 50 * 1024 * 1024) throw new Error('O ficheiro excede o limite de 50 MB.');
     backupData = JSON.parse(await backupFile.text());
-    const details = inspectBackup(backupData);
-    $('preview').textContent = `Backup de ${details.sourceName} · ${details.files} itens no filesystem · ${details.appKeys} registos de apps · ${new Date(details.createdAt).toLocaleString('pt-PT')}`;
+    inspectBackup(backupData);
+    renderPreview();
     $('preview').hidden = false; $('restore').disabled = false;
     os.ui.status('status', `Ficheiro validado: ${backupFile.name}`, 'success');
   } catch (error) { backupFile = null; backupData = null; os.ui.status('status', os.errors.message(error), 'error'); }
@@ -41,3 +47,4 @@ $('restore').onclick = async () => {
     os.ui.status('status', `Restauro concluído: ${result.files} itens e ${result.appKeys} registos de apps.`, 'success');
   } catch { /* O estado de erro já foi mostrado pelo helper. */ }
 };
+os.i18n.onChange(renderPreview);

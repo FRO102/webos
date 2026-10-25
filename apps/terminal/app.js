@@ -35,7 +35,7 @@ function printLs(items, long) {
   }
   items.forEach(it => {
     const d = document.createElement('div');
-    d.append(`${it.type === 'dir' ? 'd' : '-'} ${String(it.size).padStart(7)} ${new Date(it.mtime).toLocaleDateString('pt-PT')}  `, nameSpan(it));
+    d.append(`${it.type === 'dir' ? 'd' : '-'} ${String(it.size).padStart(7)} ${os.i18n.date(it.mtime)}  `, nameSpan(it));
     out.append(d);
   });
 }
@@ -68,7 +68,7 @@ const cmds = {
   pwd: () => print(cwd),
   clear: () => out.replaceChildren(),
   whoami: () => print('User'),
-  date: () => print(new Date().toLocaleString('pt-PT')),
+  date: () => print(os.i18n.date(new Date(), { dateStyle: 'medium', timeStyle: 'medium' })),
   version: () => print(VERSION),
   uname: () => print('WebOS browser-shell x86_64'),
   uptime: () => print(`${Math.floor(performance.now() / 1000)}s desde o arranque desta aplicação`),

@@ -1660,7 +1660,7 @@
     if (window.os && os.i18n && typeof os.i18n.date === 'function') {
       try { return os.i18n.date(d, { dateStyle: 'long' }); } catch (e) {}
     }
-    return d.toLocaleDateString('pt-PT', { dateStyle: 'long' });
+    return d.toLocaleDateString(window.os?.i18n?.locale || 'pt-PT', { dateStyle: 'long' });
   }
 
   function formatTimeAgo(ts) {
