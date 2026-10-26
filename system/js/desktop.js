@@ -175,18 +175,20 @@ export function initDesktop(apps) {
     }
     return candidate;
   };
-  const importFilesToDesktop = async files => {
-    const list = [...files].slice(0, MAX_DROP_FILES);
+  const importFilesToDirectory = async (files, targetDir = desktopPath) => {
+    const droppedFiles = [...files];
+    const list = droppedFiles.slice(0, MAX_DROP_FILES);
     let imported = 0;
     const failures = [];
+    if (droppedFiles.length > MAX_DROP_FILES) failures.push(`${droppedFiles.length - MAX_DROP_FILES} ficheiro(s) excedem o limite de ${MAX_DROP_FILES}.`);
     for (const file of list) {
       if (!file || typeof file.name !== 'string') continue;
       if (file.size > MAX_DROP_FILE_SIZE) { failures.push(`${file.name}: ficheiro demasiado grande.`); continue; }
       const name = safeDroppedName(file.name);
       if (!name) { failures.push(`${file.name}: nome inválido.`); continue; }
       try {
-        const finalName = await collisionName(desktopPath, name);
-        await writeFile(`${desktopPath}/${finalName}`, file, file.type || 'application/octet-stream');
+        const finalName = await collisionName(targetDir, name);
+        await writeFile(`${targetDir}/${finalName}`, file, file.type || 'application/octet-stream');
         imported++;
       } catch (error) {
         failures.push(`${file.name}: ${error?.message || 'erro ao importar.'}`);
@@ -194,11 +196,56 @@ export function initDesktop(apps) {
     }
     if (imported > 0) {
       bus.emit('notify', { app: 'WebOS', message: imported === 1 ? '1 ficheiro adicionado ao WebOS.' : `${imported} ficheiros adicionados ao WebOS.` });
-      renderDesktopEntries();
+      if (targetDir === desktopPath) renderDesktopEntries();
     }
     if (failures.length) {
       bus.emit('notify', { app: 'WebOS', message: `${failures.length} ficheiro(s) não importado(s): ${failures.slice(0, 3).join(' · ')}${failures.length > 3 ? ' …' : ''}` });
     }
+  };
+
+  const hasFiles = dt => !!dt && Array.from(dt.types || []).includes('Files');
+
+  const enableFolderDrop = (node, folderPath) => {
+    let dragDepth = 0;
+    const clearTarget = () => {
+      dragDepth = 0;
+      node.classList.remove('is-folder-drop-target');
+    };
+    node.addEventListener('dragenter', event => {
+      if (!hasFiles(event.dataTransfer)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      dragDepth += 1;
+      node.classList.add('is-folder-drop-target');
+      hideDropOverlay();
+    });
+    node.addEventListener('dragover', event => {
+      if (!hasFiles(event.dataTransfer)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      node.classList.add('is-folder-drop-target');
+    });
+    node.addEventListener('dragleave', event => {
+      if (!hasFiles(event.dataTransfer)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) {
+        clearTarget();
+        showDropOverlay();
+      }
+    });
+    node.addEventListener('drop', async event => {
+      if (!hasFiles(event.dataTransfer)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      clearTarget();
+      hideDropOverlay();
+      const files = event.dataTransfer?.files;
+      if (files?.length) await importFilesToDirectory(files, folderPath);
+    });
+    return node;
   };
 
   // overlay visual para indicar que se pode largar ficheiros
@@ -211,11 +258,8 @@ export function initDesktop(apps) {
   desktop.append(dropOverlay);
 
   let dragDepth = 0;
-  const hasFiles = dt => !!dt && Array.from(dt.types || []).includes('Files');
   const showDropOverlay = () => { if (dropOverlay.hidden) { dropOverlay.hidden = false; desktop.classList.add('is-drop-target'); } };
   const hideDropOverlay = () => { dropOverlay.hidden = true; desktop.classList.remove('is-drop-target'); };
-  const resetDragDepth = () => { dragDepth = 0; };
-
   desktop.addEventListener('dragenter', e => {
     if (!hasFiles(e.dataTransfer)) return;
     e.preventDefault();
@@ -244,7 +288,7 @@ export function initDesktop(apps) {
     dragDepth = 0;
     hideDropOverlay();
     const files = e.dataTransfer?.files;
-    if (files && files.length) await importFilesToDesktop(files);
+    if (files && files.length) await importFilesToDirectory(files, desktopPath);
   });
 
   // captura global de segurança para drops sobre iframes/janelas
@@ -252,7 +296,17 @@ export function initDesktop(apps) {
     if (hasFiles(e.dataTransfer)) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; }
   }, true);
   document.addEventListener('drop', e => {
-    if (hasFiles(e.dataTransfer)) { e.preventDefault(); }
+    if (!hasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    hideDropOverlay();
+    desktop.querySelectorAll('.is-folder-drop-target').forEach(node => node.classList.remove('is-folder-drop-target'));
+  }, true);
+  document.addEventListener('dragleave', e => {
+    if (!hasFiles(e.dataTransfer) || e.relatedTarget) return;
+    dragDepth = 0;
+    hideDropOverlay();
+    desktop.querySelectorAll('.is-folder-drop-target').forEach(node => node.classList.remove('is-folder-drop-target'));
   }, true);
 
   const entryIcon = entry => {
@@ -289,6 +343,8 @@ export function initDesktop(apps) {
         contextLabel: entry.type === 'dir' ? 'Abrir pasta' : 'Abrir ficheiro',
         open: () => openEntry(entry),
       }).dataset.filesystemEntry = '';
+      const fsIcon = ul.lastElementChild;
+      if (entry.type === 'dir') enableFolderDrop(fsIcon, entry.path);
     });
   };
   renderDesktopEntries();

@@ -1,6 +1,6 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { display: flex; flex-direction: column; background: var(--os-bg, #fff); font: 13px system-ui, sans-serif; color: var(--os-fg, #1c2a33); }
+body { position: relative; display: flex; flex-direction: column; background: var(--os-bg, #fff); font: 13px system-ui, sans-serif; color: var(--os-fg, #1c2a33); }
 nav { display: flex; flex-wrap: wrap; gap: 5px; padding: 7px; background: var(--os-surface, #eef1f3); border-bottom: 1px solid var(--os-border, #d3dce2); }
 button { min-height: 30px; padding: 5px 9px; border: 0; border-radius: 5px; background: var(--os-btn, #d3dce2); font: inherit; color: inherit; cursor: pointer; white-space: nowrap; }
 button:hover { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 30%, var(--os-btn, #d3dce2)); }
@@ -24,6 +24,8 @@ tr[tabindex]:hover { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 12
 tr.sel { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 30%, var(--os-bg, #fff)); }
 tr:focus-visible { outline: 2px solid var(--os-accent, #3cb6a4); outline-offset: -2px; }
 #status { margin: 0; padding: 4px 10px; min-height: 24px; font-size: 12px; color: var(--os-muted, #44565f); background: var(--os-surface, #eef1f3); border-top: 1px solid var(--os-border, #d3dce2); }
+#file-drop-overlay { position: fixed; inset: 8px; z-index: 10002; display: grid; place-items: center; border: 3px dashed var(--os-accent, #3cb6a4); background: color-mix(in srgb, var(--os-bg, #fff) 88%, transparent); color: var(--os-fg, #1c2a33); font-size: 18px; font-weight: 700; pointer-events: none; }
+#file-drop-overlay[hidden] { display: none; }
 @media (max-width: 520px) {
 	#places { flex-basis: 112px; }
 	nav button { flex: 1 1 auto; }

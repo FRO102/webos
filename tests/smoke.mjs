@@ -15,11 +15,12 @@ await mustContain('system/js/storage.js', ['webos-profile-backup', 'caminho invÃ
 await mustContain('system/js/filesystem.js', ['export async function trash', 'export async function restore', 'export async function search', 'export async function exists']);
 await mustContain('system/js/filesystem.js', ["'/home/user/Desktop'", 'changed(to)']);
 await mustContain('system/js/desktop.js', ['list as listFiles', 'renderDesktopEntries', "path === desktopPath", 'data-filesystem-entry']);
+await mustContain('system/js/desktop.js', ['const enableFolderDrop = (node, folderPath) => {', 'importFilesToDirectory(files, folderPath)', 'excedem o limite']);
 await mustContain('system/js/filesystem.js', ['normalizeFsPath', 'fileContentSize', 'isBinaryFileContent']);
 await mustContain('system/js/fs-paths.js', ['resolveScopedFsPath', "value.split('/').includes('..')"]);
 await mustContain('system/js/fs-content.js', ['encodeBackupContent', 'decodeBackupContent', 'fileContentSize']);
 await mustContain('apps/file-explorer/index.html', ['type="file" multiple']);
-await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'content instanceof Blob']);
+await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files)', 'await importFiles([...(event.dataTransfer?.files ?? [])])', 'content instanceof Blob']);
 await mustContain('apps/images/app.js', ['c instanceof Blob', 'URL.createObjectURL(c)']);
 await mustContain('apps/sudoku/app.js', ['const SudokuLogic', 'function toggleNotesMode()', 'function revealHint()', 'state.mistakes++']);
 await mustContain('apps/sudoku/index.html', ['id="btn-notes"', 'id="btn-hint"', 'id="mistakes"', 'id="game-status"']);

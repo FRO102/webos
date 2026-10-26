@@ -185,8 +185,7 @@ $('empty-trash').onclick = async () => {
   if (await os.dialog.confirm({ title: 'Esvaziar lixeira', message: 'Apagar permanentemente todos os itens?', okLabel: 'Esvaziar', danger: true })) act(() => os.fs.emptyTrash());
 };
 $('upload').onclick = () => fileInput.click();
-fileInput.onchange = async () => {
-  const files = [...(fileInput.files ?? [])];
+async function importFiles(files) {
   if (!files.length) return;
   let imported = 0;
   const failures = [];
@@ -202,8 +201,49 @@ fileInput.onchange = async () => {
     } catch (error) { failures.push(`${file.name}: ${error.message}`); }
   }
   say(failures.length ? `${imported} importado(s); ${failures.length} falha(s): ${failures.join(' · ')}` : `${imported} ${imported === 1 ? 'ficheiro importado.' : 'ficheiros importados.'}`);
+}
+fileInput.onchange = async () => {
+  const files = [...(fileInput.files ?? [])];
+  await importFiles(files);
   fileInput.value = '';
 };
+const dropOverlay = document.createElement('div');
+dropOverlay.id = 'file-drop-overlay';
+dropOverlay.setAttribute('role', 'status');
+dropOverlay.setAttribute('aria-live', 'polite');
+dropOverlay.hidden = true;
+dropOverlay.textContent = 'Largar para importar nesta pasta';
+document.body.append(dropOverlay);
+let fileDragDepth = 0;
+const hasDroppedFiles = event => !!event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files');
+const hideFileDropOverlay = () => {
+  fileDragDepth = 0;
+  dropOverlay.hidden = true;
+  document.body.classList.remove('is-file-drop-target');
+};
+document.addEventListener('dragenter', event => {
+  if (!hasDroppedFiles(event)) return;
+  event.preventDefault();
+  fileDragDepth++;
+  dropOverlay.hidden = false;
+  document.body.classList.add('is-file-drop-target');
+});
+document.addEventListener('dragover', event => {
+  if (!hasDroppedFiles(event)) return;
+  event.preventDefault();
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+});
+document.addEventListener('dragleave', event => {
+  if (!hasDroppedFiles(event)) return;
+  fileDragDepth = Math.max(0, fileDragDepth - 1);
+  if (fileDragDepth === 0 && !event.relatedTarget) hideFileDropOverlay();
+});
+document.addEventListener('drop', async event => {
+  if (!hasDroppedFiles(event)) return;
+  event.preventDefault();
+  hideFileDropOverlay();
+  await importFiles([...(event.dataTransfer?.files ?? [])]);
+});
 async function download(enParam = current()) {
   const en = enParam;
   if (!en || en.type !== 'file') return say('Seleciona um ficheiro primeiro.');
