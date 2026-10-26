@@ -202,6 +202,11 @@
   async function loadPdfFromPath(path) {
     if (!window.os || !os.fs) return;
     try {
+      if (!(await os.fs.exists(path))) {
+        await removeRecent(path);
+        os.notify('Este PDF já não existe no WebOS. Abre a pasta no Explorador e importa-o novamente.');
+        return;
+      }
       const content = await os.fs.read(path);
       
       let stat = null;
@@ -224,7 +229,7 @@
       addToRecent(path);
       
     } catch (err) {
-      os.notify('Erro ao ler o ficheiro PDF.');
+      os.notify(`Erro ao abrir o PDF: ${err.message || 'não foi possível ler o ficheiro.'}`);
     }
   }
 
@@ -279,7 +284,12 @@
 
   async function loadRecentFiles() {
     try {
-      const recent = await os.storage.get(RECENT_KEY) || [];
+      const storedRecent = await os.storage.get(RECENT_KEY) || [];
+      const recent = [];
+      for (const path of storedRecent) {
+        if (await os.fs.exists(path)) recent.push(path);
+      }
+      if (recent.length !== storedRecent.length) await os.storage.set(RECENT_KEY, recent);
       els.recentList.innerHTML = '';
       
       if (recent.length === 0) {
@@ -304,6 +314,14 @@
       recent.unshift(path);
       recent = recent.slice(0, 5);
       await os.storage.set(RECENT_KEY, recent);
+      await loadRecentFiles();
+    } catch (e) { /* noop */ }
+  }
+
+  async function removeRecent(path) {
+    try {
+      const recent = await os.storage.get(RECENT_KEY) || [];
+      await os.storage.set(RECENT_KEY, recent.filter(item => item !== path));
       await loadRecentFiles();
     } catch (e) { /* noop */ }
   }

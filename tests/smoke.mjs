@@ -21,6 +21,7 @@ await mustContain('system/js/fs-paths.js', ['resolveScopedFsPath', "value.split(
 await mustContain('system/js/fs-content.js', ['encodeBackupContent', 'decodeBackupContent', 'fileContentSize']);
 await mustContain('apps/file-explorer/index.html', ['type="file" multiple']);
 await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files)', 'await importFiles([...(event.dataTransfer?.files ?? [])])', 'content instanceof Blob']);
+await mustContain('apps/pdfwebos/app.js', ['if (!(await os.fs.exists(path)))', 'await removeRecent(path)', 'for (const path of storedRecent)', 'Erro ao abrir o PDF:']);
 await mustContain('apps/images/app.js', ['c instanceof Blob', 'URL.createObjectURL(c)']);
 await mustContain('apps/sudoku/app.js', ['const SudokuLogic', 'function toggleNotesMode()', 'function revealHint()', 'state.mistakes++']);
 await mustContain('apps/sudoku/index.html', ['id="btn-notes"', 'id="btn-hint"', 'id="mistakes"', 'id="game-status"']);
