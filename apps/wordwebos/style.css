@@ -85,7 +85,7 @@ body {
 .ribbon__panels {
   background: var(--word-bg);
   border-top: 1px solid var(--word-border);
-  height: 96px; /* Altura estrita e fixa */
+  min-height: 88px;
   display: flex;
   flex-direction: column;
 }
@@ -893,3 +893,13 @@ body {
     margin: 0 auto;
   }
 }
+
+/* ---------- Recentes ---------- */
+.recent-bar { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--word-surface); border-bottom:1px solid var(--word-border); font-size:12px; flex-wrap:wrap; }
+.recent-bar[hidden] { display:none; }
+.recent-bar__title { color:var(--word-muted); font-weight:600; }
+.recent-bar__items { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
+.recent-item { padding:4px 8px; border:1px solid var(--word-border); border-radius:6px; background:var(--word-btn); cursor:pointer; }
+.recent-item:hover { background:color-mix(in srgb,var(--word-accent) 15%,var(--word-btn)); }
+.recent-bar__clear { margin-left:auto; padding:4px 8px; border:0; border-radius:6px; background:transparent; cursor:pointer; color:var(--word-muted); }
+.recent-bar__clear:hover { background:var(--word-btn); }

@@ -3,6 +3,8 @@
 
   const DRAFTS_KEY = 'drafts';
   const LEGACY_DRAFT_KEY = 'draft';
+  const RECENTS_KEY = 'wordwebos-recents';
+  const MAX_RECENTS = 10;
   const SAVE_DEBOUNCE_MS = 800;
   const MIN_ZOOM = 50;
   const MAX_ZOOM = 200;
@@ -19,8 +21,27 @@
     saving: false,
     saveTimer: null,
     statusTimer: null,
-    revision: 0
+    revision: 0,
+    savedRevision: 0,
+    savedHtml: ''
   };
+
+  function getCurrentHtml() {
+    return editor ? sanitizeHtml(editor.innerHTML || '<p><br></p>') : '';
+  }
+
+  function applyDocumentHtml(html) {
+    if (!editor) return;
+    const safe = sanitizeHtml(html || '<p><br></p>') || '<p><br></p>';
+    editor.innerHTML = safe;
+    state.savedHtml = safe;
+    state.revision = state.savedRevision;
+  }
+
+  function isDocumentDirty() {
+    return state.dirty;
+  }
+
 
   let editor;
   const els = {};
@@ -54,6 +75,28 @@
   }
 
   // ---------------------------------------------------------------- elements
+
+  function renderRecentDocuments() {
+    if (!window.os || !os.storage) return;
+    const bar = document.getElementById('recentBar');
+    const items = document.getElementById('recentItems');
+    if (!bar || !items) return;
+    getRecentDocuments().then(list => {
+      items.replaceChildren();
+      if (!list.length) { bar.hidden = true; return; }
+      bar.hidden = false;
+      list.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'recent-item';
+        btn.textContent = item.name || basename(item.path);
+        btn.title = item.path;
+        btn.addEventListener('click', () => openFile(item.path, { restoreDraft: true }));
+        items.append(btn);
+      });
+    }).catch(() => { bar.hidden = true; });
+  }
+
 
   function cacheElements() {
     editor = document.getElementById('editor');
@@ -344,6 +387,18 @@
     });
   }
 
+  const TEMPLATES = {
+    memo: '<h1>MEMORANDO</h1><p><strong>Para:</strong> </p><p><strong>De:</strong> </p><p><strong>Data:</strong> ' + formatDate(new Date()) + '</p><p><strong>Assunto:</strong> </p><hr><p></p>',
+    report: '<h1>RELATÓRIO</h1><h2>1. Resumo</h2><p></p><h2>2. Metodologia</h2><p></p><h2>3. Conclusões</h2><p></p>',
+    letter: '<p style="text-align:right">' + formatDate(new Date()) + '</p><p>Exmo(a). Senhor(a),</p><p></p><p>Com os melhores cumprimentos,</p><p></p>'
+  };
+
+  function applyTemplate(name) {
+    editor.innerHTML = TEMPLATES[name] || '<p><br></p>';
+    onEditorChanged();
+    setStatus(t('Modelo aplicado'), 'success');
+  }
+
   async function newDocument() {
     if (state.dirty) {
       const ok = await confirmDiscard();
@@ -356,7 +411,8 @@
     state.docName = 'Documento sem título';
     state.dirty = false;
     state.revision++;
-    updateStatus();
+    state.savedRevision = state.revision;
+    state.savedHtml = '<p><br></p>';
     updateWindowTitle();
     updateSaveState('saved');
     setStatus(t('Novo documento'), 'info');
@@ -522,6 +578,8 @@
       setStatus(errorMessage(err, t('Falha ao guardar.')), 'error');
     } finally {
       state.saving = false;
+      state.savedRevision = state.revision;
+      state.savedHtml = sanitizeHtml(editor.innerHTML);
       if (state.dirty) scheduleDraftSave();
     }
   }
@@ -901,6 +959,96 @@
     document.getElementById('insertLink').addEventListener('click', insertLink);
   }
 
+  function toggleTableHeader() {
+    const table = getCurrentTable();
+    if (!table || !table.rows.length) { setStatus(t('Seleciona uma tabela.'), 'info'); return; }
+    const firstRow = table.rows[0];
+    const isHeader = firstRow.querySelector('th') !== null;
+    Array.from(firstRow.cells).forEach(cell => {
+      const replacement = document.createElement(isHeader ? 'td' : 'th');
+      replacement.innerHTML = cell.innerHTML;
+      Array.from(cell.attributes).forEach(attr => replacement.setAttribute(attr.name, attr.value));
+      cell.replaceWith(replacement);
+    });
+    onEditorChanged();
+    setStatus(isHeader ? t('Cabeçalho removido.') : t('Cabeçalho ativado.'), 'success');
+  }
+
+  function toggleTableBorders() {
+    const table = getCurrentTable();
+    if (!table) { setStatus(t('Seleciona uma tabela.'), 'info'); return; }
+    const collapsed = table.style.borderCollapse === 'collapse' || table.getAttribute('data-borders') === 'on';
+    if (collapsed) {
+      table.style.borderCollapse = 'separate';
+      table.removeAttribute('data-borders');
+      table.querySelectorAll('td, th').forEach(cell => { cell.style.border = 'none'; });
+    } else {
+      table.style.borderCollapse = 'collapse';
+      table.setAttribute('data-borders', 'on');
+      table.querySelectorAll('td, th').forEach(cell => { cell.style.border = '1px solid #999'; });
+    }
+    onEditorChanged();
+    setStatus(collapsed ? t('Bordas removidas.') : t('Bordas aplicadas.'), 'success');
+  }
+
+  function getCurrentTable() {
+    const selection = window.getSelection();
+    let node = selection && selection.anchorNode ? selection.anchorNode : null;
+    if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+    return node && node.closest ? node.closest('table') : null;
+  }
+
+  function addTableRow() {
+    const table = getCurrentTable();
+    if (!table) { setStatus(t('Seleciona uma tabela.'), 'info'); return; }
+    const row = table.rows.length ? table.rows[table.rows.length - 1] : null;
+    const newRow = table.insertRow(-1);
+    const cols = row ? row.cells.length : (table.rows[0] ? table.rows[0].cells.length : 1);
+    for (let i = 0; i < cols; i++) {
+      const cell = newRow.insertCell(-1);
+      cell.innerHTML = '<br>';
+    }
+    onEditorChanged();
+    setStatus(t('Linha adicionada.'), 'success');
+  }
+
+  function addTableColumn() {
+    const table = getCurrentTable();
+    if (!table) { setStatus(t('Seleciona uma tabela.'), 'info'); return; }
+    Array.from(table.rows).forEach(row => {
+      const cell = row.insertCell(-1);
+      cell.innerHTML = '<br>';
+    });
+    onEditorChanged();
+    setStatus(t('Coluna adicionada.'), 'success');
+  }
+
+  function removeTableRow() {
+    const table = getCurrentTable();
+    if (!table || table.rows.length <= 1) { setStatus(t('Não é possível remover a última linha.'), 'info'); return; }
+    let row = null;
+    const selection = window.getSelection();
+    let node = selection && selection.anchorNode ? selection.anchorNode : null;
+    if (node && node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+    if (node && node.closest) row = node.closest('tr');
+    if (!row) row = table.rows[table.rows.length - 1];
+    row.remove();
+    onEditorChanged();
+    setStatus(t('Linha removida.'), 'success');
+  }
+
+  function removeTableColumn() {
+    const table = getCurrentTable();
+    if (!table) { setStatus(t('Seleciona uma tabela.'), 'info'); return; }
+    const cols = table.rows[0] ? table.rows[0].cells.length : 0;
+    if (cols <= 1) { setStatus(t('Não é possível remover a última coluna.'), 'info'); return; }
+    Array.from(table.rows).forEach(row => {
+      if (row.cells.length) row.deleteCell(row.cells.length - 1);
+    });
+    onEditorChanged();
+    setStatus(t('Coluna removida.'), 'success');
+  }
+
   function insertTable() {
     editor.focus();
     const rows = 3, cols = 3;
@@ -1211,9 +1359,27 @@
   function findNext() { searchFind(false); }
   function findPrev() { searchFind(true); }
 
+  function countMatches(query) {
+    const text = editor.innerText || '';
+    if (!query) return 0;
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    let count = 0;
+    let pos = 0;
+    while (true) {
+      const index = lowerText.indexOf(lowerQuery, pos);
+      if (index < 0) break;
+      count++;
+      pos = index + lowerQuery.length;
+    }
+    return count;
+  }
+
   function searchFind(backwards) {
     const q = els.findInput.value;
     if (!q) return;
+    const total = countMatches(q);
+    if (!total) { setStatus(t('Sem correspondências.'), 'info'); return; }
     let found = false;
     try {
       if (typeof window.find === 'function') {
@@ -1221,7 +1387,7 @@
       }
     } catch (e) { /* noop */ }
     if (!found) setStatus(t('Sem correspondências.'), 'info');
-    else setStatus('', null);
+    else setStatus(t('Correspondência') + ' · ' + total + ' ' + t('ocorrências'), 'info');
   }
 
   function replaceAllText() {
@@ -1296,9 +1462,16 @@
 
   function onEditorChanged() {
     state.revision++;
-    state.dirty = true;
+    const current = editor ? (editor.innerHTML || '<p><br></p>') : '';
+    state.dirty = sanitizeHtml(current) !== state.savedHtml;
     scheduleStatusUpdate();
-    updateSaveState('unsaved');
+    updateSaveState(state.dirty ? 'unsaved' : 'saved');
+    updateWindowTitle();
+    scheduleDraftSave();
+  }
+
+  function markDirty() {
+    state.dirty = true;
     updateWindowTitle();
     scheduleDraftSave();
   }
@@ -1378,11 +1551,14 @@
 
   function applyDraft(draft) {
     cancelDraftSave();
-    editor.innerHTML = sanitizeHtml(draft.html) || '<p><br></p>';
+    const safeHtml = sanitizeHtml(draft.html) || '<p><br></p>';
+    editor.innerHTML = safeHtml;
     state.path = draft.path || null;
     state.docName = draft.name || 'Documento sem título';
     state.dirty = true;
     state.revision++;
+    state.savedRevision = Number.isFinite(draft.savedRevision) ? draft.savedRevision : 0;
+    state.savedHtml = draft.savedHtml || '';
 
     const when = draft.savedAt ? formatTimeAgo(draft.savedAt) : '';
     setStatus(t('Rascunho restaurado') + (when ? ' (' + when + ')' : ''), 'info');
@@ -1397,6 +1573,29 @@
     delete drafts[draftId(path)];
     if (Object.keys(drafts).length) await os.storage.set(DRAFTS_KEY, drafts);
     else await os.storage.remove(DRAFTS_KEY);
+  }
+
+  async function recordRecentDocument(path) {
+    if (!path || !window.os || !os.storage) return;
+    try {
+      const list = await getRecentDocuments();
+      const filtered = list.filter(item => item.path !== path);
+      filtered.unshift({ path, name: basename(path), openedAt: Date.now() });
+      await os.storage.set(RECENTS_KEY, filtered.slice(0, MAX_RECENTS));
+    } catch (err) { /* noop */ }
+  }
+
+  async function getRecentDocuments() {
+    try {
+      const value = await os.storage.get(RECENTS_KEY);
+      return Array.isArray(value) ? value : [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  async function clearRecentDocuments() {
+    try { await os.storage.remove(RECENTS_KEY); } catch (err) { /* noop */ }
   }
 
   async function initializeDocument() {
@@ -1533,6 +1732,12 @@
 
   function basename(path) {
     return path.split('/').pop() || path;
+  }
+
+  function pathExt(path) {
+    const name = basename(path || '');
+    const index = name.lastIndexOf('.');
+    return index >= 0 ? name.slice(index + 1).toLowerCase() : '';
   }
 
   function escapeHtml(s) {
@@ -1672,5 +1877,22 @@
     if (hours < 24) return t('há') + ' ' + hours + ' ' + t('h');
     const days = Math.floor(hours / 24);
     return t('há') + ' ' + days + ' ' + t('d');
+  }
+
+  function globalKeyboard(e) {
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      saveDocument(false);
+    } else if (mod && (e.key === 'o' || e.key === 'O')) {
+      e.preventDefault();
+      openDocument();
+    } else if (mod && (e.key === 'n' || e.key === 'N')) {
+      e.preventDefault();
+      newDocument();
+    } else if (mod && (e.key === 'p' || e.key === 'P')) {
+      e.preventDefault();
+      try { window.print(); } catch (err) {}
+    }
   }
 })();
