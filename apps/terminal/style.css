@@ -1,9 +1,16 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { display: flex; flex-direction: column; background: #0e1a22; color: #d6e2e8; font: 13px/1.5 ui-monospace, Consolas, monospace; }
-#out { flex: 1; overflow: auto; padding: 8px 10px 0; }
-#out div { white-space: pre-wrap; word-break: break-word; }
-.cmd { color: #8fa3ae; } .err { color: #ff8a8a; } .dir { color: #7fb4ff; }
-#line { display: flex; gap: 8px; padding: 0 10px 8px; }
-#prompt { color: var(--os-accent, #3cb6a4); white-space: nowrap; }
-#in { flex: 1; min-width: 0; border: 0; background: none; color: inherit; font: inherit; outline: none; caret-color: var(--os-accent, #3cb6a4); }
+body { display: flex; flex-direction: column; background: var(--os-bg, #0e1a22); color: var(--os-fg, #d6e2e8); font: 13px/1.5 ui-monospace, Consolas, monospace; --terminal-bg: var(--os-bg, #0e1a22); --terminal-fg: var(--os-fg, #d6e2e8); --terminal-accent: var(--os-accent, #3cb6a4); --terminal-error: #ff8a8a; --terminal-dir: #7fb4ff; --terminal-muted: var(--os-muted, #8fa3ae); --terminal-surface: var(--os-surface, #08131a); }
+#out { flex: 1; overflow: auto; padding: 8px 10px 0; overflow-anchor: auto; scrollbar-width: thin; }
+#out div { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+.cmd { color: var(--terminal-muted, #8fa3ae); }
+.err { color: var(--terminal-error, #ff8a8a); }
+.dir { color: var(--terminal-dir, #7fb4ff); }
+.info { color: var(--terminal-accent, #3cb6a4); }
+.warn { color: #f0b35a; }
+.success { color: #7ee38f; }
+#line { display: flex; gap: 8px; padding: 0 10px 8px; border-top: 1px solid color-mix(in srgb, var(--terminal-muted, #8fa3ae) 25%, transparent); align-items: center; }
+#prompt { color: var(--terminal-accent, #3cb6a4); white-space: nowrap; user-select: none; }
+#in { flex: 1; min-width: 0; border: 0; background: none; color: inherit; font: inherit; outline: none; caret-color: var(--terminal-accent, #3cb6a4); }
+#in:disabled { opacity: .7; }
+::selection { background: color-mix(in srgb, var(--terminal-accent, #3cb6a4) 40%, transparent); color: inherit; }

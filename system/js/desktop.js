@@ -2,7 +2,7 @@ import { launchApp } from './app-loader.js';
 import { showContextMenu } from './context-menu.js';
 import { getCurrentUser } from './users.js';
 import { bus } from './event-bus.js';
-import { list as listFiles } from './filesystem.js';
+import { list as listFiles, write as writeFile, exists as fileExists, mkdir as makeDirectory, trash as trashFile, remove as removeFile } from './filesystem.js';
 
 export function initDesktop(apps) {
   const ul = document.getElementById('desktop-icons');
@@ -30,7 +30,36 @@ export function initDesktop(apps) {
     b.addEventListener('dblclick', open);
     b.addEventListener('contextmenu', e => {
       e.preventDefault(); e.stopPropagation(); select(b);
-      showContextMenu(e.clientX, e.clientY, [{ label: contextLabel, action: open }]);
+      const items = [{ label: contextLabel, action: open }];
+
+      if (key.startsWith('filesystem:')) {
+        const path = key.slice('filesystem:'.length);
+        const entry = [...desktopEntries.values()].find(item => item.path === path);
+        if (entry) {
+          items.push({ separator: true });
+          if (entry.path.startsWith('/.Trash/')) {
+            items.push({
+              label: 'Apagar permanentemente',
+              action: async () => {
+                if (!confirm(`Apagar permanentemente "${entry.name}"?`)) return;
+                try { await removeFile(entry.path); }
+                catch (err) { console.error(err); }
+              }
+            });
+          } else {
+            items.push({
+              label: 'Mover para a lixeira',
+              action: async () => {
+                if (!confirm(`Mover "${entry.name}" para a lixeira?`)) return;
+                try { await trashFile(entry.path); }
+                catch (err) { console.error(err); }
+              }
+            });
+          }
+        }
+      }
+
+      showContextMenu(e.clientX, e.clientY, items);
     });
     b.addEventListener('keydown', e => { if (e.key === 'Enter') open(); });
     b.addEventListener('pointerdown', e => {
@@ -124,6 +153,108 @@ export function initDesktop(apps) {
   const desktopPath = `${home}/Desktop`;
   const desktopEntries = new Map();
   let desktopRenderSequence = 0;
+
+  const MAX_DROP_FILES = 100;
+  const MAX_DROP_FILE_SIZE = 100 * 1024 * 1024;
+  const normalizeDroppedName = name => String(name ?? '').replace(/\\/g, '/').split('/').filter(Boolean).pop()?.replace(/[\u0000-\u001f]/g, '') || '';
+  const safeDroppedName = name => {
+    const value = normalizeDroppedName(name).trim();
+    if (!value || value === '.' || value === '..') return '';
+    return value.slice(0, 255);
+  };
+  const collisionName = async (targetDir, name) => {
+    const dotIndex = name.lastIndexOf('.');
+    const base = dotIndex > 0 ? name.slice(0, dotIndex) : name;
+    const extension = dotIndex > 0 ? name.slice(dotIndex) : '';
+    let candidate = name;
+    let counter = 1;
+    while (await fileExists(`${targetDir}/${candidate}`)) {
+      candidate = `${base} (${counter})${extension}`;
+      counter += 1;
+      if (counter > 9999) break;
+    }
+    return candidate;
+  };
+  const importFilesToDesktop = async files => {
+    const list = [...files].slice(0, MAX_DROP_FILES);
+    let imported = 0;
+    const failures = [];
+    for (const file of list) {
+      if (!file || typeof file.name !== 'string') continue;
+      if (file.size > MAX_DROP_FILE_SIZE) { failures.push(`${file.name}: ficheiro demasiado grande.`); continue; }
+      const name = safeDroppedName(file.name);
+      if (!name) { failures.push(`${file.name}: nome inválido.`); continue; }
+      try {
+        const finalName = await collisionName(desktopPath, name);
+        await writeFile(`${desktopPath}/${finalName}`, file, file.type || 'application/octet-stream');
+        imported++;
+      } catch (error) {
+        failures.push(`${file.name}: ${error?.message || 'erro ao importar.'}`);
+      }
+    }
+    if (imported > 0) {
+      bus.emit('notify', { app: 'WebOS', message: imported === 1 ? '1 ficheiro adicionado ao WebOS.' : `${imported} ficheiros adicionados ao WebOS.` });
+      renderDesktopEntries();
+    }
+    if (failures.length) {
+      bus.emit('notify', { app: 'WebOS', message: `${failures.length} ficheiro(s) não importado(s): ${failures.slice(0, 3).join(' · ')}${failures.length > 3 ? ' …' : ''}` });
+    }
+  };
+
+  // overlay visual para indicar que se pode largar ficheiros
+  const dropOverlay = document.createElement('div');
+  dropOverlay.id = 'desktop-drop-overlay';
+  dropOverlay.setAttribute('role', 'status');
+  dropOverlay.setAttribute('aria-live', 'polite');
+  dropOverlay.hidden = true;
+  dropOverlay.textContent = 'Arraste ficheiros para adicionar ao WebOS';
+  desktop.append(dropOverlay);
+
+  let dragDepth = 0;
+  const hasFiles = dt => !!dt && Array.from(dt.types || []).includes('Files');
+  const showDropOverlay = () => { if (dropOverlay.hidden) { dropOverlay.hidden = false; desktop.classList.add('is-drop-target'); } };
+  const hideDropOverlay = () => { dropOverlay.hidden = true; desktop.classList.remove('is-drop-target'); };
+  const resetDragDepth = () => { dragDepth = 0; };
+
+  desktop.addEventListener('dragenter', e => {
+    if (!hasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    dragDepth += 1;
+    showDropOverlay();
+  });
+  desktop.addEventListener('dragover', e => {
+    if (!hasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    showDropOverlay();
+  });
+  desktop.addEventListener('dragleave', e => {
+    if (!hasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) hideDropOverlay();
+  });
+  desktop.addEventListener('drop', async e => {
+    if (!hasFiles(e.dataTransfer)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth = 0;
+    hideDropOverlay();
+    const files = e.dataTransfer?.files;
+    if (files && files.length) await importFilesToDesktop(files);
+  });
+
+  // captura global de segurança para drops sobre iframes/janelas
+  document.addEventListener('dragover', e => {
+    if (hasFiles(e.dataTransfer)) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; }
+  }, true);
+  document.addEventListener('drop', e => {
+    if (hasFiles(e.dataTransfer)) { e.preventDefault(); }
+  }, true);
+
   const entryIcon = entry => {
     if (entry.type === 'dir') return '📁';
     const extension = entry.name.split('.').pop().toLowerCase();

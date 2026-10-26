@@ -33,6 +33,7 @@ await mustContain('apps/excelwebos/formula-data.js', ['function evaluateArithmet
 await mustContain('apps/wordwebos/app.js', ['importDocxFromWebOS(path)', 'saveDocxToWebOS()', 'window.mammoth.convertToHtml', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']);
 await mustContain('apps/wordwebos/index.html', ['menuSaveDocx', 'mammoth@1.9.0']);
 await mustContain('apps/terminal/app.js', ['const HISTORY_KEY', 'os.fs.home()', 'await os.fs.trash(p)', 'async purge(a)', 'await walk(', 'metadata.mime']);
+await mustContain('apps/terminal/app.js', ['ALIASES_KEY = \'terminal-aliases-v1\'', 'previousCwd', 'scheduleSaveState', 'async emptytrash(a)', 'async wc(a)']);
 await mustContain('system/sdk/os-dialogs.js', ['async function resolveStart()', "o.start.startsWith('/home/user/')"]);
 await mustContain('apps/media-player/manifest.json', ['"fs.read"', '"fs.write"', '"apps.launch"', '"fileTypes"']);
 await mustContain('apps/media-player/index.html', ['os-sdk.js', 'os-dialogs.js', 'id="video"', 'id="audio"', 'id="seek"']);
