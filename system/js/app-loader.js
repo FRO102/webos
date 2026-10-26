@@ -76,6 +76,7 @@ export function launchApp(appId, args = null) {
 
   const frame = document.createElement('iframe');
   frame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads';
+  frame.dataset.appId = appId;
   frame.title = m.name;
   frame.src = base + m.entry;
 

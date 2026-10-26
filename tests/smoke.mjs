@@ -22,6 +22,8 @@ await mustContain('system/js/fs-paths.js', ['resolveScopedFsPath', "value.split(
 await mustContain('system/js/fs-content.js', ['encodeBackupContent', 'decodeBackupContent', 'fileContentSize']);
 await mustContain('apps/file-explorer/index.html', ['type="file" multiple']);
 await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files)', 'window.addEventListener(\'drop\'', 'await importFiles([...(event.dataTransfer?.files ?? [])])', 'content instanceof Blob']);
+await mustContain('apps/file-explorer/app.js', ["event.data?.type !== 'webos:file-drop'", 'Array.isArray(event.data.files)']);
+await mustContain('system/js/desktop.js', ["target?.dataset.appId === 'file-explorer'", "type: 'webos:file-drop'"]);
 await mustContain('apps/file-explorer/app.js', ['async function refreshCurrentFolder()', 'A pasta atual foi removida.', 'Este item já não existe nesta pasta.']);
 await mustContain('apps/pdfwebos/app.js', ['if (!(await os.fs.exists(path)))', 'await removeRecent(path)', 'for (const path of storedRecent)', 'Erro ao abrir o PDF:']);
 await mustContain('apps/images/app.js', ['c instanceof Blob', 'URL.createObjectURL(c)']);
@@ -84,6 +86,7 @@ assert.equal(desktopSource.includes("const snake = apps.find"), false, 'O Snake 
 await mustContain('system/js/notifications.js', ['system:notifications', 'system:notifications:unread']);
 await mustContain('system/js/users.js', ['createUser', 'selectUser']);
 await mustContain('system/js/app-loader.js', ['parseAppDirectoryListing', "fetch('apps/')", 'listagem da pasta apps/', "fetch('apps/registry.json'"]);
+await mustContain('system/js/app-loader.js', ['frame.dataset.appId = appId']);
 await mustContain('system/js/app-discovery.js', ['parseAppDirectoryListing', 'appIdPattern']);
 assert.ok(Array.isArray(JSON.parse(await readFile(join(root, 'apps/registry.json'), 'utf8'))), 'O registry de apps para Cloudflare Pages deve existir e ser um array.');
 await mustContain('system/js/i18n.js', ['export const localeFor', 'export const translate', 'locale:changed', 'function translateTextNode']);

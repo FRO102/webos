@@ -298,6 +298,11 @@ export function initDesktop(apps) {
   document.addEventListener('drop', e => {
     if (!hasFiles(e.dataTransfer)) return;
     e.preventDefault();
+    const target = e.target instanceof HTMLIFrameElement ? e.target : document.elementFromPoint(e.clientX, e.clientY)?.closest('iframe');
+    if (target?.dataset.appId === 'file-explorer' && target.contentWindow) {
+      target.contentWindow.postMessage({ type: 'webos:file-drop', files: [...(e.dataTransfer?.files ?? [])] }, location.origin);
+      e.stopPropagation();
+    }
     dragDepth = 0;
     hideDropOverlay();
     desktop.querySelectorAll('.is-folder-drop-target').forEach(node => node.classList.remove('is-folder-drop-target'));
