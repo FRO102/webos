@@ -21,7 +21,7 @@ await mustContain('system/js/filesystem.js', ['normalizeFsPath', 'fileContentSiz
 await mustContain('system/js/fs-paths.js', ['resolveScopedFsPath', "value.split('/').includes('..')"]);
 await mustContain('system/js/fs-content.js', ['encodeBackupContent', 'decodeBackupContent', 'fileContentSize']);
 await mustContain('apps/file-explorer/index.html', ['type="file" multiple']);
-await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files)', 'await importFiles([...(event.dataTransfer?.files ?? [])])', 'content instanceof Blob']);
+await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files)', 'window.addEventListener(\'drop\'', 'await importFiles([...(event.dataTransfer?.files ?? [])])', 'content instanceof Blob']);
 await mustContain('apps/file-explorer/app.js', ['async function refreshCurrentFolder()', 'A pasta atual foi removida.', 'Este item já não existe nesta pasta.']);
 await mustContain('apps/pdfwebos/app.js', ['if (!(await os.fs.exists(path)))', 'await removeRecent(path)', 'for (const path of storedRecent)', 'Erro ao abrir o PDF:']);
 await mustContain('apps/images/app.js', ['c instanceof Blob', 'URL.createObjectURL(c)']);

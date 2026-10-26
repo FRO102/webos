@@ -233,29 +233,30 @@ const hideFileDropOverlay = () => {
   dropOverlay.hidden = true;
   document.body.classList.remove('is-file-drop-target');
 };
-document.addEventListener('dragenter', event => {
+window.addEventListener('dragenter', event => {
   if (!hasDroppedFiles(event)) return;
   event.preventDefault();
   fileDragDepth++;
   dropOverlay.hidden = false;
   document.body.classList.add('is-file-drop-target');
-});
-document.addEventListener('dragover', event => {
+}, true);
+window.addEventListener('dragover', event => {
   if (!hasDroppedFiles(event)) return;
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
-});
-document.addEventListener('dragleave', event => {
+}, true);
+window.addEventListener('dragleave', event => {
   if (!hasDroppedFiles(event)) return;
   fileDragDepth = Math.max(0, fileDragDepth - 1);
   if (fileDragDepth === 0 && !event.relatedTarget) hideFileDropOverlay();
-});
-document.addEventListener('drop', async event => {
+}, true);
+window.addEventListener('drop', async event => {
   if (!hasDroppedFiles(event)) return;
   event.preventDefault();
+  event.stopPropagation();
   hideFileDropOverlay();
   await importFiles([...(event.dataTransfer?.files ?? [])]);
-});
+}, true);
 async function download(enParam = current()) {
   const en = enParam;
   if (!en || en.type !== 'file') return say('Seleciona um ficheiro primeiro.');
