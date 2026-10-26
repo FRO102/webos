@@ -86,6 +86,7 @@ export async function remove(p) {
 export async function trash(p) {
   p = norm(p);
   if (p === '/' || p === '/.Trash' || p.startsWith('/.Trash/')) throw new Error('Caminho inválido para a lixeira.');
+  if (p === '/home' || /^\/home\/[^/]+$/.test(p)) throw new Error('Não é possível mover a pasta pessoal para a lixeira.');
   const nodes = await subtree(p);
   if (!nodes.length) throw new Error(`Não existe: ${p}`);
   const name = p.split('/').pop();
@@ -124,6 +125,7 @@ export async function restore(p) {
 export async function move(from, to) {
   from = norm(from); to = norm(to);
   if (from === '/' || to.startsWith(from + '/')) throw new Error('Movimento inválido.');
+  if (from === '/home' || /^\/home\/[^/]+$/.test(from)) throw new Error('Não é possível mover a pasta pessoal.');
   const nodes = await subtree(from);
   if (!nodes.length) throw new Error(`Não existe: ${from}`);
   if (await get(to)) throw new Error(`Já existe: ${to}`);

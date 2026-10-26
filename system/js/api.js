@@ -14,7 +14,7 @@ const apiError = error => {
   const message = String(error?.message ?? error);
   const code = /permissão em falta/i.test(message) ? 'permission_denied'
     : /só pode aceder|path forbidden/i.test(message) ? 'path_forbidden'
-      : /não existe|não encontrado/i.test(message) ? 'not_found'
+      : /não existe|não encontrado|não é uma pasta/i.test(message) ? 'not_found'
         : /já existe/i.test(message) ? 'already_exists'
           : /inválid|inválido|invalid/i.test(message) ? 'invalid_args'
             : /quota|limite de/i.test(message) ? 'quota_exceeded' : 'operation_failed';

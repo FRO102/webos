@@ -6,6 +6,7 @@ let home = '/home/user', cwd = home, entries = [], sel = null, ctxMenu = null;
 
 const say = msg => { status.textContent = msg; };
 const join = (dir, name) => (dir === '/' ? '' : dir) + '/' + name;
+const parentPath = path => path.split('/').slice(0, -1).join('/') || '/';
 const size = n => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 const validName = name => name && name !== '.' && name !== '..' && name.length <= 255 && !/[\\/\u0000-\u001f]/.test(name);
 const styleEl = document.createElement('style');
@@ -171,7 +172,18 @@ async function rename(entryParam = current()) {
 async function remove(entryParam = current(), focusAfter = false) {
   const en = entryParam;
   if (!en) return say('Seleciona um item primeiro.');
-  if (await os.dialog.confirm({ title: 'Mover para a lixeira', message: `Mover "${en.name}" para a lixeira?`, okLabel: 'Mover', danger: true })) await act(() => os.fs.trash(en.path));
+  if (!(await os.fs.exists(en.path))) {
+    say('Este item já não existe nesta pasta.');
+    await refreshCurrentFolder();
+    return;
+  }
+  if (!(await os.dialog.confirm({ title: 'Mover para a lixeira', message: `Mover "${en.name}" para a lixeira?`, okLabel: 'Mover', danger: true }))) return;
+  if (!(await os.fs.exists(en.path))) {
+    say('Este item já não existe nesta pasta.');
+    await refreshCurrentFolder();
+    return;
+  }
+  await act(() => os.fs.trash(en.path));
 }
 $('rename').onclick = rename;
 $('del').onclick = remove;
@@ -281,7 +293,30 @@ function dataUrlToBlob(value) {
   return new Blob([bytes], { type: mime });
 }
 
-os.on('fs:changed', () => go(cwd));
+async function refreshCurrentFolder() {
+  let path = cwd;
+  while (path && path !== home && path !== '/home') {
+    try {
+      const info = await os.fs.stat(path);
+      if (info.type === 'dir') {
+        await go(path);
+        return;
+      }
+    } catch {}
+    path = parentPath(path);
+  }
+  try { home = await os.fs.home(); } catch {}
+  await go(home);
+}
+os.on('fs:changed', async ({ path } = {}) => {
+  if (path && cwd !== path && !cwd.startsWith(`${path}/`) && !path.startsWith(`${cwd}/`)) return;
+  try {
+    const info = await os.fs.stat(cwd);
+    if (info.type === 'dir') return go(cwd);
+  } catch {}
+  say('A pasta atual foi removida. A abrir a pasta disponível mais próxima.');
+  await refreshCurrentFolder();
+});
 Promise.all([os.fs.home(), os.args()]).then(([path, args]) => {
   home = path;
   go(args?.path || home);
