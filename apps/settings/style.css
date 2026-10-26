@@ -33,6 +33,8 @@ main { display: flex; flex-direction: column; gap: 24px; padding: 24px; max-widt
 .action-btn.ghost { background: var(--os-btn, #d3dce2); color: inherit; }
 .action-btn.ghost:hover { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 20%, var(--os-btn, #d3dce2)); }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--os-accent, #3cb6a4); outline-offset: 2px; }
+.bg-preview-box { display: grid; gap: 8px; }
+.bg-preview { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid var(--os-border, #ddd); }
 .status { min-height: 1.4em; margin: 10px 0 0; color: var(--os-muted, #666); font-size: 12px; }
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 38px; border-top: 1px solid var(--os-border, #ddd); }
 .setting-row input[type="range"] { flex: 1; accent-color: var(--os-accent, #3cb6a4); }

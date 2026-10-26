@@ -14,7 +14,7 @@ const PALETTE = {
   light: { bg: '#ffffff', surface: '#eef1f3', btn: '#d3dce2', fg: '#1c2a33', muted: '#44565f', border: '#d3dce2', field: '#ffffff' },
   dark:  { bg: '#17222a', surface: '#1f2d37', btn: '#2f404c', fg: '#e6edf1', muted: '#9fb0ba', border: '#33454f', field: '#1a2730' },
 };
-const defaults = { theme: 'dark', accent: '#3cb6a4', wallpaper: 'aurora', fontSize: 14, animations: true, sounds: true, language: 'pt-PT' };
+const defaults = { theme: 'dark', accent: '#3cb6a4', wallpaper: 'aurora', fontSize: 14, animations: true, sounds: true, language: 'pt-PT', desktopBackground: null };
 let state = { ...defaults };
 
 export const getSettings = () => ({ ...state });
@@ -27,7 +27,10 @@ export function validateSettingsSnapshot(value) {
   if (!WALLPAPERS[next.wallpaper]) throw new Error('Papel de parede inválido no backup.');
   if (!Number.isFinite(Number(next.fontSize)) || Number(next.fontSize) < 12 || Number(next.fontSize) > 20) throw new Error('Tamanho de texto inválido no backup.');
   if (typeof next.animations !== 'boolean' || typeof next.sounds !== 'boolean' || !['pt-PT', 'en'].includes(next.language)) throw new Error('Preferências inválidas no backup.');
-  return { theme: next.theme, accent: next.accent, wallpaper: next.wallpaper, fontSize: Number(next.fontSize), animations: next.animations, sounds: next.sounds, language: next.language };
+  if (next.desktopBackground !== null) {
+    if (typeof next.desktopBackground !== 'string' || !next.desktopBackground.startsWith('/') || next.desktopBackground.includes('..')) throw new Error('Fundo do ambiente de trabalho inválido no backup.');
+  }
+  return { theme: next.theme, accent: next.accent, wallpaper: next.wallpaper, fontSize: Number(next.fontSize), animations: next.animations, sounds: next.sounds, language: next.language, desktopBackground: next.desktopBackground };
 }
 
 export function applyRestoredSettings(snapshot) {
@@ -49,7 +52,7 @@ function apply() {
   root.dataset.animations = state.animations ? 'on' : 'off';
   root.style.setProperty('--os-font-size', `${state.fontSize}px`);
   root.style.setProperty('--accent', state.accent);
-  document.getElementById('desktop')?.style.setProperty('background', (WALLPAPERS[state.wallpaper] ?? WALLPAPERS.aurora).css);
+  document.getElementById('desktop')?.style.removeProperty('background');
 }
 
 export async function initSettings() {
@@ -58,6 +61,7 @@ export async function initSettings() {
   if (!Number.isFinite(state.fontSize)) state.fontSize = defaults.fontSize;
   state.fontSize = Math.min(20, Math.max(12, state.fontSize));
   if (!['pt-PT', 'en'].includes(state.language)) state.language = defaults.language;
+  if (typeof state.desktopBackground !== 'string' || !state.desktopBackground.startsWith('/') || state.desktopBackground.includes('..')) state.desktopBackground = null;
   if (!(await kv.get('system:settings'))) await kv.set('system:settings', state);
   apply();
 }
@@ -71,6 +75,12 @@ export async function updateSettings(patch = {}) {
   if ('animations' in patch) next.animations = Boolean(patch.animations);
   if ('sounds' in patch) next.sounds = Boolean(patch.sounds);
   if ('language' in patch) { if (!['pt-PT', 'en'].includes(patch.language)) throw new Error('Idioma inválido.'); next.language = patch.language; }
+  if ('desktopBackground' in patch) {
+    const value = patch.desktopBackground;
+    if (value === null) next.desktopBackground = null;
+    else if (typeof value !== 'string' || !value.startsWith('/') || value.includes('..') || value.length > 1024) throw new Error('Fundo do ambiente de trabalho inválido.');
+    else next.desktopBackground = value;
+  }
   state = next;
   apply();
   await kv.set('system:settings', state);

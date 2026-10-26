@@ -83,7 +83,7 @@ try {
 - O SDK aplica automaticamente o tema do sistema ao `:root` da app: `data-theme` e as variáveis
   `--os-bg`, `--os-surface`, `--os-btn`, `--os-fg`, `--os-muted`, `--os-border`, `--os-field`, `--os-accent`.
   Usa-as com fallback, ex.: `background: var(--os-bg, #fff)`. Mudanças ao vivo chegam via `os.on('theme:changed', fn)`.
-- `os.settings.get()` (aberto) e `os.settings.set({ theme, accent, wallpaper })` (permissão `settings.write`).
+- `os.settings.get()` (aberto) e `os.settings.set({ theme, accent, wallpaper, desktopBackground })` (permissão `settings.write`).
 - `os.notify(mensagem)` mostra uma notificação (toast) com o nome da app.
 
 ## Diálogos de ficheiros

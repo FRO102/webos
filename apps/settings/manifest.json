@@ -7,5 +7,5 @@
   "entry": "index.html",
   "window": { "width": 460, "height": 540, "minWidth": 340, "minHeight": 320 },
   "singleInstance": true,
-  "permissions": ["settings.write", "notifications"]
+  "permissions": ["settings.write", "notifications", "fs.read", "fs.write"]
 }

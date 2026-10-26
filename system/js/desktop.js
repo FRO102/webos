@@ -2,13 +2,31 @@ import { launchApp } from './app-loader.js';
 import { showContextMenu } from './context-menu.js';
 import { getCurrentUser } from './users.js';
 import { bus } from './event-bus.js';
-import { list as listFiles, write as writeFile, exists as fileExists, mkdir as makeDirectory, trash as trashFile, remove as removeFile } from './filesystem.js';
+import { list as listFiles, read as readDesktopFile, stat as statDesktopFile, write as writeFile, exists as fileExists, mkdir as makeDirectory, trash as trashFile, remove as removeFile } from './filesystem.js';
+import { getSettings, WALLPAPERS } from './settings.js';
 
 export function initDesktop(apps) {
   const ul = document.getElementById('desktop-icons');
   const desktop = document.getElementById('desktop');
   let openFolder = null;
   let positions = {};
+  let desktopBackgroundUrl = null;
+  const applyDesktopBackground = async () => {
+    if (desktopBackgroundUrl) { URL.revokeObjectURL(desktopBackgroundUrl); desktopBackgroundUrl = null; }
+    const settings = getSettings();
+    if (settings.desktopBackground) {
+      try {
+        const content = await readDesktopFile(settings.desktopBackground);
+        const blob = content instanceof Blob ? content : new Blob([content], { type: (await statDesktopFile(settings.desktopBackground)).mime || 'application/octet-stream' });
+        desktopBackgroundUrl = URL.createObjectURL(blob);
+        desktop.style.background = `url("${desktopBackgroundUrl}") center / cover no-repeat`;
+        return;
+      } catch (error) {
+        console.warn('Não foi possível aplicar o fundo personalizado do ambiente de trabalho.', error);
+      }
+    }
+    desktop.style.background = (WALLPAPERS[settings.wallpaper] ?? WALLPAPERS.aurora).css;
+  };
   try { positions = JSON.parse(localStorage.getItem('webos:desktop-positions') || '{}'); } catch { localStorage.removeItem('webos:desktop-positions'); }
   const savePositions = () => { try { localStorage.setItem('webos:desktop-positions', JSON.stringify(Object.fromEntries([...ul.children].filter(li => li.dataset.key && li.style.order).map(li => [li.dataset.key, li.style.order])))); } catch {} };
   const select = (el, additive = false) => {
@@ -352,7 +370,12 @@ export function initDesktop(apps) {
       if (entry.type === 'dir') enableFolderDrop(fsIcon, entry.path);
     });
   };
-  renderDesktopEntries();
+    bus.on('settings:changed', () => { applyDesktopBackground(); });
+
+  // Aplica novamente caso o ficheiro de fundo seja alterado
+  bus.on('fs:changed', ({ path }) => {
+    if (getSettings().desktopBackground && (path === getSettings().desktopBackground || path.startsWith(`${getSettings().desktopBackground}/`))) applyDesktopBackground();
+  });
   bus.on('fs:changed', ({ path }) => {
     if (path === desktopPath || path.startsWith(`${desktopPath}/`)) renderDesktopEntries();
   });
@@ -395,6 +418,7 @@ export function initDesktop(apps) {
     b.querySelector('span').replaceWith(img);
   }
 
+  applyDesktopBackground();
   desktop.addEventListener('click', () => select(null));
   document.addEventListener('pointerdown', event => {
     if (openFolder && !openFolder.contains(event.target)) closeFolder();
