@@ -7,12 +7,14 @@ export const WALLPAPERS = {
   floresta: { name: 'Floresta', css: 'radial-gradient(ellipse at 20% 20%, rgba(150,200,120,.25), transparent 55%), linear-gradient(160deg,#254232,#0e1a14)' },
   grafite: { name: 'Grafite', css: 'linear-gradient(160deg,#3a3f45,#16181b)' },
   papel:   { name: 'Papel',   css: 'radial-gradient(ellipse at 80% 10%, rgba(255,255,255,.8), transparent 60%), linear-gradient(160deg,#d9e2e8,#b7c6d0)' },
+  crt:     { name: 'CRT',    css: 'radial-gradient(ellipse at 50% 45%, rgba(57,255,20,.10), transparent 60%), radial-gradient(ellipse at 50% 50%, #03130b 0%, #02070a 100%), repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px)' },
 };
 
 // paleta que as apps recebem (o SDK aplica-a como variáveis CSS --os-*)
 const PALETTE = {
   light: { bg: '#ffffff', surface: '#eef1f3', btn: '#d3dce2', fg: '#1c2a33', muted: '#44565f', border: '#d3dce2', field: '#ffffff' },
   dark:  { bg: '#17222a', surface: '#1f2d37', btn: '#2f404c', fg: '#e6edf1', muted: '#9fb0ba', border: '#33454f', field: '#1a2730' },
+  retro: { bg: '#03090c', surface: '#06141a', btn: '#0b1f25', fg: '#39ff14', muted: '#7CFC00', border: '#57ff7a', field: '#020608' },
 };
 const defaults = { theme: 'dark', accent: '#3cb6a4', wallpaper: 'aurora', fontSize: 14, animations: true, sounds: true, language: 'pt-PT', desktopBackground: null };
 let state = { ...defaults };
@@ -60,6 +62,7 @@ export async function initSettings() {
   state = { ...defaults, ...(saved && typeof saved === 'object' ? saved : {}) };
   if (!Number.isFinite(state.fontSize)) state.fontSize = defaults.fontSize;
   state.fontSize = Math.min(20, Math.max(12, state.fontSize));
+  if (!PALETTE[state.theme]) state.theme = defaults.theme;
   if (!['pt-PT', 'en'].includes(state.language)) state.language = defaults.language;
   if (typeof state.desktopBackground !== 'string' || !state.desktopBackground.startsWith('/') || state.desktopBackground.includes('..')) state.desktopBackground = null;
   if (!(await kv.get('system:settings'))) await kv.set('system:settings', state);
@@ -68,9 +71,21 @@ export async function initSettings() {
 
 export async function updateSettings(patch = {}) {
   const next = { ...state };
-  if ('theme' in patch) { if (!PALETTE[patch.theme]) throw new Error('Tema inválido.'); next.theme = patch.theme; }
+  if ('theme' in patch) {
+    if (!PALETTE[patch.theme]) throw new Error('Tema inválido.');
+    // Ao mudar para Retro, força o wallpaper CRT.
+    if (patch.theme === 'retro') next.wallpaper = 'crt';
+    // Ao sair de Retro, repõe Aurora se o wallpaper atual era CRT.
+    if (patch.theme !== 'retro' && state.theme === 'retro' && next.wallpaper === 'crt') next.wallpaper = 'aurora';
+    next.theme = patch.theme;
+  }
   if ('accent' in patch) { if (!/^#[0-9a-f]{6}$/i.test(patch.accent)) throw new Error('Cor inválida (usa #rrggbb).'); next.accent = patch.accent; }
-  if ('wallpaper' in patch) { if (!WALLPAPERS[patch.wallpaper]) throw new Error('Papel de parede inválido.'); next.wallpaper = patch.wallpaper; }
+  if ('wallpaper' in patch) {
+    // Bloqueia papel de parede CRT quando não é Retro.
+    if (patch.wallpaper === 'crt' && next.theme !== 'retro') throw new Error('O papel de parede CRT só está disponível no modo Retro.');
+    if (!WALLPAPERS[patch.wallpaper]) throw new Error('Papel de parede inválido.');
+    next.wallpaper = patch.wallpaper;
+  }
   if ('fontSize' in patch) { const size = Number(patch.fontSize); if (!Number.isFinite(size) || size < 12 || size > 20) throw new Error('Tamanho de texto inválido.'); next.fontSize = size; }
   if ('animations' in patch) next.animations = Boolean(patch.animations);
   if ('sounds' in patch) next.sounds = Boolean(patch.sounds);

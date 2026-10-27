@@ -24,3 +24,83 @@
   --win-bg: #1b2730; --win-fg: #e6edf1; --win-border: rgba(255, 255, 255, .14);
   --title-bg: #2a3944; --title-fg: #9fb0ba; --menu-bg: #22303a;
 }
+
+:root[data-theme="retro"] {
+  --font: "VT323", "Courier New", Consolas, "Lucida Console", monospace;
+  --radius: 0;
+  --task-bg: rgba(2, 8, 10, .97);
+  --task-fg: #39ff14;
+  --task-muted: rgba(124, 252, 0, .72);
+  --win-bg: #041014;
+  --win-fg: #39ff14;
+  --win-border: rgba(57, 255, 20, .45);
+  --title-bg: #02080a;
+  --title-fg: #7fff4f;
+  --title-active-bg: #0b2a0f;
+  --shadow: 0 0 0 2px rgba(57, 255, 20, .22), 0 0 12px rgba(57, 255, 20, .12);
+  --shadow-active: 0 0 0 3px rgba(57, 255, 20, .4), 0 0 18px rgba(57, 255, 20, .22);
+  --menu-bg: #02080a;
+}
+:root[data-theme="retro"] #clock,
+:root[data-theme="retro"] .win-title,
+:root[data-theme="retro"] #start-btn {
+  text-shadow: 0 0 3px rgba(57, 255, 20, .7), 0 0 8px rgba(57, 255, 20, .35);
+  letter-spacing: .02em;
+}
+:root[data-theme="retro"] .window,
+:root[data-theme="retro"] .win-btns button,
+:root[data-theme="retro"] #start-btn,
+:root[data-theme="retro"] .task-btn,
+:root[data-theme="retro"] .workspace-btn {
+  border-radius: 0;
+}
+:root[data-theme="retro"] .win-title {
+  font-family: var(--font);
+  font-size: 14px;
+}
+:root[data-theme="retro"] .window.active .win-title {
+  background: #0b2a0f;
+  color: #7fff4f;
+}
+:root[data-theme="retro"] #desktop {
+  background: radial-gradient(ellipse at 50% 50%, #041014 0%, #020506 100%);
+  overflow: hidden;
+}
+:root[data-theme="retro"] #desktop::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply; opacity: .6; z-index: 9989;
+  will-change: transform;
+}
+:root[data-theme="retro"] #desktop::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+  z-index: 9989;
+}
+@keyframes crt-flicker {
+  0% { opacity: .985; }
+  50% { opacity: .97; }
+  100% { opacity: .99; }
+}
+:root[data-theme="retro"] #desktop {
+  animation: crt-flicker .12s steps(2) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="retro"] #desktop { animation: none; }
+  :root[data-theme="retro"] #desktop::before { display: none; }
+  :root[data-theme="retro"] #desktop::after { display: none; }
+}
+@media (pointer: coarse) {
+  :root[data-theme="retro"] #desktop::before { opacity: .35; }
+}
+:root[data-theme="retro"] ::-webkit-scrollbar { width: 10px; height: 10px; }
+:root[data-theme="retro"] ::-webkit-scrollbar-track { background: rgba(57, 255, 20, .05); }
+:root[data-theme="retro"] ::-webkit-scrollbar-thumb { background: rgba(57, 255, 20, .45); border-radius: 0; }
+:root[data-theme="retro"] button:focus-visible {
+  outline: 2px solid #39ff14; outline-offset: 2px;
+}
+/* CRT barrel distortion subtle via mask (optional) */
+:root[data-theme="retro"] #desktop.is-drop-target::before { opacity: 1; }
+

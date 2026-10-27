@@ -29,7 +29,7 @@ function loadPrefs(){
     ...Object.keys(bestScores).map(key=>storage.get(`tetris-best-${key}`).then(value=>{if(value!=null)bestScores[key]=Number(value)||0;}).catch(()=>{})),
     storage.get('tetris-best').then(value=>{if(value!=null&&!bestScores.normal)bestScores.normal=Number(value)||0;}).catch(()=>{}),
     storage.get('tetris-sound').then(v=>{if(v!=null)soundOn=(v!=='off');}).catch(()=>{}),
-    storage.get('tetris-theme').then(v=>{if(v==='light'||v==='dark')theme=v;}).catch(()=>{}),
+    storage.get('tetris-theme').then(v=>{if(v==='light'||v==='dark'||v==='retro')theme=v;}).catch(()=>{}),
     storage.get('tetris-controls').then(value=>{if(value&&typeof value==='object')keyBindings={...defaultBindings,...value};}).catch(()=>{})
   ]);
 }
@@ -245,8 +245,8 @@ document.querySelectorAll('[data-bind]').forEach(button=>button.addEventListener
 canvas.addEventListener('pointerdown',()=>canvas.focus());
 
 if(window.os){
-  window.os.on('theme:changed',t=>{if(t&&t.theme){theme=(t.theme==='dark'?'dark':'light');applyTheme();}});
-  window.os.theme.get().then(t=>{if(t&&t.theme){theme=(t.theme==='dark'?'dark':'light');applyTheme();}}).catch(()=>{});
+  window.os.on('theme:changed',t=>{if(t&&t.theme){theme=(t.theme==='dark'||t.theme==='retro'?'dark':'light');applyTheme();}});
+  window.os.theme.get().then(t=>{if(t&&t.theme){theme=(t.theme==='dark'||t.theme==='retro'?'dark':'light');applyTheme();}}).catch(()=>{});
 }
 
 loadPrefs().then(()=>{
