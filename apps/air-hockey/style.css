@@ -368,3 +368,32 @@ button:hover {
 #gameover-screen.lose-state {
 	background: rgba(20, 4, 8, 0.9);
 }
+
+/* === WebOS overlay corrections === */
+#ready-screen, #pause-screen, #gameover-screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: rgba(4,6,10,0.92);
+  backdrop-filter: blur(6px);
+  z-index: 5;
+  text-align: center;
+}
+#ready-screen.on, #pause-screen.on, #gameover-screen.on { display: flex; }
+#gameover-screen { background: rgba(4,6,10,0.9); }
+.ready-inner, .pause-inner, .go-inner { display:flex; flex-direction:column; align-items:center; gap:10px; }
+.ready-face { font-size:64px; line-height:1; }
+.ready-title { font:900 46px Orbitron; color:#00d4ff; text-shadow:0 0 30px #00d4ff; letter-spacing:4px; }
+.ready-sub { font:300 13px Rajdhani; color:#ffc940; letter-spacing:10px; }
+.ready-pill { font:700 14px Orbitron; color:#ffc940; margin:4px 0 12px; text-shadow:0 0 12px #ffc940; }
+.pace.ready-diff { display:flex; gap:8px; margin-bottom:12px; }
+.pace.ready-diff button { padding:6px 14px; font:700 11px Orbitron; border:1px solid rgba(255,255,255,.2); background:transparent; color:rgba(255,255,255,.6); clip-path:none; letter-spacing:2px; transition:.15s; }
+.pace.ready-diff button.active { border-color:#00d4ff; color:#00d4ff; box-shadow:0 0 12px rgba(0,212,255,.4); }
+.ready-play { padding:13px 44px; border:2px solid var(--blue); background:transparent; color:var(--blue); font:700 13px Orbitron; letter-spacing:4px; cursor:pointer; clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%); }
+.ready-play:hover { background:var(--blue); color:#000; box-shadow:0 0 30px rgba(0,212,255,.5); }
+.ready-keys { font:300 11px Rajdhani; color:rgba(255,255,255,.35); letter-spacing:2px; margin-top:8px; }
+#arena { position:relative; width:100%; max-width:760px; aspect-ratio:760/520; margin:0 auto; touch-action:none; }
+

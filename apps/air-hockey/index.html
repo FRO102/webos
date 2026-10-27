@@ -26,32 +26,54 @@
         <canvas id="c"></canvas>
         <div id="mute-btn"></div>
         <div id="ui"></div>
-      </div>
-      <div id="gameover-screen" class="screen">
-        <div class="go-inner">
-          <div class="go-face" id="go-face">😄</div>
-          <div class="go-who" id="go-who">YOU WIN</div>
-          <div class="go-wins" id="go-wins">GAME · SET · MATCH</div>
-          <div class="go-final" id="go-final">7 – 3</div>
-          <button id="btn-again">PLAY AGAIN</button>
+        <div id="gameover-screen" class="screen">
+          <div class="go-inner">
+            <div class="go-face" id="go-face">😄</div>
+            <div class="go-who" id="go-who">YOU WIN</div>
+            <div class="go-wins" id="go-wins">GAME · SET · MATCH</div>
+            <div class="go-final" id="go-final">7 – 3</div>
+            <button id="btn-again">PLAY AGAIN</button>
+          </div>
         </div>
+      </div>
+
+      <div id="stat-right" class="stat-panel">
+        <div class="stat-name" style="color:#ff2d55">CPU</div>
+        <div class="stat-score" id="score-cpu" style="color:#ff2d55;text-shadow:0 0 20px #ff2d55">0</div>
+        <div class="stat-divider"></div>
+        <div class="stat-row"><span class="stat-label">STREAK</span><span class="stat-val" id="stat-cpu-streak">0</span></div>
+        <div class="stat-row"><span class="stat-label">TOP SPEED</span><span class="stat-val" id="stat-cpu-speed">0</span></div>
+        <div class="stat-row"><span class="stat-label">POWER HITS</span><span class="stat-val" id="stat-cpu-power">0</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat-footer">FIRST TO 7 WINS</div>
       </div>
     </div>
   </div>
 
-  <div id="stat-right" class="stat-panel">
-    <div class="stat-name" style="color:#ff2d55">CPU</div>
-    <div class="stat-score" id="score-cpu" style="color:#ff2d55;text-shadow:0 0 20px #ff2d55">0</div>
-    <div class="stat-divider"></div>
-    <div class="stat-row"><span class="stat-label">STREAK</span><span class="stat-val" id="stat-cpu-streak">0</span></div>
-    <div class="stat-row"><span class="stat-label">TOP SPEED</span><span class="stat-val" id="stat-cpu-speed">0</span></div>
-    <div class="stat-row"><span class="stat-label">POWER HITS</span><span class="stat-val" id="stat-cpu-power">0</span></div>
-    <div class="stat-divider"></div>
-    <div class="stat-footer">FIRST TO 7 WINS</div>
+  <div id="ready-screen" class="screen on">
+    <div class="ready-inner">
+      <div class="ready-face">😄</div>
+      <div class="ready-title">AIR HOCKEY</div>
+      <div class="ready-sub">FIRST TO 7 WINS</div>
+      <div id="best-pill" class="ready-pill">BEST · 0</div>
+      <div id="ready-diff" class="pace ready-diff">
+        <button type="button" data-diff="easy">Easy</button>
+        <button type="button" data-diff="normal" class="active">Normal</button>
+        <button type="button" data-diff="hard">Hard</button>
+      </div>
+      <button id="btn-play" class="ready-play">PLAY</button>
+      <div class="ready-keys">MOUSE / TOUCH · WASD · SPACE PAUSE · M MUTE</div>
+    </div>
   </div>
-</div>
+  <div id="pause-screen" class="screen">
+    <div class="pause-inner">
+      <div class="ready-title" style="color:#ffc940">PAUSED</div>
+      <div id="pause-msg" class="ready-sub" style="letter-spacing:3px;margin:6px 0 20px"></div>
+      <button id="btn-resume" class="ready-play" style="border-color:#ffc940;color:#ffc940">RESUME</button>
+    </div>
+  </div>
 
-<script src="../../system/sdk/os-sdk.js"></script>
-<script src="app.js"></script>
-</body>
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="app.js"></script>
+
 </html>
