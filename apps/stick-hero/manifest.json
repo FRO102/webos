@@ -1,0 +1,11 @@
+{
+  "id": "stick-hero",
+  "name": "Stick Hero",
+  "version": "1.0.0",
+  "category": { "id": "games", "name": "Jogos", "nameEn": "Games" },
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": { "width": 860, "height": 680, "minWidth": 760, "minHeight": 620 },
+  "singleInstance": true,
+  "permissions": ["notifications"]
+}

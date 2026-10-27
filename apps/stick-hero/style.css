@@ -1,0 +1,82 @@
+* { box-sizing: border-box; }
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  cursor: pointer;
+  background: var(--os-surface, #FEF1E1);
+  color: var(--os-fg, #1c2a33);
+  transition: background .2s ease, color .2s ease;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  height: 100%;
+  position: relative;
+}
+
+#score {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  font-size: 2em;
+  font-weight: 900;
+  z-index: 2;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  touch-action: none;
+}
+
+#introduction {
+  width: 200px;
+  height: 150px;
+  position: absolute;
+  font-weight: 600;
+  font-size: 0.8em;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+  transition: opacity 2s;
+  z-index: 2;
+}
+
+#restart {
+  width: 120px;
+  height: 120px;
+  position: absolute;
+  border-radius: 50%;
+  color: white;
+  background-color: red;
+  border: none;
+  font-weight: 700;
+  font-size: 1.2em;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  display: none;
+  cursor: pointer;
+  z-index: 3;
+}
+
+#perfect {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 2s;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #introduction,
+  #perfect {
+    transition: none;
+  }
+}
