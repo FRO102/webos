@@ -8,6 +8,7 @@ if (!m) {
 
 const {
   createGame,
+  drawGame,
   startWave,
   stepGame,
   placeTower,
@@ -30,6 +31,23 @@ const {
   assert.ok(Array.isArray(game.enemies));
   assert.equal(game.enemies.length, 0);
   console.log('createGame OK');
+}
+
+{
+  const game = createGame('suburb', 'normal');
+  const context = new Proxy({}, {
+    get(target, property) {
+      if (property === 'roundRect') return () => { throw new Error('Canvas roundRect should not be required'); };
+      if (property === 'createRadialGradient') return () => ({ addColorStop() {} });
+      return target[property] ?? (() => {});
+    },
+    set(target, property, value) {
+      target[property] = value;
+      return true;
+    },
+  });
+  drawGame(context, game);
+  console.log('canvas compatibility OK');
 }
 
 {

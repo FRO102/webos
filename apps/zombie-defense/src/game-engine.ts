@@ -705,8 +705,18 @@ export function stepGame(state: GameState, deltaMs: number, input: GameInput): G
 }
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const radius = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
 }
 
 function drawTerrain(ctx: CanvasRenderingContext2D, state: GameState) {
@@ -846,7 +856,8 @@ function drawBase(ctx: CanvasRenderingContext2D, point: Point, lives: number, ma
   roundedRect(ctx, -28, -45, 56, 7, 3);
   ctx.fill();
   ctx.fillStyle = "#9bce79";
-  ctx.fillRect(-27, -44, 54 * Math.max(0, lives / maxLives), 5);
+  const lifeRatio = maxLives > 0 ? Math.max(0, Math.min(1, lives / maxLives)) : 0;
+  ctx.fillRect(-27, -44, 54 * lifeRatio, 5);
   ctx.fillStyle = "#e6dfc3";
   ctx.font = "700 8px monospace";
   ctx.textAlign = "center";
