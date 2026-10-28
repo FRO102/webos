@@ -295,7 +295,8 @@
     const ball = state.ball;
     let targetY = CANVAS_H / 2;
     if (ball.vx > 0) {
-      const timeToPaddle = Math.max(0, (state.paddleCpu.x - ball.x) / ball.vx);
+      const contactX = state.paddleCpu.x - BALL_RADIUS;
+      const timeToPaddle = Math.max(0, (contactX - ball.x) / ball.vx);
       const predictedY = ball.y + ball.vy * timeToPaddle * d.prediction;
       const top = BALL_RADIUS;
       const span = CANVAS_H - BALL_RADIUS * 2;
@@ -329,7 +330,7 @@
         b.y > state.paddlePlayer.y && b.y < state.paddlePlayer.y + PADDLE_HEIGHT) {
       const offset = (b.y - (state.paddlePlayer.y + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
       const d = DIFFICULTY[state.difficulty];
-      b.vx = Math.abs(b.vx) * 1.02;
+      b.vx = Math.abs(b.vx) * (1 + d.ballAccel);
       b.vx = Math.min(b.vx, 18 * FRAME_RATE_ADJUST);
       b.vy = offset * (d.ballSpeed * 0.8);
       b.x = PADDLE_THICKNESS + BALL_RADIUS;
@@ -342,7 +343,7 @@
         b.y > state.paddleCpu.y && b.y < state.paddleCpu.y + PADDLE_HEIGHT) {
       const offset = (b.y - (state.paddleCpu.y + PADDLE_HEIGHT / 2)) / (PADDLE_HEIGHT / 2);
       const d = DIFFICULTY[state.difficulty];
-      b.vx = -Math.abs(b.vx) * 1.02;
+      b.vx = -Math.abs(b.vx) * (1 + d.ballAccel);
       b.vx = Math.max(b.vx, -18 * FRAME_RATE_ADJUST);
       b.vy = offset * (d.ballSpeed * 0.8);
       b.x = CANVAS_W - PADDLE_THICKNESS - BALL_RADIUS;

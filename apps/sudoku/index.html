@@ -19,6 +19,8 @@
       </div>
       <div class="game-stats">
         <span class="mistakes" id="mistakes">Erros: 0</span>
+        <span class="hints" id="hints">Dicas: 0/3</span>
+        <span class="best-time" id="best-time">Melhor: --:--</span>
         <div class="timer" id="timer">00:00</div>
       </div>
     </header>
@@ -28,13 +30,22 @@
         <div class="board" id="board">
           <!-- As 81 células geradas via JS -->
         </div>
-        
+
         <!-- Overlay de Vitória -->
         <div class="win-overlay" id="win-overlay" hidden>
           <div class="win-content">
             <h2>Parabéns!</h2>
             <p>Concluíste o Sudoku em <span id="win-time">00:00</span>.</p>
             <button type="button" class="btn btn--primary" id="btn-play-again">Jogar Novamente</button>
+          </div>
+        </div>
+
+        <!-- Overlay de Derrota -->
+        <div class="win-overlay" id="lose-overlay" hidden>
+          <div class="win-content">
+            <h2>Fim de jogo</h2>
+            <p>Atingiste o limite de erros em <span id="lose-time">00:00</span>.</p>
+            <button type="button" class="btn btn--primary" id="btn-try-again">Tentar Novamente</button>
           </div>
         </div>
       </div>
@@ -56,6 +67,7 @@
       <div class="game-tools">
         <button type="button" class="btn" id="btn-notes" aria-pressed="false">Notas: desligadas</button>
         <button type="button" class="btn" id="btn-hint">Dica</button>
+        <button type="button" class="btn" id="btn-restart">Reiniciar</button>
       </div>
       <p class="game-status" id="game-status" role="status" aria-live="polite"></p>
     </main>
