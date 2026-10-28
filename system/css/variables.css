@@ -79,16 +79,254 @@
   background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
   z-index: 9989;
 }
-@keyframes crt-flicker {
-  0% { opacity: .985; }
+oot {
+  --taskbar-h: 48px;
+  --radius: 10px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --accent: #3cb6a4;
+  --desk-1: #10202b;
+  --desk-2: #27485a;
+  --task-bg: rgba(14, 24, 32, .92);
+  --task-fg: #e8eef2;
+  --win-bg: #eef1f3;
+  --win-fg: #1c2a33;
+  --win-border: rgba(0, 0, 0, .28);
+  --title-bg: #d3dce2;
+  --title-fg: #44565f;
+  --title-active-bg: #1f3d4f;
+  --shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  --shadow-active: 0 14px 40px rgba(0, 0, 0, .45);
+}
+
+:root { --title-active-bg: color-mix(in srgb, var(--accent) 40%, #10202b); }
+:root { --os-font-size: 14px; }
+:root[data-animations="off"] *, :root[data-animations="off"] *::before, :root[data-animations="off"] *::after { animation: none !important; transition: none !important; }
+:root[data-theme="dark"] {
+  --win-bg: #1b2730; --win-fg: #e6edf1; --win-border: rgba(255, 255, 255, .14);
+  --title-bg: #2a3944; --title-fg: #9fb0ba; --menu-bg: #22303a;
+}
+
+:root[data-theme="retro"] {
+  --font: "VT323", "Courier New", Consolas, "Lucida Console", monospace;
+  --radius: 0;
+  --task-bg: rgba(2, 8, 10, .97);
+  --task-fg: #39ff14;
+  --task-muted: rgba(124, 252, 0, .72);
+  --win-bg: #041014;
+  --win-fg: #39ff14;
+  --win-border: rgba(57, 255, 20, .45);
+  --title-bg: #02080a;
+  --title-fg: #7fff4f;
+  --title-active-bg: #0b2a0f;
+  --shadow: 0 0 0 2px rgba(57, 255, 20, .22), 0 0 12px rgba(57, 255, 20, .12);
+  --shadow-active: 0 0 0 3px rgba(57, 255, 20, .4), 0 0 18px rgba(57, 255, 20, .22);
+  --menu-bg: #02080a;
+}
+:root[data-theme="retro"] #clock,
+:root[data-theme="retro"] .win-title,
+:root[data-theme="retro"] #start-btn {
+  text-shadow: 0 0 3px rgba(57, 255, 20, .7), 0 0 8px rgba(57, 255, 20, .35);
+  letter-spacing: .02em;
+}
+:root[data-theme="retro"] .window,
+:root[data-theme="retro"] .win-btns button,
+:root[data-theme="retro"] #start-btn,
+:root[data-theme="retro"] .task-btn,
+:root[data-theme="retro"] .workspace-btn {
+  border-radius: 0;
+}
+:root[data-theme="retro"] .win-title {
+  font-family: var(--font);
+  font-size: 14px;
+}
+:root[data-theme="retro"] .window.active .win-title {
+  background: #0b2a0f;
+  color: #7fff4f;
+}
+:root[data-theme="retro"] #desktop {
+  background: radial-gradient(ellipse at 50% 50%, #041014 0%, #020506 100%);
+  overflow: hidden;
+}
+:root[data-theme="retro"] #desktop::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply; opacity: .6; z-index: 9989;
+  will-change: transform;
+}
+:root[data-theme="retro"] #desktop::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+  z-index: 9989;
+}
+oot {
+  --taskbar-h: 48px;
+  --radius: 10px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --accent: #3cb6a4;
+  --desk-1: #10202b;
+  --desk-2: #27485a;
+  --task-bg: rgba(14, 24, 32, .92);
+  --task-fg: #e8eef2;
+  --win-bg: #eef1f3;
+  --win-fg: #1c2a33;
+  --win-border: rgba(0, 0, 0, .28);
+  --title-bg: #d3dce2;
+  --title-fg: #44565f;
+  --title-active-bg: #1f3d4f;
+  --shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  --shadow-active: 0 14px 40px rgba(0, 0, 0, .45);
+}
+
+:root { --title-active-bg: color-mix(in srgb, var(--accent) 40%, #10202b); }
+:root { --os-font-size: 14px; }
+:root[data-animations="off"] *, :root[data-animations="off"] *::before, :root[data-animations="off"] *::after { animation: none !important; transition: none !important; }
+:root[data-theme="dark"] {
+  --win-bg: #1b2730; --win-fg: #e6edf1; --win-border: rgba(255, 255, 255, .14);
+  --title-bg: #2a3944; --title-fg: #9fb0ba; --menu-bg: #22303a;
+}
+
+:root[data-theme="retro"] {
+  --font: "VT323", "Courier New", Consolas, "Lucida Console", monospace;
+  --radius: 0;
+  --task-bg: rgba(2, 8, 10, .97);
+  --task-fg: #39ff14;
+  --task-muted: rgba(124, 252, 0, .72);
+  --win-bg: #041014;
+  --win-fg: #39ff14;
+  --win-border: rgba(57, 255, 20, .45);
+  --title-bg: #02080a;
+  --title-fg: #7fff4f;
+  --title-active-bg: #0b2a0f;
+  --shadow: 0 0 0 2px rgba(57, 255, 20, .22), 0 0 12px rgba(57, 255, 20, .12);
+  --shadow-active: 0 0 0 3px rgba(57, 255, 20, .4), 0 0 18px rgba(57, 255, 20, .22);
+  --menu-bg: #02080a;
+}
+:root[data-theme="retro"] #clock,
+:root[data-theme="retro"] .win-title,
+:root[data-theme="retro"] #start-btn {
+  text-shadow: 0 0 3px rgba(57, 255, 20, .7), 0 0 8px rgba(57, 255, 20, .35);
+  letter-spacing: .02em;
+}
+:root[data-theme="retro"] .window,
+:root[data-theme="retro"] .win-btns button,
+:root[data-theme="retro"] #start-btn,
+:root[data-theme="retro"] .task-btn,
+:root[data-theme="retro"] .workspace-btn {
+  border-radius: 0;
+}
+:root[data-theme="retro"] .win-title {
+  font-family: var(--font);
+  font-size: 14px;
+}
+:root[data-theme="retro"] .window.active .win-title {
+  background: #0b2a0f;
+  color: #7fff4f;
+}
+:root[data-theme="retro"] #desktop {
+  background: radial-gradient(ellipse at 50% 50%, #041014 0%, #020506 100%);
+  overflow: hidden;
+}
+:root[data-theme="retro"] #desktop::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply; opacity: .6; z-index: 9989;
+  will-change: transform;
+}
+:root[data-theme="retro"] #desktop::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+  z-index: 9989;
+}
+oot {
+  --taskbar-h: 48px;
+  --radius: 10px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --accent: #3cb6a4;
+  --desk-1: #10202b;
+  --desk-2: #27485a;
+  --task-bg: rgba(14, 24, 32, .92);
+  --task-fg: #e8eef2;
+  --win-bg: #eef1f3;
+  --win-fg: #1c2a33;
+  --win-border: rgba(0, 0, 0, .28);
+  --title-bg: #d3dce2;
+  --title-fg: #44565f;
+  --title-active-bg: #1f3d4f;
+  --shadow: 0 6px 18px rgba(0, 0, 0, .28);
+  --shadow-active: 0 14px 40px rgba(0, 0, 0, .45);
+}
+
+:root { --title-active-bg: color-mix(in srgb, var(--accent) 40%, #10202b); }
+:root { --os-font-size: 14px; }
+:root[data-animations="off"] *, :root[data-animations="off"] *::before, :root[data-animations="off"] *::after { animation: none !important; transition: none !important; }
+:root[data-theme="dark"] {
+  --win-bg: #1b2730; --win-fg: #e6edf1; --win-border: rgba(255, 255, 255, .14);
+  --title-bg: #2a3944; --title-fg: #9fb0ba; --menu-bg: #22303a;
+}
+
+:root[data-theme="retro"] {
+  --font: "VT323", "Courier New", Consolas, "Lucida Console", monospace;
+  --radius: 0;
+  --task-bg: rgba(2, 8, 10, .97);
+  --task-fg: #39ff14;
+  --task-muted: rgba(124, 252, 0, .72);
+  --win-bg: #041014;
+  --win-fg: #39ff14;
+  --win-border: rgba(57, 255, 20, .45);
+  --title-bg: #02080a;
+  --title-fg: #7fff4f;
+  --title-active-bg: #0b2a0f;
+  --shadow: 0 0 0 2px rgba(57, 255, 20, .22), 0 0 12px rgba(57, 255, 20, .12);
+  --shadow-active: 0 0 0 3px rgba(57, 255, 20, .4), 0 0 18px rgba(57, 255, 20, .22);
+  --menu-bg: #02080a;
+}
+:root[data-theme="retro"] #clock,
+:root[data-theme="retro"] .win-title,
+:root[data-theme="retro"] #start-btn {
+  text-shadow: 0 0 3px rgba(57, 255, 20, .7), 0 0 8px rgba(57, 255, 20, .35);
+  letter-spacing: .02em;
+}
+:root[data-theme="retro"] .window,
+:root[data-theme="retro"] .win-btns button,
+:root[data-theme="retro"] #start-btn,
+:root[data-theme="retro"] .task-btn,
+:root[data-theme="retro"] .workspace-btn {
+  border-radius: 0;
+}
+:root[data-theme="retro"] .win-title {
+  font-family: var(--font);
+  font-size: 14px;
+}
+:root[data-theme="retro"] .window.active .win-title {
+  background: #0b2a0f;
+  color: #7fff4f;
+}
+:root[data-theme="retro"] #desktop {
+  background: radial-gradient(ellipse at 50% 50%, #041014 0%, #020506 100%);
+  overflow: hidden;
+}
+:root[data-theme="retro"] #desktop::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply; opacity: .6; z-index: 9989;
+  will-change: transform;
+}
+:root[data-theme="retro"] #desktop::after {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+  z-index: 9989;
+}
+
   50% { opacity: .97; }
   100% { opacity: .99; }
 }
-:root[data-theme="retro"] #desktop {
-  animation: crt-flicker .12s steps(2) infinite;
-}
 @media (prefers-reduced-motion: reduce) {
-  :root[data-theme="retro"] #desktop { animation: none; }
   :root[data-theme="retro"] #desktop::before { display: none; }
   :root[data-theme="retro"] #desktop::after { display: none; }
 }
