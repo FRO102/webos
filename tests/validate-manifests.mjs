@@ -29,6 +29,7 @@ for (const id of apps) {
     else categories.set(category.id, labels);
   }
   if (!Array.isArray(manifest.permissions) || manifest.permissions.some(permission => !allowed.has(permission))) errors.push(`${id}: permissões inválidas`);
+  if (manifest.allowSameOrigin !== undefined && typeof manifest.allowSameOrigin !== 'boolean') errors.push(`${id}: allowSameOrigin deve ser booleano`);
   if (manifest.fileTypes !== undefined && (!Array.isArray(manifest.fileTypes) || manifest.fileTypes.some(type => typeof type !== 'string' || !/^\.[a-z0-9]+$/i.test(type)))) errors.push(`${id}: fileTypes inválido`);
   for (const field of ['entry', 'icon']) {
     if (typeof manifest[field] !== 'string' || manifest[field].startsWith('/') || manifest[field].split(/[\\/]/).includes('..')) {

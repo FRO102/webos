@@ -21,9 +21,10 @@ Regras:
 - Todos os ficheiros e imagens específicos da app devem ficar dentro da própria pasta `apps/<id>/`.
 - O `icon` e o `entry` são caminhos relativos à pasta da app.
 - `fileTypes`, quando usado, é um array de extensões com ponto e em minúsculas, como `[".txt", ".md"]`.
-- A app corre num iframe com `sandbox`, e agora usa `allow-same-origin` para permitir módulos locais e scripts do WebOS sem CORS, mantendo o isolamento do DOM do sistema e do `localStorage` principal.
+- A app corre num iframe com origem opaca por omissão: o sandbox não inclui `allow-same-origin`. Isto impede que scripts da app acedam à origem e ao armazenamento do shell.
+- `allowSameOrigin` no manifest só deve ser `true` quando a app depender comprovadamente de módulos/workers locais, armazenamento próprio ou iframes aninhados. Esta exceção reduz o isolamento e deve ser removida quando a dependência for migrada; nunca a uses apenas para contornar um erro sem investigar a causa.
 - O sandbox permite `allow-popups` para links clicados abrirem no navegador; não usar isto para contornar as APIs do shell.
-- Usa scripts clássicos, não `type="module"` (a origem do iframe é opaca).
+- Com a política padrão de origem opaca, usa scripts clássicos. Apps com módulos ES ou workers locais precisam de configuração CORS compatível ou da exceção temporária `allowSameOrigin`.
 - Fala com o sistema só através de `window.os` (`window.setTitle/resize/close`, `notify`, `theme.get`).
 - Chamadas que exijam permissão (fase 5: `fs.*`) têm de estar listadas em `permissions` no manifest.
 - `singleInstance` é opcional e booleano; o valor padrão é `false`.

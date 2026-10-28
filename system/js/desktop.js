@@ -318,7 +318,7 @@ export function initDesktop(apps) {
     e.preventDefault();
     const target = e.target instanceof HTMLIFrameElement ? e.target : document.elementFromPoint(e.clientX, e.clientY)?.closest('iframe');
     if (target?.dataset.appId === 'file-explorer' && target.contentWindow) {
-      target.contentWindow.postMessage({ type: 'webos:file-drop', files: [...(e.dataTransfer?.files ?? [])] }, location.origin);
+      target.contentWindow.postMessage({ type: 'webos:file-drop', files: [...(e.dataTransfer?.files ?? [])] }, '*');
       e.stopPropagation();
     }
     dragDepth = 0;

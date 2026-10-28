@@ -5,6 +5,7 @@
   "category": { "id": "games", "name": "Jogos", "nameEn": "Games" },
   "icon": "icon.svg",
   "entry": "index.html",
+  "allowSameOrigin": true,
   "window": { "width": 960, "height": 760, "minWidth": 360, "minHeight": 480 },
   "singleInstance": true,
   "permissions": ["notifications"]

@@ -14,6 +14,8 @@ jobs:
           node-version: 20
       - name: Validate manifests
         run: node tests/validate-manifests.mjs
+      - name: Sandbox policy tests
+        run: node tests/sandbox.mjs
       - name: Smoke test
         run: node tests/smoke.mjs
       - name: Filesystem path tests

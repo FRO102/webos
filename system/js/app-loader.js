@@ -30,6 +30,7 @@ export async function loadRegistry() {
       for (const path of [manifest.icon, manifest.entry]) {
         if (path.startsWith('/') || path.split(/[\\/]/).includes('..')) throw new Error('caminho de ficheiro inválido');
       }
+      if (manifest.allowSameOrigin !== undefined && typeof manifest.allowSameOrigin !== 'boolean') throw new Error('allowSameOrigin inválido');
       if (!Array.isArray(manifest.permissions) || manifest.permissions.some(p => !permissions.has(p))) throw new Error('permissões inválidas');
       apps.set(manifest.id, { manifest, base });
     } catch (error) { console.warn(`App "${id}" ignorada: manifest inválido ou em falta.`, error); }
@@ -75,7 +76,9 @@ export function launchApp(appId, args = null) {
   }
 
   const frame = document.createElement('iframe');
-  frame.sandbox = 'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads';
+  const sandbox = ['allow-scripts', 'allow-forms', 'allow-modals', 'allow-popups', 'allow-downloads'];
+  if (m.allowSameOrigin === true) sandbox.push('allow-same-origin');
+  frame.sandbox = sandbox.join(' ');
   frame.dataset.appId = appId;
   frame.title = m.name;
   frame.src = base + m.entry;

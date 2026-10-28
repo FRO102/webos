@@ -258,7 +258,7 @@ window.addEventListener('drop', async event => {
   await importFiles([...(event.dataTransfer?.files ?? [])]);
 }, true);
 window.addEventListener('message', async event => {
-  if (event.source !== parent || event.origin !== location.origin || event.data?.type !== 'webos:file-drop') return;
+  if (event.source !== parent || event.data?.type !== 'webos:file-drop') return;
   await importFiles(Array.isArray(event.data.files) ? event.data.files : []);
 });
 async function download(enParam = current()) {

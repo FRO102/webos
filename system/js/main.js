@@ -14,9 +14,7 @@ import { initLocalization } from './i18n.js';
 
 async function init() {
   logger.info('Inicialização do WebOS iniciada');
-  await initFS();
-  await initUsers();
-  await initSettings();
+  await Promise.all([initFS(), initUsers(), initSettings()]);
   initLocalization();
   await initNotifications();
   const apps = await loadRegistry();
