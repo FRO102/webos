@@ -260,18 +260,6 @@ export function updatePlayer(dt) {
         blockedY = true;
       }
     }
-    // Hazards bloqueados (rotas fechadas do mapa)
-    try {
-      const mech = currentMapMechanics();
-      for (const h of (mech.hazards || [])) {
-        if (h.type !== 'blocked' || !h.rect) continue;
-        const r = h.rect;
-        if (nx + state.player.r > r.x && nx - state.player.r < r.x + r.w &&
-            state.player.y + state.player.r > r.y && state.player.y - state.player.r < r.y + r.h) blockedX = true;
-        if (ny + state.player.r > r.y && ny - state.player.r < r.y + r.h &&
-            state.player.x + state.player.r > r.x && state.player.x - state.player.r < r.x + r.w) blockedY = true;
-      }
-    } catch (e) {}
     if (!blockedX) state.player.x = nx;
     if (!blockedY) state.player.y = ny;
 

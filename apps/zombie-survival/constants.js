@@ -256,8 +256,8 @@ export const MAPS = {
     mechanics: {
       visibility: 0.85,
       fogMul: 1.15,
-      hazards: [{ type:'blocked', rect:{ x:760, y:480, w:180, h:90 } }], // rota bloqueada
-      interactives: [{ type:'door', x:1520, y:760, requires:'key' }]
+      hazards: [],
+      interactives: [{ type: 'door', x: 1520, y: 760, requires: 'key' }]
     }
   },
   graveyard: {

@@ -546,13 +546,7 @@ export function drawHazards() {
   try {
     const mech = currentMapMechanics();
     for (const h of (mech.hazards || [])) {
-      if (h.type === "blocked" && h.rect) {
-        const r = h.rect;
-        ctx.fillStyle = "rgba(10,11,6,0.75)";
-        ctx.fillRect(r.x - camX, r.y - camY, r.w, r.h);
-        ctx.strokeStyle = "rgba(92,106,53,0.45)";
-        ctx.strokeRect(r.x - camX, r.y - camY, r.w, r.h);
-      } else if (h.x != null) {
+      if (h.x != null) {
         const ss = worldToScreen(h.x, h.y);
         ctx.strokeStyle = "rgba(143,174,60,0.25)";
         ctx.beginPath();

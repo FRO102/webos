@@ -338,7 +338,7 @@ export function updateZombies(dt) {
           if(ny+z.r>o.y-o.h/2 && ny-z.r<o.y+o.h/2 && z.x+z.r>o.x-o.w/2 && z.x-z.r<o.x+o.w/2) by=true;
         }
       }
-      try{const mech=currentMapMechanics();for(const h of (mech.hazards||[])){if(h.type!=='blocked'||!h.rect)continue;const r=h.rect;if(nx+z.r>r.x&&nx-z.r<r.x+r.w&&z.y+z.r>r.y&&z.y-z.r<r.y+r.h)bx=true;if(ny+z.r>r.y&&ny-z.r<r.y+r.h&&z.x+z.r>r.x&&z.x-z.r<r.x+r.w)by=true;}}catch(e){}
+      try { currentMapMechanics(); } catch (e) {}
       if(!bx)z.x=nx;if(!by)z.y=ny;
     } else if (state.player.alive && z.attackCd <= 0) {
       z.attackCd = 0.9;
