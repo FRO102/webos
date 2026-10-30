@@ -14,6 +14,7 @@
   <div id="tutorial-message" class="tagline" style="font-size:18px;">Use WASD para se mover</div>
   <div id="tutorial-progress" style="color:var(--olive-lt);font-size:12px;margin-top:8px;">Passo 1/8</div>
   <div class="menu-actions">
+    <button class="btn" id="tutorial-next-btn">CONTINUAR</button>
     <button class="btn" id="skip-tutorial-btn">PULAR TUTORIAL</button>
   </div>
 </div>
@@ -47,6 +48,11 @@
       <div class="label" style="margin-top:6px;">Utility</div>
       <div class="row"><span>MEDKIT</span><span id="medkit-count">0</span></div>
       <div class="row"><span>DASH</span><div id="dashbar-outer"><div id="dashbar-inner"></div></div></div>
+      <div class="label" style="margin-top:6px;">Status</div>
+      <div id="right-status">
+        <div id="right-status-title">PLAYER STATUS</div>
+        <div id="right-status-body"></div>
+      </div>
     </div>
     <div class="hud-panel" id="topright">
       <div class="label">Night</div>
@@ -86,10 +92,25 @@
       <div id="bossbar-name">BOSS</div>
       <div id="bossbar-outer"><div id="bossbar-inner"></div></div>
     </div>
+    <div id="objective-wrap" class="hidden">
+      <div id="objective-label">OBJECTIVE</div>
+      <div id="objective-text"></div>
+      <div id="objective-bar-outer"><div id="objective-bar-inner"></div></div>
+    </div>
   </div>
 
   <div id="mobile-controls">
     <div id="joystick-zone"><div id="joystick-nub"></div></div>
+    <div id="aim-zone"><div id="aim-nub"></div></div>
+    <div id="mobile-actions">
+      <button type="button" id="mobile-reload-btn" aria-label="Recarregar">R</button>
+      <button type="button" id="mobile-medkit-btn" aria-label="Medkit">Q</button>
+      <button type="button" id="mobile-dash-btn" aria-label="Dash">␣</button>
+      <button type="button" id="mobile-weapon-btn" aria-label="Trocar arma">🔄</button>
+      <button type="button" id="mobile-pause-btn" aria-label="Pausa">⏸</button>
+      <button type="button" id="mobile-fired-btn" aria-label="Disparar">🔥</button>
+      <button type="button" id="mobile-called-btn" aria-label="Disparo chamado">🎯</button>
+    </div>
     <div id="fire-btn">FIRE</div>
   </div>
 
@@ -123,6 +144,15 @@
         </select>
       </div>
       <div class="setting-row">
+        <span class="setting-label">MODE</span>
+        <select id="mode-select">
+          <option value="standard" selected>STANDARD</option>
+          <option value="bossrush">BOSS RUSH</option>
+          <option value="horde">HORDE ENDLESS</option>
+          <option value="challenge">NIGHTMARE CHALLENGE</option>
+        </select>
+      </div>
+      <div class="setting-row">
         <span class="setting-label">MAP</span>
         <select id="map-select">
           <option value="random">🎲 RANDOM</option>
@@ -140,6 +170,8 @@
       <button class="btn" id="safehouse-btn">⚙️ SAFEHOUSE</button>
       <button class="btn" id="customize-btn">CUSTOMIZE SURVIVOR</button>
       <button class="btn" id="achievements-btn">🏆 ACHIEVEMENTS</button>
+  <button class="btn" id="bestiary-btn">📖 BESTIARY</button>
+  <button class="btn" id="armory-btn">🔫 ARMORY</button>
       <button class="btn" id="fullscreen-btn">FULLSCREEN: OFF</button>
     </div>
   </div>
@@ -249,7 +281,17 @@
     </div>
   </div>
 
-  <!-- DEATH SCREEN -->
+  <!-- BESTIARY / ARMORY SCREENS (simple) -->
+  <div class="screen hidden" id="bestiary-screen">
+    <h1 class="title" style="font-size:34px;">BESTIARY</h1>
+    <div id="bestiary-list"></div>
+    <div class="menu-actions"><button class="btn" id="back-bestiary-btn">BACK</button></div>
+  </div>
+  <div class="screen hidden" id="armory-screen">
+    <h1 class="title" style="font-size:34px;">ARMORY</h1>
+    <div id="armory-list"></div>
+    <div class="menu-actions"><button class="btn" id="back-armory-btn">BACK</button></div>
+  </div>
   <div class="screen hidden" id="death-screen">
     <h1 class="title" style="font-size:38px;">YOU DIED</h1>
     <div id="deathstats">

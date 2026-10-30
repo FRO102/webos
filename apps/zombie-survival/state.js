@@ -90,6 +90,9 @@ export const state = {
   selectedDifficulty: 'survivor',
   selectedClass: 'assault',
   selectedMap: 'forest',
+  runtimeMap: null,
+  selectedMode: 'standard',
+  runMode: 'standard',
   difficultyMod: DIFFICULTY_MODS.survivor,
   classMod: CLASS_MODS.assault,
 
@@ -127,7 +130,8 @@ export const state = {
   floatTexts: [],
   bloodPools: [],
   ambientParticles: [],
-  damageIndicators: { top: 0, right: 0, bottom: 0, left: 0 }
+  damageIndicators: { top: 0, right: 0, bottom: 0, left: 0 },
+  objective: { zone: null, type: null, progress: 0, timer: 0, active: false, target: null }
 };
 
 // Funções auxiliares
@@ -153,6 +157,8 @@ export function resetState() {
   state.tutorialMode = false;
   state.tutorialWeaponsUnlocked = false;
   state.bossVariant = null;
+  state.runtimeMap = null;
+  state.runMode = state.selectedMode || 'standard';
   state.comboCount = 0;
   state.comboTimer = 0;
   state.comboMult = 1;

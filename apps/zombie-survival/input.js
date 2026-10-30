@@ -10,13 +10,16 @@ export let touchFiring = false;
 export let lastKeyPressed = '';
 
 // Referências para joystick (preenchidas depois)
-let joyZone, joyNub, fireBtn;
+let joyZone, joyNub, fireBtn, aimZoneEl, aimNub;
+const tryAim = (x,y) => {};
 let scrollAccum = 0;
 
-export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl) {
+export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl, aimZoneElParam, aimNubElParam) {
   joyZone = joyZoneEl;
   joyNub = joyNubEl;
   fireBtn = fireBtnEl;
+  aimZoneEl = aimZoneElParam;
+  aimNub = aimNubElParam;
 
   window.addEventListener('keydown', e => {
     keys[e.key.toLowerCase()] = true;
@@ -40,6 +43,7 @@ export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl) {
     }
     if(e.key.toLowerCase() === 'f') {
       meleeAttack();
+      import('./world.js').then(m => { if(m.tryInteract) m.tryInteract(); });
     }
     if(e.key.toLowerCase() === 'q') {
       tryUseMedkit();
@@ -83,41 +87,110 @@ export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl) {
     }
   }, { passive: false });
 
-  // Joystick touch
-  let joyActive = false, joyId = null;
+// Joystick touch
+  let joyActive = false, joyId = null, joyLeft = 0;
+  const joyEl = joyZone; const aimEl = aimZoneEl;
+
   joyZone.addEventListener('touchstart', e => {
-    joyActive = true;
-    joyId = e.changedTouches[0].identifier;
-  });
-  window.addEventListener('touchmove', e => {
-    for(const t of e.changedTouches) {
-      if(t.identifier === joyId) {
-        const rect = joyZone.getBoundingClientRect();
-        const cx = rect.left + rect.width/2;
-        const cy = rect.top + rect.height/2;
-        let dx = t.clientX - cx;
-        let dy = t.clientY - cy;
-        const dist = Math.min(Math.hypot(dx,dy), 40);
-        const ang = Math.atan2(dy,dx);
-        dx = Math.cos(ang)*dist;
-        dy = Math.sin(ang)*dist;
-        joyNub.style.left = (32+dx)+'px';
-        joyNub.style.top = (32+dy)+'px';
-        joystickVec.x = dx/40;
-        joystickVec.y = dy/40;
+    for (const t of e.changedTouches) {
+      if (joyId === null) {
+        joyId = t.identifier;
+        joyActive = true;
+        updateJoy(t.clientX, t.clientY);
       }
     }
-  }, {passive: true});
+  }, { passive: true });
+
+  function updateJoy(cx, cy) {
+    const rect = joyZone.getBoundingClientRect();
+    const ccx = rect.left + rect.width/2;
+    const ccy = rect.top + rect.height/2;
+    let dx = cx - ccx;
+    let dy = cy - ccy;
+    const ang = Math.atan2(dy, dx);
+    const dist = Math.min(Math.hypot(dx, dy), 40);
+    dx = Math.cos(ang)*dist; dy = Math.sin(ang)*dist;
+    joyNub.style.left = (32+dx)+'px';
+    joyNub.style.top = (32+dy)+'px';
+    joystickVec.x = dx/40;
+    joystickVec.y = dy/40;
+  }
+
+  window.addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) {
+        updateJoy(t.clientX, t.clientY);
+      }
+      if (t.identifier === aimId) {
+        updateAim(t.clientX, t.clientY);
+      }
+    }
+  }, { passive: true });
+
   window.addEventListener('touchend', e => {
-    for(const t of e.changedTouches) {
-      if(t.identifier === joyId) {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) {
         joyActive = false; joyId = null;
         joystickVec = {x:0, y:0};
-        joyNub.style.left = '32px';
-        joyNub.style.top = '32px';
+        if (joyNub) { joyNub.style.left = '32px'; joyNub.style.top = '32px'; }
+      }
+      if (t.identifier === aimId) {
+        aimId = null;
+        if (aimNub) { aimNub.style.left = '32px'; aimNub.style.top = '32px'; }
+        // mira mantém último ponto
       }
     }
   });
-  fireBtn.addEventListener('touchstart', e => { e.preventDefault(); touchFiring = true; });
-  fireBtn.addEventListener('touchend', e => { touchFiring = false; });
+
+  // Aim pad
+  let aimId = null;
+  function updateAim(cx, cy) {
+    const rect = aimZoneEl.getBoundingClientRect();
+    const ccx = rect.left + rect.width/2;
+    const ccy = rect.top + rect.height/2;
+    let dx = cx - ccx;
+    let dy = cy - ccy;
+    const ang = Math.atan2(dy, dx);
+    const dist = Math.min(Math.hypot(dx, dy), 40);
+    dx = Math.cos(ang)*dist; dy = Math.sin(ang)*dist;
+    if (aimNub) { aimNub.style.left = (32+dx)+'px'; aimNub.style.top = (32+dy)+'px'; }
+    // Ajusta mouseX/mouseY relativamente ao canvas
+    const canvasRect = canvas.getBoundingClientRect();
+    const worldX = (ccx + dx - canvasRect.left) * (canvas.width / canvasRect.width);
+    const worldY = (ccy + dy - canvasRect.top) * (canvas.height / canvasRect.height);
+    mouseX = worldX;
+    mouseY = worldY;
+  }
+
+  if (aimZoneEl) {
+    aimZoneEl.addEventListener('touchstart', e => {
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (aimId === null) {
+          aimId = t.identifier;
+          updateAim(t.clientX, t.clientY);
+        }
+      }
+    }, { passive: false });
+  }
+
+  // Botões mobile
+  const bindBtn = (id, fn) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('touchstart', e => { e.preventDefault(); fn(); }, { passive: false });
+    el.addEventListener('click', e => { e.preventDefault(); fn(); });
+  };
+  bindBtn('mobile-reload-btn', () => { try { reload(); } catch(e){} });
+  bindBtn('mobile-medkit-btn', () => { try { tryUseMedkit(); } catch(e){} });
+  bindBtn('mobile-dash-btn', () => { try { tryDash(); } catch(e){} });
+  bindBtn('mobile-weapon-btn', () => { try { cycleWeapon(1); } catch(e){} });
+  bindBtn('mobile-pause-btn', () => { import('./game.js').then(m => m.togglePause()); });
+  bindBtn('mobile-fired-btn', () => { touchFiring = true; setTimeout(()=> touchFiring=false, 120); });
+  bindBtn('mobile-called-btn', () => { rightMouseDown = true; setTimeout(()=> rightMouseDown=false, 120); });
+
+  if (fireBtn) {
+    fireBtn.addEventListener('touchstart', e => { e.preventDefault(); touchFiring = true; });
+    fireBtn.addEventListener('touchend', e => { touchFiring = false; });
+  }
 }

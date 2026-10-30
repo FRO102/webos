@@ -23,17 +23,24 @@
     image-rendering: pixelated;
     user-select:none;
   }
-  #stage{
-    position:relative;
-    width:100%; height:100%;
-    display:flex; align-items:center; justify-content:center;
+  #stage {
+    position:relative; width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
   }
-  canvas{
+  .screen {
+    max-height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 24px;
+  }
+
+canvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     display:block;
     background:#10130b;
     box-shadow: 0 0 0 4px var(--rot-black), 0 0 0 6px var(--olive), 0 0 60px 10px rgba(0,0,0,0.8);
+    width: min(100vw, 960px); max-width: 100%; aspect-ratio: 960 / 600;
+    max-height: calc(100vh - 120px);
   }
 
   /* ---- scanline / vignette overlay ---- */
@@ -265,6 +272,14 @@
     min-width:190px;
   }
 
+  #objective-wrap{
+    position:absolute; top:120px; left:50%; transform:translateX(-50%);
+    background:rgba(12,13,9,0.78); border:2px solid var(--olive); padding:8px 12px;
+    min-width:220px; text-align:center; pointer-events:none;
+  }
+  #objective-bar-outer{ width:100%; height:6px; background:#000; border:1px solid var(--rot-dark); margin-top:4px; }
+  #objective-bar-inner{ height:100%; width:100%; background:linear-gradient(to right,#8fae3c,#d8cfa8); }
+
   #bossbar-wrap{
     position:absolute;
     top:10px;
@@ -409,8 +424,53 @@
     image-rendering: pixelated;
   }
 
-  #mobile-controls{ display:none; }
+  button:focus-visible, select:focus-visible, input:focus-visible, .slot:focus-visible {
+    outline: 2px solid var(--sick-green);
+    outline-offset: 2px;
+  }
+  #aim-zone{
+    display:none;
+    position:absolute; right:18px; bottom:18px; width:110px; height:110px;
+    border-radius:50%; background:rgba(140,160,90,0.12); border:2px solid rgba(140,160,90,0.4);
+    pointer-events:auto; touch-action: none;
+  }
+  #aim-nub{
+    position:absolute; width:46px; height:46px; border-radius:50%;
+    background:rgba(140,160,90,0.5); border:2px solid var(--sick-green);
+    left:32px; top:32px; pointer-events:none;
+  }
+  #mobile-actions{
+    display:none;
+    position:absolute; right:18px; top:50%; transform:translateY(-50%);
+    flex-direction:column; gap:8px; pointer-events:auto;
+  }
+  #mobile-actions button{
+    width:64px; height:44px; border-radius:8px; border:2px solid var(--olive-lt);
+    background:rgba(12,13,9,0.78); color:var(--bone); font-size:16px;
+    pointer-events:auto; touch-action: manipulation;
+  }
   @media (pointer:coarse){
+    #mobile-controls{ display:block; position:absolute; inset:0; pointer-events:none; }
+    #aim-zone{ display:block; }
+    #mobile-actions{ display:flex; }
+    #joystick-zone{
+      position:absolute; left:18px; bottom:18px; width:110px; height:110px;
+      border-radius:50%; background:rgba(140,160,90,0.12); border:2px solid rgba(140,160,90,0.4);
+      pointer-events:auto; touch-action: none;
+    }
+    #joystick-nub{
+      position:absolute; width:46px; height:46px; border-radius:50%;
+      background:rgba(140,160,90,0.5); border:2px solid var(--sick-green);
+      left:32px; top:32px; pointer-events:none;
+    }
+    #fire-btn{
+      position:absolute; right:26px; bottom:30px; width:78px; height:78px; border-radius:50%;
+      background:rgba(165,21,42,0.35); border:3px solid var(--rust-lt);
+      color:var(--bone); font-size:11px; letter-spacing:1px;
+      display:flex; align-items:center; justify-content:center;
+      pointer-events:auto; touch-action: manipulation;
+    }
+  }
     #mobile-controls{
       display:block; position:absolute; inset:0; pointer-events:none;
     }
@@ -446,6 +506,31 @@
   color: var(--bone);
   max-width: 460px;
   line-height: 1.6;
+}
+#tutorial-screen.tutorial-overlay {
+  inset: 12px 12px auto;
+  left: 50%;
+  width: min(520px, calc(100% - 24px));
+  height: auto;
+  min-height: 0;
+  padding: 14px 18px;
+  transform: translateX(-50%);
+  gap: 8px;
+  background: rgba(5, 6, 3, 0.9);
+  border: 2px solid var(--olive);
+  pointer-events: none;
+}
+#tutorial-screen.tutorial-overlay .menu-actions {
+  min-width: 0;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+#tutorial-screen.tutorial-overlay .btn {
+  padding: 9px 14px;
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 #tutorial-progress {
   color: var(--olive-lt);
@@ -492,6 +577,11 @@
 
 /* Para ecrãs pequenos */
 @media (max-width: 700px) {
+  .screen {
+    max-height: 100vh;
+    overflow-y: auto;
+    padding-bottom: 24px;
+  }
   #controls-hint {
     font-size: 10px;
     padding: 8px 12px;
@@ -605,3 +695,29 @@
   height:100%; width:0%;
   background:linear-gradient(to right, #735b1f, #ffb347);
 }
+
+  /* Status panel — inline inside topleft panel, below minimap */
+  #right-status {
+    position: relative; top: auto; left: auto; right: auto;
+    width: 100%; background: rgba(12,13,9,0.45); border: 1px solid var(--olive);
+    padding: 4px 6px; pointer-events: none; margin: 4px 0 0;
+  }
+  #right-status-title{ color:var(--rust-lt); font-size:12px; letter-spacing:2px; margin-bottom:6px; text-align:center; }
+  .right-status-row{ display:flex; justify-content:space-between; color:var(--bone); font-size:12px; margin:2px 0; letter-spacing:1px; }
+  .right-label{ color:#8b8968; }
+  .right-value{ color:var(--bone); }
+
+  .right-status-section-title{ color:var(--rust-lt); font-size:10px; margin:6px 0 2px 0; letter-spacing:1px; border-top:1px solid rgba(92,106,53,0.3); padding-top:4px; }
+  .buff-row .right-label{ max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* Bottom status panel (outside map / below) */
+  #bottom-status{
+    position:relative; margin:8px auto 0; transform:none; left:auto; bottom:auto;
+    min-width:min(320px, 90vw); max-width:min(65vw, 960px);
+    background:rgba(12,13,9,0.88); border:2px solid var(--olive);
+    padding:8px 10px; pointer-events:none; z-index:5;
+  }
+  #bottom-status-title{ color:var(--rust-lt); font-size:11px; letter-spacing:2px; margin-bottom:4px; text-align:center; }
+  .bottom-status-row{ display:inline-block; margin:0 8px; color:var(--bone); font-size:11px; }
+  .bottom-status-row span:first-child{ color:#8b8968; margin-right:4px; }
+  .bottom-status-effects{ margin-top:4px; font-size:10px; color:#8b8968; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

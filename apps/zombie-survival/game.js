@@ -1,4 +1,4 @@
-import { MAPS, WEAPONS, PERKS, PERK_RARITY_WEIGHTS, RARITY_COLOR, WORLD_W, WORLD_H, STORAGE_KEY, DIFFICULTY_MODS, CLASS_MODS, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY, SAFEHOUSE_UPGRADES } from './constants.js';
+import { MAPS, WEAPONS, PERKS, PERK_RARITY_WEIGHTS, RARITY_COLOR, WORLD_W, WORLD_H, STORAGE_KEY, DIFFICULTY_MODS, CLASS_MODS, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY, SAFEHOUSE_UPGRADES, OBJECTIVES, SAFEHOUSE_MILESTONES, GAME_MODES } from './constants.js';
 import { clamp, rand, randInt } from './utils.js';
 import { initAudioIfNeeded, playSound, resumeAudio } from './audio.js';
 import { keys, mouseDown, touchFiring, rightMouseDown, joystickVec, mouseX, mouseY } from './input.js';
@@ -7,18 +7,18 @@ import { resetPlayerState, shoot, reload, switchWeapon, cycleWeapon, tryUseMedki
 import { waveComposition, spawnZombie, killZombie, updateZombies, resetEnemies, pickBossVariant } from './enemies.js';
 import { updateBullets, updateGrenades, updateEnemyProjectiles, updateShockwaves } from './projectiles.js';
 import { updatePickups, updateParticles, spawnFloatText, spawnBloodSplat, addParticle } from './pickups.js';
-import { updateWeather, updateAmbient, obstacles,  buildGround, buildDebris, buildObstacles  } from './world.js';
+import { updateWeather, updateAmbient, obstacles,  buildGround, buildDebris, buildObstacles, currentMapMechanics, pickRandomMap  } from './world.js';
 import { render, setCamera, setShake, initRenderer } from './render.js';
-import { dom, syncHUD, updateDamageIndicators, decayCombo, triggerDamageIndicator, damageIndicators, initUI, refreshWeaponSlotsUI } from './ui.js';
+import { dom, syncHUD, updateDamageIndicators, decayCombo, triggerDamageIndicator, damageIndicators, initUI, refreshWeaponSlotsUI, syncObjectiveUI, syncRightStatusPanel, syncBottomStatusPanel } from './ui.js';
 import { playerLook, applyCharacterLook, drawCharacterPreview, initCharacter, loadCharacterLook, saveCharacterLook } from './character.js';
 import { loadAchievements, loadLifetimeStats, saveLifetimeStats, checkAchievements, renderAchievementsScreen, resetExplosiveKillCounter, unlockedCount, ACHIEVEMENTS } from './achievements.js';
 import { getStoredValue, setStoredValue } from './persistence.js';
 
 let canvas, ctx, W, H;
 let hpBeforeWave = 100; // usado para o achievement "Untouched"
-let footstepTimer = 0; // acumulador local para poeira de passos (não precisa persistir entre runs)
+let footstepTimer = 0; // acumulador local para poeira de passos (nÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o precisa persistir entre runs)
 
-// ---- Funções de persistência ----
+// ---- FunÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âµes de persistÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªncia ----
 export function saveBestRun() {
   setStoredValue(STORAGE_KEY, JSON.stringify(state.bestRun));
 }
@@ -93,7 +93,7 @@ export function renderSafehouseScreen() {
     const row = document.createElement('div');
     row.className = 'ach-row';
     row.innerHTML = `
-      <div class="ach-icon">⚙️</div>
+      <div class="ach-icon">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â</div>
       <div class="ach-text">
         <div class="ach-name">${u.name} (Lvl ${lvl}/${u.maxLevel})</div>
         <div class="ach-desc">${u.desc}</div>
@@ -135,7 +135,9 @@ export function applyGameSettings() {
 // ---- Iniciar onda ----
 export function startWave(w) {
   state.wave = w;
+  const mode = GAME_MODES.find(m => m.id === state.runMode) || GAME_MODES[0];
   state.waveSpawnQueue = waveComposition(w);
+  if (mode.spawnMul) state.waveSpawnQueue = state.waveSpawnQueue.concat(Array.from({length: Math.round(state.waveSpawnQueue.length * (mode.spawnMul - 1))}, () => (state.waveSpawnQueue[Math.floor(Math.random()*state.waveSpawnQueue.length)] || 'walker')));
   state.waveZombiesRemaining = state.waveSpawnQueue.length;
   state.waveActive = true;
   hpBeforeWave = state.player.hp;
@@ -145,12 +147,13 @@ export function startWave(w) {
   const bannerSub = document.getElementById('banner-sub');
   bannerNum.textContent = w;
   const unlockedNow = WEAPONS.filter(weapon => weapon.unlockedWave === w && weapon.unlockedWave > 1);
-  if (w % 5 === 0) {
+  const bossEvery = mode.bossEvery || 5;
+  if (w % bossEvery === 0) {
     state.bossVariant = pickBossVariant(w);
     const variantFlavor = { brawler: 'RELENTLESS BRAWLER', summoner: 'THE SUMMONER', artillery: 'LIVING ARTILLERY' }[state.bossVariant] || 'BOSS NIGHT';
-    bannerSub.textContent = 'BOSS NIGHT — ' + variantFlavor;
+    bannerSub.textContent = 'BOSS NIGHT ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ' + variantFlavor;
   }
-  else if (unlockedNow.length > 0) bannerSub.textContent = unlockedNow.map(wp => wp.name.toUpperCase() + ' UNLOCKED').join(' • ');
+  else if (unlockedNow.length > 0) bannerSub.textContent = unlockedNow.map(wp => wp.name.toUpperCase() + ' UNLOCKED').join(' ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ ');
   else bannerSub.textContent = w === 1 ? 'THEY ARE COMING' : 'THE HORDE GROWS';
   bannerEl.classList.add('show');
   setTimeout(() => bannerEl.classList.remove('show'), 1800);
@@ -173,17 +176,22 @@ export function onPlayerDeath() {
   state.gameRunning = false;
   playSound(55, 0.3, 'sawtooth', 0.1);
   saveScrapAndUpgrades();
-  const isBest = state.killCount > state.bestRun.kills || (state.killCount === state.bestRun.kills && state.wave > state.bestRun.wave);
+  // NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºmeros de ondas efetivamente concluÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­das para esta run (nunca contar
+  // a onda ainda ativa quando o jogador morre).
+  const completedWaves = state.waveActive ? Math.max(0, state.wave - 1) : state.wave;
+
+  const isBest = state.killCount > state.bestRun.kills || (state.killCount === state.bestRun.kills && completedWaves > state.bestRun.wave);
   if (isBest) {
-    state.bestRun = { kills: state.killCount, wave: state.wave, level: state.player.level };
+    state.bestRun = { kills: state.killCount, wave: completedWaves, level: state.player.level };
     saveBestRun();
   }
+
   state.lifetimeStats.totalRuns++;
-  state.lifetimeStats.totalWavesCleared += Math.max(0, state.wave - 1);
+  state.lifetimeStats.totalWavesCleared += completedWaves;
   saveLifetimeStats();
   syncBestRunUI();
   setTimeout(() => {
-    document.getElementById('stat-wave').textContent = state.wave;
+    document.getElementById('stat-wave').textContent = completedWaves;
     document.getElementById('stat-kills').textContent = state.killCount;
     document.getElementById('stat-level').textContent = state.player.level;
     document.getElementById('stat-combo').textContent = 'x' + state.bestComboThisRun.toFixed(1);
@@ -221,6 +229,12 @@ export function updatePlayer(dt) {
   const w = WEAPONS[state.player.weaponIdx];
   const sprinting = (keys['shift']) && len > 0 && (state.player.stamina > 1 || state.player.freeSprint);
   let spd = (sprinting ? state.player.sprintSpeed : state.player.speed) * w.speedMul;
+  // hazard (fog) slow
+  try {
+    const mech = currentMapMechanics();
+    const slow = (mech.hazards || []).find(h => h.type === 'slow' && Math.hypot(state.player.x - h.x, state.player.y - h.y) <= h.r);
+    if (slow) spd *= (1 - (slow.amount || 0.3));
+  } catch (e) {}
   if (state.player.hasBerserker && state.player.hp / state.player.maxHp < 0.30) spd *= 1.2;
 
   if (state.dashDuration > 0) {
@@ -233,7 +247,7 @@ export function updatePlayer(dt) {
     let ny = state.player.y + dy * spd * dt;
     nx = clamp(nx, state.player.r, WORLD_W - state.player.r);
     ny = clamp(ny, state.player.r, WORLD_H - state.player.r);
-    // Colisão síncrona por eixo — permite deslizar ao longo de obstáculos
+    // ColisÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o sÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ncrona por eixo ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â permite deslizar ao longo de obstÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡culos
     let blockedX = false, blockedY = false;
     for (const o of obstacles) {
       if (o.hp <= 0) continue;
@@ -246,10 +260,22 @@ export function updatePlayer(dt) {
         blockedY = true;
       }
     }
+    // Hazards bloqueados (rotas fechadas do mapa)
+    try {
+      const mech = currentMapMechanics();
+      for (const h of (mech.hazards || [])) {
+        if (h.type !== 'blocked' || !h.rect) continue;
+        const r = h.rect;
+        if (nx + state.player.r > r.x && nx - state.player.r < r.x + r.w &&
+            state.player.y + state.player.r > r.y && state.player.y - state.player.r < r.y + r.h) blockedX = true;
+        if (ny + state.player.r > r.y && ny - state.player.r < r.y + r.h &&
+            state.player.x + state.player.r > r.x && state.player.x - state.player.r < r.x + r.w) blockedY = true;
+      }
+    } catch (e) {}
     if (!blockedX) state.player.x = nx;
     if (!blockedY) state.player.y = ny;
 
-    // Poeira de passos — ritmo mais rápido a sprintar
+    // Poeira de passos ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ritmo mais rÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡pido a sprintar
     footstepTimer -= dt;
     if (footstepTimer <= 0) {
       footstepTimer = sprinting ? 0.16 : 0.26;
@@ -273,8 +299,19 @@ export function updatePlayer(dt) {
   state.player.angle = Math.atan2(worldMouseY - state.player.y, worldMouseX - state.player.x);
 
   if (state.player.invuln > 0) state.player.invuln -= dt;
-  if (state.shieldTimer > 0) state.shieldTimer -= dt;
   if (state.player.meleeCd > 0) state.player.meleeCd -= dt;
+  if (state.shieldTimer > 0) state.shieldTimer -= dt;
+  // hazard damage (poison mist, etc.)
+  try {
+    const mech = currentMapMechanics();
+    const dmgH = (mech.hazards || []).find(function(h) {
+      return (h.type === 'damage' || h.type === 'poison') && Math.hypot(state.player.x - h.x, state.player.y - h.y) <= (h.r || 120);
+    });
+    if (dmgH && state.player.invuln <= 0) {
+      const amt = (dmgH.amount || 5) * dt;
+      applyIncomingDamage(amt, dmgH.x, dmgH.y, 0.6);
+    }
+  } catch (e) {}
 
   if (state.fireTimer > 0) state.fireTimer -= dt;
   if (!mouseDown && !touchFiring && w.spinUp) {
@@ -323,13 +360,98 @@ export function updateWaveLogic(dt) {
     const centerMsg = document.getElementById('center-msg');
     centerMsg.textContent = 'NIGHT ' + state.wave + ' CLEARED';
     centerMsg.classList.add('show');
-    state.lifetimeStats.totalWavesCleared++;
+    SAFEHOUSE_MILESTONES.forEach(m => {
+      if (m.wave === state.wave) {
+        if (m.reward && m.reward.scrap) state.scrap += m.reward.scrap;
+        saveScrapAndUpgrades();
+        spawnFloatText(state.player.x, state.player.y - 40, 'MILESTONE: ' + m.label, '#c084fc');
+      }
+    });
+    if (state.objective && state.objective.active) {
+      const obj = state.objective;
+      const done = (obj.type === 'protect' && obj.timer <= 0) ||
+                   (obj.type === 'recover' && obj.collected) ||
+                   (obj.type === 'eliminate' && obj.killed);
+      if (done) {
+        const r = obj.reward || {};
+        if (r.scrap) state.scrap += r.scrap;
+        if (r.medkit) state.medkits = (state.medkits || 0) + r.medkit;
+        if (r.xp) { state.player.xp += r.xp; }
+        saveScrapAndUpgrades();
+        spawnFloatText(state.player.x, state.player.y - 30, 'OBJECTIVE COMPLETE', '#8fae3c');
+      }
+      obj.active = false;
+    }
     checkAchievements({ type:'wave', wave: state.wave });
     if (state.player.hp >= hpBeforeWave) {
       checkAchievements({ type:'waveNoDamage' });
     }
     saveLifetimeStats();
   }
+  // ---- AtualizaÃ§Ã£o de objetivos ativos ----
+  if (state.objective && state.objective.active) {
+    const obj = state.objective;
+    if (obj.type === 'protect' && obj.target) {
+      const dd = Math.hypot(state.player.x - obj.target.x, state.player.y - obj.target.y);
+      if (dd <= (obj.target.r || 130)) obj.timer -= dt;
+      else obj.timer -= dt * 0.35;
+      if (obj.timer <= 0) {
+        obj.timer = 0;
+        const r = obj.reward || {};
+        if (r.scrap) state.scrap += r.scrap;
+        if (r.medkit) state.medkits = (state.medkits || 0) + r.medkit;
+        if (r.xp) state.player.xp += r.xp;
+        saveScrapAndUpgrades();
+        spawnFloatText(state.player.x, state.player.y - 30, 'OBJECTIVE COMPLETE', '#8fae3c');
+        obj.active = false;
+      }
+    } else {
+      obj.timer -= dt;
+      if (obj.timer <= 0) {
+        obj.active = false;
+      }
+    }
+  }
+
+  // ---- Objetivos opcionais ----
+  if (state.waveActive && !state.objective.active && !state.tutorialMode) {
+    // weight-based selection
+    const candidates = OBJECTIVES.filter(o => (o.minWave || 1) <= state.wave);
+    const totalWeight = candidates.reduce((s, o) => s + (o.weight || 1), 0);
+    let roll = Math.random() * totalWeight;
+    let o = candidates[0];
+    for (const c of candidates) {
+      roll -= (c.weight || 1);
+      if (roll <= 0) { o = c; break; }
+    }
+    state.objective = {
+      type: o.id,
+      label: o.label,
+      icon: o.icon,
+      timer: o.time,
+      initialTime: o.time,
+      progress: 0,
+      active: true,
+      target: o.id === 'protect' ? { x: state.player.x, y: state.player.y, r: 135 } : null,
+      collected: false,
+      killed: false,
+      reward: o.reward
+    };
+    const centerMsg = document.getElementById('center-msg');
+    if (centerMsg) {
+      centerMsg.textContent = o.icon + ' ' + o.label.toUpperCase();
+      centerMsg.classList.add('show');
+      setTimeout(() => centerMsg.classList.remove('show'), 2000);
+    }
+  }
+  // per-type timer already handled above; keep safe guard
+  if (state.objective && state.objective.active && state.objective.type !== 'protect') {
+    state.objective.timer -= dt;
+    if (state.objective.timer <= 0) {
+      state.objective.active = false;
+    }
+  }
+
   if (!state.waveActive && state.waveTransitionTimer > 0) {
     state.waveTransitionTimer -= dt;
     if (state.waveTransitionTimer <= 0) {
@@ -346,21 +468,21 @@ export function resetGame() {
 
 export function initGameState(tutorial) {
       // Se o mapa selecionado for 'random', sortear um mapa real
+  // Preserve user preference; if 'random', choose runtime map without persisting preference
   if (state.selectedMap === 'random') {
-    const keys = Object.keys(MAPS);
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    state.selectedMap = randomKey;
+    state.runtimeMap = pickRandomMap();
     // Reconstruir o mundo com o mapa sorteado
     buildGround();
     buildDebris();
     buildObstacles();
-    // Atualizar o select para mostrar o mapa sorteado (opcional)
-    const mapSelect = document.getElementById('map-select');
-    if (mapSelect) mapSelect.value = randomKey;
+    initAmbient();
+  } else {
+    state.runtimeMap = state.selectedMap;
   }
 
 
   state.tutorialMode = !!tutorial;
+  state.runMode = state.selectedMode || 'standard';
   applyGameSettings();
   resetPlayerState(state.classMod);
   resetEnemies();
@@ -434,7 +556,7 @@ export function togglePause(force) {
 
 // ---- Perks (com raridade ponderada) ----
 function weightedPerkPool() {
-  // Devolve uma cópia dos PERKS com pesos ajustados pela raridade
+  // Devolve uma cÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³pia dos PERKS com pesos ajustados pela raridade
   return PERKS.map(p => ({ perk: p, weight: PERK_RARITY_WEIGHTS[p.rarity] || 50 }));
 }
 
@@ -502,7 +624,7 @@ export function choosePerk(idx) {
   state.gameRunning = true;
 }
 
-// ---- Inicialização e loop ----
+// ---- InicializaÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o e loop ----
 export function initGame(canvasEl, ctx2d, width, height) {
   canvas = canvasEl; ctx = ctx2d; W = width; H = height;
   initRenderer(canvas, ctx, W, H);
@@ -546,6 +668,9 @@ export function loop(ts) {
     setShake(state.screenShake);
 
     syncHUD(state.gameStartTime);
+     try { syncObjectiveUI(); } catch (e) {}
+     try { syncRightStatusPanel(); } catch (e) {}
+     try { syncBottomStatusPanel(); } catch (e) {}
   }
   if (state.paused) {
     updateDamageIndicators(dt);
@@ -554,3 +679,4 @@ export function loop(ts) {
   render(ts);
   requestAnimationFrame(loop);
 }
+

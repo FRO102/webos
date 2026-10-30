@@ -95,6 +95,11 @@ export function updatePickups(dt) {
         spawnFloatText(p.x, p.y - 10, 'SHIELDED!', '#c084fc');
       }
       playSound(640, 0.05, 'triangle', 0.03);
+  try {
+    if (state.objective && state.objective.active && state.objective.type === 'recover') {
+      state.objective.collected = true;
+    }
+  } catch (e) {}
       pickups.splice(i, 1);
     }
   }

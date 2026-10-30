@@ -8,6 +8,7 @@ import { playSound } from './audio.js';
 import { applyIncomingDamage, gainXP, onKillLifesteal } from './player.js';
 import { explodeAt, enemyProjectiles } from './projectiles.js';
 import { checkAchievements } from './achievements.js';
+import { currentMapMechanics, obstacles } from './world.js';
 // alias setStoredValue already available above
 
 
@@ -25,6 +26,7 @@ export function spawnZombie(type) {
   x = clamp(x, 20, WORLD_W - 20);
   y = clamp(y, 20, WORLD_H - 20);
   const zombie = {
+    id: 'z_' + Math.random().toString(36).slice(2,10),
     x, y, type,
     hp: def.hp * state.difficultyMod.enemyHp,
     maxHp: def.hp * state.difficultyMod.enemyHp,
@@ -38,6 +40,11 @@ export function spawnZombie(type) {
     summonCd: rand(4.0, 6.0),
     bossVariant: type === 'boss' ? state.bossVariant : null
   };
+  if (state.objective && state.objective.active && state.objective.type === 'eliminate' && !state.objective.targetId) {
+    if (type === 'boss' || type === 'juggernaut' || type === 'tank') {
+      state.objective.targetId = zombie.id;
+    }
+  }
   state.zombies.push(zombie);
   return zombie;
 }
@@ -127,6 +134,16 @@ export function killZombie(z, opts) {
   spawnBloodSplat(z.x, z.y, 14);
   playSound(z.type === 'boss' ? 65 : 180, 0.09, 'triangle', 0.05);
   if (Math.random() < 0.35) dropPickup(z.x, z.y);
+  // marcar objetivo 'eliminate' se o zombie tem tipo elite
+  if (state.objective && state.objective.active && state.objective.type === 'eliminate' && !state.objective.killed) {
+    if (z.type === 'tank' || z.type === 'juggernaut' || z.type === 'boss') {
+      state.objective.killed = true;
+    }
+  }
+  // marcar objetivo 'recover' se houver cache coletada (handled world); contagem simples
+  if (state.objective && state.objective.active && state.objective.type === 'recover') {
+    // completed when a pickup is collected? We'll set flag on pickup collection elsewhere
+  }
   state.waveZombiesRemaining = Math.max(0, state.waveZombiesRemaining - 1);
 
   checkAchievements({ type:'kill', zombieType: z.type, melee: !!opts.melee, headshot: !!opts.headshot, crit: !!opts.crit });
@@ -192,8 +209,9 @@ export function updateZombies(dt) {
             const sx = clamp(z.x + Math.cos(sAng) * 60, 20, WORLD_W - 20);
             const sy = clamp(z.y + Math.sin(sAng) * 60, 20, WORLD_H - 20);
             const def = ZTYPES.swarmer;
+            const zid = 'z_' + Math.random().toString(36).slice(2,10);
             state.zombies.push({
-              x: sx, y: sy, type:'swarmer',
+              id: zid, x: sx, y: sy, type:'swarmer',
               hp: def.hp * state.difficultyMod.enemyHp, maxHp: def.hp * state.difficultyMod.enemyHp,
               speed: def.speed * state.difficultyMod.enemySpeed, dmg: def.dmg * state.difficultyMod.enemyDmg,
               r: def.r, color: def.color, angle:0, hitFlash:0.2, attackCd:0, wobble: Math.random()*10,
@@ -293,8 +311,9 @@ export function updateZombies(dt) {
           const sAng = Math.random() * Math.PI * 2;
           const sx = clamp(z.x + Math.cos(sAng) * 70, 20, WORLD_W - 20);
           const sy = clamp(z.y + Math.sin(sAng) * 70, 20, WORLD_H - 20);
+          const zid2 = 'z_' + Math.random().toString(36).slice(2,10);
           state.zombies.push({
-            x: sx, y: sy, type: t,
+            id: zid2, x: sx, y: sy, type: t,
             hp: def.hp * state.difficultyMod.enemyHp, maxHp: def.hp * state.difficultyMod.enemyHp,
             speed: def.speed * state.difficultyMod.enemySpeed, dmg: def.dmg * state.difficultyMod.enemyDmg,
             r: def.r, color: def.color, angle:0, hitFlash:0.2, attackCd:0, wobble: Math.random()*10,
@@ -306,8 +325,21 @@ export function updateZombies(dt) {
 
     // Movimento e ataque
     if (d > 28) {
-      z.x += Math.cos(z.angle) * z.speed * dt;
-      z.y += Math.sin(z.angle) * z.speed * dt;
+      let nx = z.x + Math.cos(z.angle)*z.speed*dt;
+      let ny = z.y + Math.sin(z.angle)*z.speed*dt;
+      nx = clamp(nx,z.r,WORLD_W-z.r);
+      ny = clamp(ny,z.r,WORLD_H-z.r);
+      let bx=false,by=false;
+      const zombieDef = z.type ? null : null;
+      if (!(ZTYPES[z.type] && ZTYPES[z.type].ignoresObstacles)) {
+        for(const o of obstacles){
+          if(o.hp<=0)continue;
+          if(nx+z.r>o.x-o.w/2 && nx-z.r<o.x+o.w/2 && z.y+z.r>o.y-o.h/2 && z.y-z.r<o.y+o.h/2) bx=true;
+          if(ny+z.r>o.y-o.h/2 && ny-z.r<o.y+o.h/2 && z.x+z.r>o.x-o.w/2 && z.x-z.r<o.x+o.w/2) by=true;
+        }
+      }
+      try{const mech=currentMapMechanics();for(const h of (mech.hazards||[])){if(h.type!=='blocked'||!h.rect)continue;const r=h.rect;if(nx+z.r>r.x&&nx-z.r<r.x+r.w&&z.y+z.r>r.y&&z.y-z.r<r.y+r.h)bx=true;if(ny+z.r>r.y&&ny-z.r<r.y+r.h&&z.x+z.r>r.x&&z.x-z.r<r.x+r.w)by=true;}}catch(e){}
+      if(!bx)z.x=nx;if(!by)z.y=ny;
     } else if (state.player.alive && z.attackCd <= 0) {
       z.attackCd = 0.9;
       if (state.player.invuln <= 0) {

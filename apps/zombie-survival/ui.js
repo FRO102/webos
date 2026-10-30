@@ -2,7 +2,7 @@ import { WEAPONS } from './constants.js';
 import { clamp } from './utils.js';
 import { state } from './state.js';
 import { isWeaponUnlocked } from './state.js';
-import { initBuffsUI, renderBuffsHUD } from './buffs.js';
+import { initBuffsUI, renderBuffsHUD, getActiveBuffs } from './buffs.js';
 
 // Referências DOM
 export const dom = {};
@@ -24,6 +24,15 @@ export function initUI() {
   dom.bossbarWrap = document.getElementById('bossbar-wrap');
   dom.bossbarInner = document.getElementById('bossbar-inner');
   dom.bossbarName = document.getElementById('bossbar-name');
+  dom.rightStatus = document.getElementById('right-status');
+  dom.rightStatusTitle = document.getElementById('right-status-title');
+  dom.rightStatusBody = document.getElementById('right-status-body');
+  dom.bottomStatus = document.getElementById('bottom-status');
+  dom.bottomStatusTitle = document.getElementById('bottom-status-title');
+  dom.bottomStatusBody = document.getElementById('bottom-status-body');
+  dom.objectiveWrap = document.getElementById('objective-wrap');
+  dom.objectiveText = document.getElementById('objective-text');
+  dom.objectiveBar = document.getElementById('objective-bar-inner');
   dom.waveNum = document.getElementById('wave-num');
   dom.killCount = document.getElementById('kill-count');
   dom.ammoActiveName = document.getElementById('ammo-active-name');
@@ -192,4 +201,108 @@ export function decayCombo(dt) {
     dom.comboEl.classList.remove('show');
     dom.comboEl.textContent = 'COMBO x1.0';
   }
+}
+
+export function syncObjectiveUI() {
+  if (!dom || !dom.objectiveWrap) return;
+  const o = (state && state.objective) ? state.objective : null;
+  if (!o || !o.active) {
+    dom.objectiveWrap.classList.add('hidden');
+    return;
+  }
+  dom.objectiveWrap.classList.remove('hidden');
+  let text = (String(o.icon || '') + ' ' + String(o.label || '')).trim().toUpperCase();
+  if (o.type === 'protect') text += ' (' + Math.ceil(o.timer || 0) + 's)';
+  if (o.type === 'eliminate') text += o.killed ? ' (DONE)' : '';
+  if (o.type === 'recover') text += o.collected ? ' (COLLECTED)' : '';
+  if (dom.objectiveText) dom.objectiveText.textContent = text;
+  if (dom.objectiveBar) {
+    const total = (o.initialTime && o.initialTime > 0) ? o.initialTime : ((o.timer && o.timer > 0) ? o.timer : 1);
+    const pct = Math.max(0, Math.min(1, (o.timer || 0) / total));
+    dom.objectiveBar.style.width = (pct * 100).toFixed(1) + '%';
+  }
+}
+
+
+export function syncRightStatusPanel() {
+  if (dom && dom.rightStatus) dom.rightStatus.classList.add('hidden');
+  if (!dom || !dom.rightStatusBody) return;
+  if (state.gameRunning && state.player && state.player.alive) {
+    dom.rightStatus.classList.remove('hidden');
+  } else {
+    dom.rightStatus.classList.add('hidden');
+  }
+  const rows = [
+    ['HP', String(Math.round(state.player.hp)) + ' / ' + state.player.maxHp],
+    ['Armor', String(Math.round(state.player.armor)) + ' / ' + state.player.maxArmor],
+    ['Level', String(state.player.level)],
+    ['Night', String(state.wave)],
+    ['Kills', String(state.killCount)],
+    ['Combo', 'x' + state.comboMult.toFixed(2)],
+    ['Ammo', (state.ammoState[state.player.weaponIdx] ? state.ammoState[state.player.weaponIdx].mag + ' / ' + state.ammoState[state.player.weaponIdx].reserve : '∞')],
+    ['Weight', state.player.spreadMul.toFixed(2)],
+    ['Role', state.selectedClass.toUpperCase()],
+    ['Mode', state.runMode.toUpperCase()]
+  ];
+  dom.rightStatusBody.innerHTML = '';
+  const buffsSection = document.createElement('div');
+  buffsSection.className = 'right-status-section';
+  const buffsTitle = document.createElement('div');
+  buffsTitle.className = 'right-status-section-title';
+  buffsTitle.textContent = 'BUFFS';
+  buffsSection.appendChild(buffsTitle);
+  try {
+    const buffs = (typeof getActiveBuffs === 'function') ? getActiveBuffs() : [];
+    for (const b of buffs) {
+      const row = document.createElement('div');
+      row.className = 'right-status-row buff-row';
+      row.innerHTML = '<span class="right-label">' + String(b.icon || '?') + ' ' + String(b.label || '') + '</span><span class="right-value">' + String(b.desc || '').slice(0,40) + '</span>';
+      buffsSection.appendChild(row);
+    }
+    if (buffs.length === 0) {
+      const row = document.createElement('div');
+      row.className = 'right-status-row';
+      row.innerHTML = '<span class="right-label">NONE</span><span class="right-value">-</span>';
+      buffsSection.appendChild(row);
+    }
+  } catch (e) {}
+  dom.rightStatusBody.appendChild(buffsSection);
+
+  for (const [label, val] of rows) {
+    const row = document.createElement('div');
+    row.className = 'right-status-row';
+    row.innerHTML = '<span class="right-label">' + label + '</span><span class="right-value">' + val + '</span>';
+    dom.rightStatusBody.appendChild(row);
+  }
+}
+
+
+export function syncBottomStatusPanel() {
+  if (!dom || !dom.bottomStatus || !dom.bottomStatusBody) return;
+  if (state.gameRunning && state.player && state.player.alive) dom.bottomStatus.classList.remove('hidden');
+  else dom.bottomStatus.classList.add('hidden');
+  dom.bottomStatusBody.innerHTML = '';
+  const buffs = (typeof getActiveBuffs === 'function') ? getActiveBuffs() : [];
+  // status rows
+  const rows = [
+    ['HP', String(Math.round(state.player.hp)) + '/' + state.player.maxHp],
+    ['Armor', String(Math.round(state.player.armor)) + '/' + state.player.maxArmor],
+    ['Level', String(state.player.level)],
+    ['Night', String(state.wave)],
+    ['Kills', String(state.killCount)],
+    ['Combo', 'x' + state.comboMult.toFixed(2)],
+    ['Ammo', (state.ammoState[state.player.weaponIdx] ? state.ammoState[state.player.weaponIdx].mag + '/' + state.ammoState[state.player.weaponIdx].reserve : '∞')],
+    ['Mode', state.runMode.toUpperCase()]
+  ];
+  for (const [label,val] of rows) {
+    const row=document.createElement('div');
+    row.className='bottom-status-row';
+    row.innerHTML='<span>'+label+'</span><span>'+val+'</span>';
+    dom.bottomStatusBody.appendChild(row);
+  }
+  // effects section
+  const eff=document.createElement('div');
+  eff.className='bottom-status-effects';
+  eff.textContent='EFFECTS: ' + (buffs.length ? buffs.map(b=> (b.icon||'') + ' ' + (b.label||'')).join(' | ') : 'NONE');
+  dom.bottomStatusBody.appendChild(eff);
 }

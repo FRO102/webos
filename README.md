@@ -81,6 +81,8 @@ node tests/sudoku.mjs
 node tests/excel-data.mjs
 node tests/pacman.mjs
 node tests/tetris.mjs
+node tests/zombie-survival-engine.mjs
+node tests/zombie-survival-objectives.mjs
 ```
 
 Para verificar a sintaxe dos scripts JavaScript em PowerShell:

@@ -1,6 +1,9 @@
 import { PAL, WORLD_W, WORLD_H, TILE, WEATHER_TYPES, MAPS } from './constants.js';
 import { rand, randInt, clamp } from './utils.js';
+import { setStoredValue } from './persistence.js';
+import { SCRAP_STORAGE_KEY } from './constants.js';
 import { state } from './state.js';
+import { spawnFloatText } from './pickups.js';
 
 export let groundTiles = [];
 export let debris = [];
@@ -9,7 +12,14 @@ export let ambientParticles = [];
 export let dayNightClock = 0;
 
 export function currentMap() {
-  return MAPS[state.selectedMap] || MAPS.forest;
+  const key = state.runtimeMap || state.selectedMap || 'forest';
+  return MAPS[key] || MAPS.forest;
+}
+
+export function currentMapMechanics() {
+  const map = currentMap();
+  const m = map.mechanics;
+  return m || { visibility: 1.0, fogMul: 1.0, hazards: [], interactives: [] };
 }
 
 export function buildGround() {
@@ -126,4 +136,38 @@ export function updateAmbient(dt) {
       spawnAmbientParticle(state.player.x, state.player.y);
     }
   }
+}
+
+export function tryInteract() {
+  const mech = currentMapMechanics();
+  const list = (mech.interactives || []);
+  for (const it of list) {
+    if (it.used) continue;
+    const dx = state.player.x - it.x;
+    const dy = state.player.y - it.y;
+    if (Math.hypot(dx,dy) <= 48) {
+      it.used = true;
+      if (it.type === 'cache') {
+        const r = it.reward || {};
+        if (r.scrap) state.scrap += r.scrap;
+        if (r.medkit) state.medkits = (state.medkits||0)+r.medkit;
+         if (state.objective && state.objective.active && state.objective.type === 'recover') state.objective.collected = true;
+        spawnFloatText(it.x, it.y - 20, '+' + (r.scrap||0) + ' SCRAP', '#d8cfa8');
+        setStoredValue(SCRAP_STORAGE_KEY, String(state.scrap));
+      }
+      if (it.type === 'altar' && it.effect === 'heal') {
+        state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
+        spawnFloatText(it.x, it.y - 20, '+40 HP', '#8fae3c');
+      }
+      if (it.type === 'door' && it.requires === 'key') {
+        spawnFloatText(it.x, it.y - 20, 'LOCKED', '#c0492e');
+      }
+    }
+  }
+}
+
+
+export function pickRandomMap() {
+  const keys = ["forest","city","graveyard","desert","wasteland"];
+  return keys[Math.floor(Math.random()*keys.length)];
 }

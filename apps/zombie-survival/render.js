@@ -1,7 +1,7 @@
 import { PAL, WORLD_W, WORLD_H, TILE, HAT_PRESETS, BACKPACK_PRESETS, MASK_PRESETS } from './constants.js';
 import { state } from './state.js';
 import { bullets, grenades, enemyProjectiles, shockwaves } from './projectiles.js';
-import { groundTiles, debris, obstacles, ambientParticles, currentMap } from './world.js';
+import { groundTiles, debris, obstacles, ambientParticles, currentMap, currentMapMechanics } from './world.js';
 import { pickups, particles, floatTexts, bloodPools } from './pickups.js';
 import { playerLook } from './character.js';
 import { rand, clamp } from './utils.js';
@@ -99,7 +99,7 @@ export function drawObstacles() {
       ctx.lineTo(s.x - o.w / 2, s.y + o.h / 2);
       ctx.stroke();
     } else if (o.type === 'grave') {
-      // Lápide: base retangular com topo arredondado
+      // LÃƒÆ’Ã‚Â¡pide: base retangular com topo arredondado
       ctx.fillStyle = '#5a5a52';
       ctx.beginPath();
       ctx.moveTo(s.x - o.w / 2, s.y + o.h / 2);
@@ -224,7 +224,7 @@ export function drawZombie(z) {
     ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(0, 0, z.r * 0.7, -0.7, 0.7); ctx.stroke();
   }
-  // Tank: linhas de "couraça"
+  // Tank: linhas de "couraÃƒÆ’Ã‚Â§a"
   if (z.type === 'tank') {
     ctx.strokeStyle = '#3a2f26';
     ctx.lineWidth = 1.5;
@@ -260,7 +260,7 @@ export function drawPlayer() {
   const flicker = state.player.invuln > 0 && Math.floor(performance.now() / 60) % 2 === 0;
   ctx.rotate(state.player.angle);
 
-  // Mochila — desenhada atrás do corpo, do lado oposto à direção do olhar
+  // Mochila ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â desenhada atrÃƒÆ’Ã‚Â¡s do corpo, do lado oposto ÃƒÆ’Ã‚Â  direÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do olhar
   if (playerLook.backpack && playerLook.backpack !== 'none') {
     ctx.fillStyle = (BACKPACK_PRESETS[playerLook.backpack] || {}).color || '#4a3a26';
     ctx.fillRect(-state.player.r * 0.9, -state.player.r * 0.55, state.player.r * 0.55, state.player.r * 1.1);
@@ -281,13 +281,13 @@ export function drawPlayer() {
   ctx.arc(state.player.r * 0.3, 0, state.player.r * 0.55, 0, Math.PI * 2);
   ctx.fill();
 
-  // Máscara — sobre a cara, virada para a direção do olhar
+  // MÃƒÆ’Ã‚Â¡scara ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â sobre a cara, virada para a direÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do olhar
   if (playerLook.mask && playerLook.mask !== 'none') {
     ctx.fillStyle = (MASK_PRESETS[playerLook.mask] || {}).color || '#1a1a1a';
     ctx.fillRect(state.player.r * 0.15, -state.player.r * 0.3, state.player.r * 0.55, state.player.r * 0.6);
   }
 
-  // Chapéu — sobre a cabeça
+  // ChapÃƒÆ’Ã‚Â©u ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â sobre a cabeÃƒÆ’Ã‚Â§a
   if (playerLook.hat && playerLook.hat !== 'none') {
     ctx.fillStyle = (HAT_PRESETS[playerLook.hat] || {}).color || '#3a4a26';
     ctx.beginPath();
@@ -297,7 +297,7 @@ export function drawPlayer() {
 
   ctx.restore();
 
-  // Escudo temporário (pickup) — anel roxo pulsante mais notório que o invuln genérico
+  // Escudo temporÃƒÆ’Ã‚Â¡rio (pickup) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â anel roxo pulsante mais notÃƒÆ’Ã‚Â³rio que o invuln genÃƒÆ’Ã‚Â©rico
   if (state.shieldTimer > 0) {
     ctx.save();
     ctx.globalAlpha = 0.5 + 0.3 * Math.sin(performance.now() / 120);
@@ -309,7 +309,7 @@ export function drawPlayer() {
     ctx.restore();
   }
 
-  // Halo sutil quando "Undying" está pronto (feedback de perk épico)
+  // Halo sutil quando "Undying" estÃƒÆ’Ã‚Â¡ pronto (feedback de perk ÃƒÆ’Ã‚Â©pico)
   if (state.player.hasUndying && state.player.undyingReady) {
     ctx.save();
     ctx.globalAlpha = 0.35 + 0.15 * Math.sin(performance.now() / 300);
@@ -325,7 +325,7 @@ export function drawPlayer() {
 export function drawBullets() {
   for (const b of bullets) {
     const s = worldToScreen(b.x, b.y);
-    // Trilho: pequena linha na direção oposta à velocidade
+    // Trilho: pequena linha na direÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o oposta ÃƒÆ’Ã‚Â  velocidade
     const speed = Math.hypot(b.vx, b.vy) || 1;
     const trailLen = clamp(speed * 0.014, 4, 16);
     const tx = s.x - (b.vx / speed) * trailLen;
@@ -411,7 +411,7 @@ export function drawWeatherFx(t) {
       ctx.stroke();
     }
     if (state.weatherType === 'storm') {
-      // Relâmpago ocasional
+      // RelÃƒÆ’Ã‚Â¢mpago ocasional
       const flashChance = Math.sin(t / 1300) > 0.985;
       if (flashChance) {
         ctx.fillStyle = 'rgba(220,230,255,0.12)';
@@ -504,9 +504,13 @@ export function drawLaser() {
 }
 
 export function drawDarknessVignette() {
-  const grad = ctx.createRadialGradient(W / 2, H / 2, 80, W / 2, H / 2, W * 0.62);
+  const mech = currentMapMechanics();
+  const map = currentMap();
+  const vis = Math.min(1.2, Math.max(0.5, mech.visibility || 1));
+  const color = (map && map.vignetteColor) ? map.vignetteColor : 'rgba(0,0,0,0.55)';
+  const grad = ctx.createRadialGradient(W / 2, H / 2, 80 * vis, W / 2, H / 2, W * (0.62 / vis));
   grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(1, 'rgba(0,0,0,0.55)');
+  grad.addColorStop(1, color);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
 }
@@ -522,6 +526,42 @@ export function drawWorldBounds() {
   ctx.fillRect(s1.x, s0.y - 40, 40, WORLD_H + 80);
 }
 
+export function drawInteractables() {
+  try {
+    const mech = currentMapMechanics();
+    const list = mech.interactives || [];
+    for (const it of list) {
+      if (it.used) continue;
+      const s = worldToScreen(it.x, it.y);
+      if (s.x < -20 || s.x > W + 20 || s.y < -20 || s.y > H + 20) continue;
+      ctx.fillStyle = 'rgba(216,207,168,0.9)';
+      ctx.font = '12px Courier New';
+      const label = it.type === 'cache' ? 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¦' : (it.type === 'altar' ? 'ÃƒÂ°Ã…Â¸Ã¢â‚¬Â¢Ã‚Â¯ÃƒÂ¯Ã‚Â¸Ã‚Â' : (it.type === 'door' ? 'ÃƒÂ°Ã…Â¸Ã…Â¡Ã‚Âª' : 'ÃƒÂ¢Ã‚ÂÃ¢â‚¬Å“'));
+      ctx.fillText(label, s.x - 6, s.y + 4);
+    }
+  } catch (e) {}
+}
+
+export function drawHazards() {
+  try {
+    const mech = currentMapMechanics();
+    for (const h of (mech.hazards || [])) {
+      if (h.type === "blocked" && h.rect) {
+        const r = h.rect;
+        ctx.fillStyle = "rgba(10,11,6,0.75)";
+        ctx.fillRect(r.x - camX, r.y - camY, r.w, r.h);
+        ctx.strokeStyle = "rgba(92,106,53,0.45)";
+        ctx.strokeRect(r.x - camX, r.y - camY, r.w, r.h);
+      } else if (h.x != null) {
+        const ss = worldToScreen(h.x, h.y);
+        ctx.strokeStyle = "rgba(143,174,60,0.25)";
+        ctx.beginPath();
+        ctx.arc(ss.x, ss.y, h.r || 120, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  } catch(e) {}
+}
 export function drawMinimap() {
   if (!minimapCtx || !minimapCanvas) return;
   const mw = minimapCanvas.width, mh = minimapCanvas.height;
@@ -567,6 +607,41 @@ export function drawMinimap() {
   minimapCtx.stroke();
 }
 
+export function drawObjectiveZone() {
+  if (!state || !state.objective || !state.objective.active) return;
+  const o = state.objective;
+  if (o.type === 'protect' && o.target) {
+    const s = worldToScreen(o.target.x, o.target.y);
+    ctx.strokeStyle = 'rgba(143,174,60,0.65)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, o.target.r || 130, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(143,174,60,0.18)';
+    ctx.fill();
+    ctx.fillStyle = '#d8cfa8';
+    ctx.font = '14px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('PROTECT', s.x, s.y - 140);
+    ctx.textAlign = 'left';
+  } else if (o.type === 'eliminate' && state.objective.targetId) {
+    const z = state.zombies.find(z => z.id === state.objective.targetId && z.hp > 0);
+    if (z) {
+      const s = worldToScreen(z.x, z.y);
+      ctx.strokeStyle = 'rgba(192,73,46,0.85)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, z.r + 8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#c0492e';
+      ctx.font = '12px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('ELITE', s.x, s.y - z.r - 12);
+      ctx.textAlign = 'left';
+    }
+  }
+}
+
 export function render(t) {
   ctx.save();
   if (screenShake > 0.1) {
@@ -577,8 +652,10 @@ export function render(t) {
   drawBloodPools();
   drawDebris();
   drawObstacles();
-  drawPickups(t);
+  drawHazards();
   drawAmbient();
+  drawInteractables();
+  drawObjectiveZone();
 
   // Usar state.zombies em vez de importar zombies diretamente
   const drawables = state.zombies.map(z => ({ y: z.y, draw: () => drawZombie(z) }));

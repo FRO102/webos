@@ -308,6 +308,7 @@ export function meleeAttack(weaponOverride) {
     z.ky = (z.ky || 0) + Math.sin(state.player.angle) * knock;
     spawnBloodSplat(z.x, z.y, 6);
     spawnFloatText(z.x, z.y - 16, '-' + Math.round(baseDmg), '#d8cfa8');
+    playSound(isMachete ? 400 : 260, 0.08, 'triangle', 0.05);
     state.lastDamageSource = isMachete ? weaponOverride.name : 'Melee';
     hits++;
     if (z.hp <= 0) killZombie(z, { melee: true });

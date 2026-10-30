@@ -234,7 +234,14 @@ export const MAPS = {
     debrisMix: { rock:0.5, bush:0.5 },
     obstacleMix: { crate:0.5, barrel:0.5 },
     tint: 'rgba(18,28,46,1)',
-    fogBase: 0
+    fogBase: 0,
+    vignetteColor: 'rgba(18,28,46,0.45)',
+    mechanics: {
+      visibility: 1.0,
+      fogMul: 1.0,
+      hazards: [{ type:'slow', x:900, y:600, r:220, amount:0.25 }], // neblina pesada
+      interactives: [{ type:'cache', x:320, y:420, reward:{ scrap:25, medkit:1 } }]
+    }
   },
   city: {
     label: 'DEAD CITY BLOCKS',
@@ -244,7 +251,14 @@ export const MAPS = {
     debrisMix: { rock:0.85, bush:0.15 },
     obstacleMix: { crate:0.35, barrel:0.65 },
     tint: 'rgba(28,26,38,1)',
-    fogBase: 0.03
+    fogBase: 0.03,
+    vignetteColor: 'rgba(28,26,38,0.5)',
+    mechanics: {
+      visibility: 0.85,
+      fogMul: 1.15,
+      hazards: [{ type:'blocked', rect:{ x:760, y:480, w:180, h:90 } }], // rota bloqueada
+      interactives: [{ type:'door', x:1520, y:760, requires:'key' }]
+    }
   },
   graveyard: {
     label: 'OLD GRAVEYARD',
@@ -254,7 +268,38 @@ export const MAPS = {
     debrisMix: { rock:0.7, bush:0.3 },
     obstacleMix: { crate:0.2, barrel:0.3, grave:0.5 },
     tint: 'rgba(20,34,30,1)',
-    fogBase: 0.06
+    fogBase: 0.06,
+    vignetteColor: 'rgba(20,34,30,0.6)',
+    mechanics: {
+      visibility: 0.7,
+      fogMul: 1.35,
+      hazards: [{ type:'slow', x:260, y:940, r:180, amount:0.35 }],
+      interactives: [{ type:'altar', x:1480, y:220, effect:'heal' }]
+    }
+  },
+  wasteland: {
+    label: 'TOXIC WASTELAND',
+    desc: 'Sludge pools and radiation hubs.',
+    ground: { g1:'#1a1c15', g2:'#12160f', g3:'#22281a' },
+    bounds: '#050603',
+    debrisMix: { rock:0.55, bush:0.45 },
+    obstacleMix: { crate:0.3, barrel:0.4, grave:0.3 },
+    tint: 'rgba(10,20,12,1)',
+    fogBase: 0.05,
+    vignetteColor: 'rgba(10,20,12,0.55)',
+    mechanics: { visibility:0.85, fogMul:1.2, hazards:[{ type:'poison', x:1000, y:700, r:190, amount:8 }], interactives:[{ type:'altar', x:400, y:300, effect:'heal' }] }
+  },
+  desert: {
+    label: 'DEAD DESERT',
+    desc: 'Sun-scorched wastes with mirages and ambushes.',
+    ground: { g1:'#3a3220', g2:'#2a2418', g3:'#4a4230' },
+    bounds: '#0a0804',
+    debrisMix: { rock:0.6, bush:0.4 },
+    obstacleMix: { crate:0.45, barrel:0.35, grave:0.2 },
+    tint: 'rgba(46,28,18,1)',
+    fogBase: 0.02,
+    vignetteColor: 'rgba(46,28,18,0.5)',
+    mechanics: { visibility: 1.15, fogMul:0.9, hazards:[{ type:'slow', x:1200, y:500, r:200, amount:0.2}], interactives:[{ type:'cache', x:600, y:900, reward:{ scrap:35 } }] }
   }
 };
 
@@ -267,6 +312,10 @@ export const MAP_STORAGE_KEY = 'nightnine-selected-map-v1';
 export const SCRAP_STORAGE_KEY = 'nightnine-scrap-v1';
 export const UPGRADES_STORAGE_KEY = 'nightnine-upgrades-v1';
 
+export const SAFEHOUSE_MILESTONES = [
+  { wave:5, reward:{ scrap: 30, cosmetic:'trail' }, label:'Night 5 milestone' },
+  { wave:10, reward:{ scrap: 60, cosmetic:'aura' }, label:'Night 10 milestone' }
+];
 export const SAFEHOUSE_UPGRADES = [
   { id: 'armor', name: 'Reinforced Plating', desc: '+15 Max Armor', costBase: 35, costScale: 1.5, maxLevel: 5 },
   { id: 'speed', name: 'Adrenaline Pump', desc: '+8 Move Speed', costBase: 45, costScale: 1.6, maxLevel: 5 },
@@ -281,5 +330,38 @@ export const TILE = 40;
 export const CRIT_CHANCE_BASE = 0.10;
 export const CRIT_CHANCE_CALLED = 0.25;
 export const CRIT_MUL = 1.75;
-export const CALLED_SHOT_MUL = 1.35;
 export const HEADSHOT_MUL = 1.5;
+export const CALLED_SHOT_MUL = 1.35;
+export const OBJECTIVES = [
+  { id: 'protect', label: 'Protect the zone', icon: '🛡️', time: 15, weight: 1, minWave: 1, reward: { scrap: 30, medkit: 1, xp: 40 }, desc: 'Stay inside the highlighted zone.' },
+  { id: 'recover', label: 'Recover supplies', icon: '📦', time: 16, weight: 1, minWave: 1, reward: { scrap: 20, xp: 25 }, desc: 'Collect any supply.' },
+  { id: 'eliminate', label: 'Eliminate the elite', icon: '🎯', time: 25, weight: 0.8, minWave: 4, reward: { scrap: 50, xp: 70 }, desc: 'Kill the marked enemy.' }
+];
+
+export const BESTIARY = [
+  { id:'walker', name:'WALKER', desc:'Zombie type walker' },
+  { id:'runner', name:'RUNNER', desc:'Zombie type runner' },
+  { id:'crawler', name:'CRAWLER', desc:'Zombie type crawler' },
+  { id:'brute', name:'BRUTE', desc:'Zombie type brute' },
+  { id:'spitter', name:'SPITTER', desc:'Zombie type spitter' },
+  { id:'exploder', name:'EXPLODER', desc:'Zombie type exploder' },
+  { id:'bomber', name:'BOMBER', desc:'Zombie type bomber' },
+  { id:'swarmer', name:'SWARMER', desc:'Zombie type swarmer' },
+  { id:'shocker', name:'SHOCKER', desc:'Zombie type shocker' },
+  { id:'healer', name:'HEALER', desc:'Zombie type healer' },
+  { id:'screamer', name:'SCREAMER', desc:'Zombie type screamer' },
+  { id:'ghost', name:'GHOST', desc:'Zombie type ghost' },
+  { id:'tank', name:'TANK', desc:'Zombie type tank' },
+  { id:'juggernaut', name:'JUGGERNAUT', desc:'Zombie type juggernaut' },
+  { id:'boss', name:'BOSS', desc:'Zombie type boss' }
+];
+
+
+export const GAME_MODES = [
+  { id:'standard', name:'STANDARD', desc:'Classic survivor mode.', minWave:1, endless:false, bossEvery:5, objectiveChance:0.9 },
+  { id:'bossrush', name:'BOSS RUSH', desc:'Face bosses every wave.', minWave:1, endless:true, bossEvery:1, objectiveChance:0.6 },
+  { id:'horde', name:'HORDE ENDLESS', desc:'Infinite waves, increasing density.', minWave:1, endless:true, bossEvery:8, spawnMul:1.4, objectiveChance:0.7 },
+  { id:'challenge', name:'NIGHTMARE CHALLENGE', desc:'Harder, shorter survival.', minWave:8, endless:false, bossEvery:4, spawnMul:1.25, objectiveChance:0.85 }
+];
+
+export const GAME_MODE_STORAGE_KEY = 'nightnine-game-mode-v1';
