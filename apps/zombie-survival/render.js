@@ -663,6 +663,7 @@ export function render(t) {
   drawShockwaves();
   drawMeleeArc();
   drawLaser();
+  drawPickups(t);
   drawParticles();
   drawFloatTexts();
   drawWeatherFx(t);

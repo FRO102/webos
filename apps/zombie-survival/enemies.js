@@ -325,12 +325,43 @@ export function updateZombies(dt) {
 
     // Movimento e ataque
     if (d > 28) {
-      let nx = z.x + Math.cos(z.angle)*z.speed*dt;
-      let ny = z.y + Math.sin(z.angle)*z.speed*dt;
+      // Direção base para o jogador
+      let dirX = Math.cos(z.angle);
+      let dirY = Math.sin(z.angle);
+      // Se houver obstáculo no caminho curto, aplicar steering perpendicular
+      // (escolher o lado menos obstruído) para o zombie contornar.
+      const look = z.speed * dt * 4;
+      let nx0 = z.x + dirX * look;
+      let ny0 = z.y + dirY * look;
+      let blocked = false;
+      if (!(ZTYPES[z.type] && ZTYPES[z.type].ignoresObstacles)) {
+        for (const o of obstacles) {
+          if (o.hp <= 0) continue;
+          if (nx0 + z.r > o.x - o.w/2 && nx0 - z.r < o.x + o.w/2 &&
+              ny0 + z.r > o.y - o.h/2 && ny0 - z.r < o.y + o.h/2) { blocked = true; break; }
+        }
+      }
+      if (blocked) {
+        // tentar ambos os lados perpendiculares; escolher o que tem menos obstáculos
+        const cand = [{x: -dirY, y: dirX}, {x: dirY, y: -dirX}];
+        let best = cand[0], bestScore = Infinity;
+        for (const c of cand) {
+          let score = 0;
+          for (const o of obstacles) {
+            if (o.hp <= 0) continue;
+            const px = z.x + c.x * look, py = z.y + c.y * look;
+            if (px + z.r > o.x - o.w/2 && px - z.r < o.x + o.w/2 &&
+                py + z.r > o.y - o.h/2 && py - z.r < o.y + o.h/2) score++;
+          }
+          if (score < bestScore) { bestScore = score; best = c; }
+        }
+        dirX = best.x; dirY = best.y;
+      }
+      let nx = z.x + dirX * z.speed * dt;
+      let ny = z.y + dirY * z.speed * dt;
       nx = clamp(nx,z.r,WORLD_W-z.r);
       ny = clamp(ny,z.r,WORLD_H-z.r);
       let bx=false,by=false;
-      const zombieDef = z.type ? null : null;
       if (!(ZTYPES[z.type] && ZTYPES[z.type].ignoresObstacles)) {
         for(const o of obstacles){
           if(o.hp<=0)continue;
@@ -338,7 +369,6 @@ export function updateZombies(dt) {
           if(ny+z.r>o.y-o.h/2 && ny-z.r<o.y+o.h/2 && z.x+z.r>o.x-o.w/2 && z.x-z.r<o.x+o.w/2) by=true;
         }
       }
-      try { currentMapMechanics(); } catch (e) {}
       if(!bx)z.x=nx;if(!by)z.y=ny;
     } else if (state.player.alive && z.attackCd <= 0) {
       z.attackCd = 0.9;
