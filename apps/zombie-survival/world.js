@@ -1,4 +1,4 @@
-import { PAL, WORLD_W, WORLD_H, TILE, WEATHER_TYPES, MAPS } from './constants.js';
+import { PAL, WORLD_W, WORLD_H, TILE, WEATHER_TYPES, MAPS, OBSTACLE_DIMENSIONS } from './constants.js';
 import { rand, randInt, clamp } from './utils.js';
 import { setStoredValue } from './persistence.js';
 import { SCRAP_STORAGE_KEY } from './constants.js';
@@ -10,6 +10,8 @@ export let debris = [];
 export let obstacles = [];
 export let ambientParticles = [];
 export let dayNightClock = 0;
+let mechanicsMapKey = null;
+let runtimeMechanics = null;
 
 export function currentMap() {
   const key = state.runtimeMap || state.selectedMap || 'forest';
@@ -17,9 +19,26 @@ export function currentMap() {
 }
 
 export function currentMapMechanics() {
-  const map = currentMap();
-  const m = map.mechanics;
-  return m || { visibility: 1.0, fogMul: 1.0, hazards: [], interactives: [] };
+  const key = state.runtimeMap || state.selectedMap || 'forest';
+  if (key !== mechanicsMapKey) {
+    const mechanics = (MAPS[key] || MAPS.forest).mechanics || {};
+    runtimeMechanics = {
+      ...mechanics,
+      hazards: (mechanics.hazards || []).map(hazard => ({ ...hazard })),
+      interactives: (mechanics.interactives || []).map(interactive => ({
+        ...interactive,
+        ...(interactive.reward ? { reward: { ...interactive.reward } } : {})
+      }))
+    };
+    mechanicsMapKey = key;
+  }
+  return runtimeMechanics;
+}
+
+export function resetMapMechanics() {
+  mechanicsMapKey = null;
+  runtimeMechanics = null;
+  return currentMapMechanics();
 }
 
 export function buildGround() {
@@ -70,10 +89,11 @@ export function buildObstacles() {
 
   for (let attempt = 0; attempt < maxAttempts && obstacles.length < targetCount; attempt++) {
     const type = weightedPick(map.obstacleMix);
+    const dimensions = OBSTACLE_DIMENSIONS[type] || OBSTACLE_DIMENSIONS.crate;
     const obstacle = {
       x: rand(80,WORLD_W-80), y: rand(80,WORLD_H-80),
-      w: type === 'grave' ? 22 : 28,
-      h: type === 'grave' ? 30 : 28,
+      w: dimensions.w,
+      h: dimensions.h,
       type, hp:40
     };
     const avoidsSpawn = Math.abs(obstacle.x - spawnX) >= 70 || Math.abs(obstacle.y - spawnY) >= 70;
@@ -146,8 +166,8 @@ export function tryInteract() {
     const dx = state.player.x - it.x;
     const dy = state.player.y - it.y;
     if (Math.hypot(dx,dy) <= 48) {
-      it.used = true;
       if (it.type === 'cache') {
+        it.used = true;
         const r = it.reward || {};
         if (r.scrap) state.scrap += r.scrap;
         if (r.medkit) state.medkits = (state.medkits||0)+r.medkit;
@@ -156,6 +176,7 @@ export function tryInteract() {
         setStoredValue(SCRAP_STORAGE_KEY, String(state.scrap));
       }
       if (it.type === 'altar' && it.effect === 'heal') {
+        it.used = true;
         state.player.hp = Math.min(state.player.maxHp, state.player.hp + 40);
         spawnFloatText(it.x, it.y - 20, '+40 HP', '#8fae3c');
       }
@@ -168,6 +189,6 @@ export function tryInteract() {
 
 
 export function pickRandomMap() {
-  const keys = ["forest","city","graveyard","desert","wasteland"];
+  const keys = Object.keys(MAPS);
   return keys[Math.floor(Math.random()*keys.length)];
 }

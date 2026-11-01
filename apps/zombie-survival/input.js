@@ -13,6 +13,21 @@ export let lastKeyPressed = '';
 let joyZone, joyNub, fireBtn, aimZoneEl, aimNub;
 const tryAim = (x,y) => {};
 let scrollAccum = 0;
+let joyActive = false, joyId = null, aimId = null;
+
+export function clearInputState() {
+  for (const key of Object.keys(keys)) delete keys[key];
+  mouseDown = false;
+  rightMouseDown = false;
+  touchFiring = false;
+  joystickVec = { x: 0, y: 0 };
+  joyActive = false;
+  joyId = null;
+  aimId = null;
+  scrollAccum = 0;
+  if (joyNub) { joyNub.style.left = '32px'; joyNub.style.top = '32px'; }
+  if (aimNub) { aimNub.style.left = '32px'; aimNub.style.top = '32px'; }
+}
 
 export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl, aimZoneElParam, aimNubElParam) {
   joyZone = joyZoneEl;
@@ -20,6 +35,12 @@ export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl, aimZoneElPara
   fireBtn = fireBtnEl;
   aimZoneEl = aimZoneElParam;
   aimNub = aimNubElParam;
+
+  window.addEventListener('blur', clearInputState);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clearInputState();
+  });
+  window.addEventListener('touchcancel', clearInputState, { passive: true });
 
   window.addEventListener('keydown', e => {
     keys[e.key.toLowerCase()] = true;
@@ -88,7 +109,7 @@ export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl, aimZoneElPara
   }, { passive: false });
 
 // Joystick touch
-  let joyActive = false, joyId = null, joyLeft = 0;
+  let joyLeft = 0;
   const joyEl = joyZone; const aimEl = aimZoneEl;
 
   joyZone.addEventListener('touchstart', e => {
@@ -143,7 +164,6 @@ export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl, aimZoneElPara
   });
 
   // Aim pad
-  let aimId = null;
   function updateAim(cx, cy) {
     const rect = aimZoneEl.getBoundingClientRect();
     const ccx = rect.left + rect.width/2;
@@ -191,6 +211,7 @@ export function setupInput(canvas, joyZoneEl, joyNubEl, fireBtnEl, aimZoneElPara
 
   if (fireBtn) {
     fireBtn.addEventListener('touchstart', e => { e.preventDefault(); touchFiring = true; });
-    fireBtn.addEventListener('touchend', e => { touchFiring = false; });
+    fireBtn.addEventListener('touchend', () => { touchFiring = false; });
+    fireBtn.addEventListener('touchcancel', clearInputState);
   }
 }

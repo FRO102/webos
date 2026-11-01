@@ -9,6 +9,10 @@ import { applyIncomingDamage, gainXP, onKillLifesteal } from './player.js';
 import { explodeAt, enemyProjectiles } from './projectiles.js';
 import { checkAchievements } from './achievements.js';
 import { currentMapMechanics, obstacles } from './world.js';
+import { shouldSpawnBoss } from './mode-rules.js';
+import { recordObjectiveKill, recordEliteKill } from './objective-rules.js';
+import { hasSummonCapacity } from './weapon-rules.js';
+import { claimZombieDeath, isPlayerCreditedDeath } from './death-rules.js';
 // alias setStoredValue already available above
 
 
@@ -49,7 +53,62 @@ export function spawnZombie(type) {
   return zombie;
 }
 
-export function waveComposition(w) {
+export function summonMinion(weapon) {
+  if (!hasSummonCapacity(state.minions, weapon.minionLimit)) return false;
+  state.minions.push({
+    x: state.player.x + rand(-18, 18),
+    y: state.player.y + rand(-18, 18),
+    r: 8,
+    speed: 175,
+    damage: weapon.minionDamage,
+    life: weapon.minionDuration,
+    maxLife: weapon.minionDuration,
+    attackCooldown: 0.35
+  });
+  return true;
+}
+
+export function updateMinions(dt) {
+  for (let i = state.minions.length - 1; i >= 0; i--) {
+    const minion = state.minions[i];
+    minion.life -= dt;
+    minion.attackCooldown -= dt;
+    if (minion.life <= 0) {
+      state.minions.splice(i, 1);
+      continue;
+    }
+
+    let target = null;
+    let targetDistance = Infinity;
+    for (const zombie of state.zombies) {
+      if (zombie.hp <= 0) continue;
+      const distance = dist(minion.x, minion.y, zombie.x, zombie.y);
+      if (distance < targetDistance) {
+        target = zombie;
+        targetDistance = distance;
+      }
+    }
+
+    const destination = target || state.player;
+    const distance = dist(minion.x, minion.y, destination.x, destination.y);
+    const stoppingDistance = target ? target.r + minion.r + 4 : 72;
+    if (distance > stoppingDistance) {
+      const angle = angleTo(minion.x, minion.y, destination.x, destination.y);
+      const step = Math.min(minion.speed * dt, distance - stoppingDistance);
+      minion.x += Math.cos(angle) * step;
+      minion.y += Math.sin(angle) * step;
+    } else if (target && minion.attackCooldown <= 0) {
+      target.hp -= minion.damage;
+      target.hitFlash = 0.16;
+      state.lastDamageSource = 'Invocadora de Minions';
+      spawnFloatText(target.x, target.y - 14, '-' + Math.round(minion.damage), '#71e6ed');
+      if (target.hp <= 0) killZombie(target, { summoned: true });
+      minion.attackCooldown = 0.75;
+    }
+  }
+}
+
+export function waveComposition(w, bossEvery = 5) {
   const list = [];
   let total = 5 + w * 3;
   if (w % 5 === 0) total = Math.max(8, total - 8);
@@ -58,30 +117,23 @@ export function waveComposition(w) {
     let t = 'walker';
     const r = Math.random();
 
-    // Tipos base
     if (w >= 2 && r < 0.24) t = 'runner';
     if (w >= 3 && r >= 0.24 && r < 0.32) t = 'crawler';
     if (w >= 4 && r > 0.85) t = 'brute';
     if (w >= 5 && r > 0.60 && r < 0.72) t = 'spitter';
     if (w >= 6 && r > 0.72 && r < 0.80) t = 'exploder';
     if (w >= 7 && r > 0.80 && r < 0.85) t = 'bomber';
-
-    // Enxame e suporte
     if (w >= 3 && r >= 0.32 && r < 0.40) t = 'swarmer';
     if (w >= 9 && r >= 0.40 && r < 0.46) t = 'screamer';
     if (w >= 11 && r >= 0.46 && r < 0.52) t = 'ghost';
-
-    // Elite / pesados
     if (w >= 8 && r > 0.92 && r < 0.97) t = 'tank';
     if (w >= 10 && r > 0.15 && r < 0.22) t = 'shocker';
     if (w >= 12 && r > 0.55 && r < 0.60) t = 'healer';
     if (w >= 14 && r > 0.97) t = 'juggernaut';
-
     list.push(t);
   }
 
-  // Boss a cada 5 waves — sabor rotativo (brawler / summoner / artillery)
-  if (w % 5 === 0) list.push('boss');
+  if (shouldSpawnBoss(w, bossEvery)) list.push('boss');
   return list;
 }
 
@@ -91,62 +143,56 @@ export function pickBossVariant(w) {
 }
 
 function trackWeaponKill(z) {
-  // state.lastDamageWeapon é definido em projectiles.js/player.js antes de killZombie
-  const wname = state.lastDamageSource || 'Melee';
-  state.lifetimeStats.weaponKills[wname] = (state.lifetimeStats.weaponKills[wname] || 0) + 1;
+  const weaponName = state.lastDamageSource || 'Melee';
+  state.lifetimeStats.weaponKills[weaponName] = (state.lifetimeStats.weaponKills[weaponName] || 0) + 1;
 }
 
-export function killZombie(z, opts) {
-  opts = opts || {};
-  z.hp = 0;
-  // keep persistence in enemies module itself using setStoredValue (no circular import)
-  const saveScrapSoon = (typeof setStoredValue === 'function') ? () => setStoredValue(SCRAP_STORAGE_KEY, String(state.scrap)) : null;
-  const scrapEarned = z.type === 'boss' ? 20 : (z.type === 'tank' || z.type === 'juggernaut' ? 5 : 1);
-  state.scrap = (state.scrap || 0) + scrapEarned;
-  // sync the scrap value every kill by writing to storage at safe time (after game ticks)
-  if (saveScrapSoon) saveScrapSoon();
+export function killZombie(z, opts = {}) {
+  if (!claimZombieDeath(z)) return false;
+  const attributed = isPlayerCreditedDeath(opts);
+  if (attributed) {
+    const saveScrapSoon = (typeof setStoredValue === 'function') ? () => setStoredValue(SCRAP_STORAGE_KEY, String(state.scrap)) : null;
+    const scrapEarned = z.type === 'boss' ? 20 : (z.type === 'tank' || z.type === 'juggernaut' ? 5 : 1);
+    state.scrap = (state.scrap || 0) + scrapEarned;
+    if (saveScrapSoon) saveScrapSoon();
+  }
+
   if (z.type === 'exploder' || z.type === 'bomber') {
-    explodeAt(z.x, z.y, z.type === 'bomber' ? 120 : 95, z.type === 'bomber' ? 80 : 62);
+    explodeAt(z.x, z.y, z.type === 'bomber' ? 120 : 95, z.type === 'bomber' ? 80 : 62, undefined, attributed);
   }
-  state.killCount++;
-  state.lifetimeStats.totalKills++;
-  trackWeaponKill(z);
-  if (opts.melee) state.lifetimeStats.meleeKills++;
-  if (opts.headshot) state.lifetimeStats.headshotKills++;
-  if (opts.crit) state.lifetimeStats.critKills++;
-  if (z.type === 'boss') state.lifetimeStats.bossKills++;
-  if (opts.explosive) checkAchievements({ type:'explosiveKillEvent' });
 
-  // Atualiza combo
-  state.comboCount += 1;
-  state.comboTimer = 3.1;
-  state.comboMult = 1 + Math.min(2.0, state.comboCount * 0.14);
-  state.bestComboThisRun = Math.max(state.bestComboThisRun, state.comboMult);
-  const comboEl = document.getElementById('combo-indicator');
-  if (comboEl) {
-    comboEl.textContent = 'COMBO x' + state.comboMult.toFixed(1);
-    comboEl.classList.add('show');
+  if (attributed) {
+    state.killCount++;
+    state.lifetimeStats.totalKills++;
+    trackWeaponKill(z);
+    if (opts.melee) state.lifetimeStats.meleeKills++;
+    if (opts.headshot) state.lifetimeStats.headshotKills++;
+    if (opts.crit) state.lifetimeStats.critKills++;
+    if (z.type === 'boss') state.lifetimeStats.bossKills++;
+    if (opts.explosive) checkAchievements({ type:'explosiveKillEvent' });
+
+    state.comboCount += 1;
+    state.comboTimer = 3.1;
+    state.comboMult = 1 + Math.min(2.0, state.comboCount * 0.14);
+    state.bestComboThisRun = Math.max(state.bestComboThisRun, state.comboMult);
+    const comboEl = document.getElementById('combo-indicator');
+    if (comboEl) {
+      comboEl.textContent = 'COMBO x' + state.comboMult.toFixed(1);
+      comboEl.classList.add('show');
+    }
+    checkAchievements({ type:'combo', mult: state.comboMult });
+    gainXP(Math.round(11 * (ZTYPES[z.type]?.scoreMul || 1) * state.comboMult));
+    onKillLifesteal();
+    if (Math.random() < 0.35) dropPickup(z.x, z.y);
+    recordEliteKill(state.objective, z.id);
+    recordObjectiveKill(state.objective, !!opts.headshot);
+    checkAchievements({ type:'kill', zombieType: z.type, melee: !!opts.melee, headshot: !!opts.headshot, crit: !!opts.crit });
   }
-  checkAchievements({ type:'combo', mult: state.comboMult });
 
-  gainXP(Math.round(11 * (ZTYPES[z.type]?.scoreMul || 1) * state.comboMult));
-  onKillLifesteal();
   spawnBloodSplat(z.x, z.y, 14);
   playSound(z.type === 'boss' ? 65 : 180, 0.09, 'triangle', 0.05);
-  if (Math.random() < 0.35) dropPickup(z.x, z.y);
-  // marcar objetivo 'eliminate' se o zombie tem tipo elite
-  if (state.objective && state.objective.active && state.objective.type === 'eliminate' && !state.objective.killed) {
-    if (z.type === 'tank' || z.type === 'juggernaut' || z.type === 'boss') {
-      state.objective.killed = true;
-    }
-  }
-  // marcar objetivo 'recover' se houver cache coletada (handled world); contagem simples
-  if (state.objective && state.objective.active && state.objective.type === 'recover') {
-    // completed when a pickup is collected? We'll set flag on pickup collection elsewhere
-  }
   state.waveZombiesRemaining = Math.max(0, state.waveZombiesRemaining - 1);
-
-  checkAchievements({ type:'kill', zombieType: z.type, melee: !!opts.melee, headshot: !!opts.headshot, crit: !!opts.crit });
+  return true;
 }
 
 function fireProjectile(z, a, opts) {
@@ -239,14 +285,13 @@ export function updateZombies(dt) {
 
       if (d < (variant === 'brawler' ? 84 : 70) && z.attackCd <= 0) {
         z.attackCd = variant === 'brawler' ? 1.4 : 1.8;
-        explodeAt(z.x, z.y, variant === 'brawler' ? 135 : 120, variant === 'brawler' ? 46 : 40);
+        explodeAt(z.x, z.y, variant === 'brawler' ? 135 : 120, variant === 'brawler' ? 46 : 40, undefined, false);
       }
     }
 
     // ---- EXPLODER ----
     if (z.type === 'exploder' && d < 34 && state.player.alive) {
-      z.hp = 0;
-      explodeAt(z.x, z.y, 95, 62);
+      killZombie(z, { attributed: false });
       continue;
     }
 
@@ -256,8 +301,7 @@ export function updateZombies(dt) {
         z.attackCd -= dt;
         if (z.attackCd <= -1.1) {
           // após 1.1s de "beeping" perto do jogador, explode
-          z.hp = 0;
-          explodeAt(z.x, z.y, 120, 80);
+          killZombie(z, { attributed: false });
           continue;
         } else if (z.attackCd <= 0 && z.attackCd > -1.1) {
           // pulso visual de aviso a cada ~0.2s (aproveita hitFlash)

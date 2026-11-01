@@ -6,6 +6,7 @@ import { playSound } from './audio.js';
 import { spawnBloodSplat, spawnFloatText, addParticle } from './pickups.js';
 import { applyIncomingDamage } from './player.js';
 import { killZombie } from './enemies.js';
+import { selectLightningTargets } from './weapon-rules.js';
 
 export let bullets = [];
 export let grenades = [];
@@ -14,6 +15,31 @@ export let shockwaves = [];
 
 export function addBullet(b) { bullets.push(b); }
 export function addGrenade(g) { grenades.push(g); }
+
+export function fireLightningBeam(angle, range, damage, chainCount, weaponName) {
+  const origin = {
+    x: state.player.x + Math.cos(angle) * 16,
+    y: state.player.y + Math.sin(angle) * 16
+  };
+  const targets = selectLightningTargets(state.zombies, origin, angle, range, chainCount);
+  let source = origin;
+  for (let index = 0; index < targets.length; index++) {
+    const target = targets[index];
+    state.lightningBeams.push({ x1: source.x, y1: source.y, x2: target.x, y2: target.y, life: 0.16, maxLife: 0.16 });
+    target.hp -= damage * Math.pow(0.75, index);
+    target.hitFlash = 0.16;
+    state.lastDamageSource = weaponName;
+    if (target.hp <= 0) killZombie(target, { electric: true });
+    source = target;
+  }
+}
+
+export function updateLightningBeams(dt) {
+  for (let i = state.lightningBeams.length - 1; i >= 0; i--) {
+    state.lightningBeams[i].life -= dt;
+    if (state.lightningBeams[i].life <= 0) state.lightningBeams.splice(i, 1);
+  }
+}
 
 export function updateShockwaves(dt) {
   for (let i = shockwaves.length - 1; i >= 0; i--) {
@@ -24,7 +50,7 @@ export function updateShockwaves(dt) {
   }
 }
 
-export function explodeAt(x, y, radius, damage, sourceWeapon) {
+export function explodeAt(x, y, radius, damage, sourceWeapon, attributed = true) {
   // Garantir que state.zombies é um array
   if (!state.zombies) state.zombies = [];
   if (sourceWeapon) state.lastDamageSource = sourceWeapon;
@@ -57,7 +83,7 @@ export function explodeAt(x, y, radius, damage, sourceWeapon) {
     z.kx = (z.kx || 0) + Math.cos(a) * kb;
     z.ky = (z.ky || 0) + Math.sin(a) * kb;
     spawnFloatText(z.x, z.y - 16, '-' + Math.round(hitDmg), '#ffb347');
-    if (z.hp <= 0) killZombie(z, { explosive: true });
+    if (z.hp <= 0) killZombie(z, { explosive: true, attributed });
   }
   const pd = dist(x, y, state.player.x, state.player.y);
   if (pd < radius + 8 && state.player.alive) {

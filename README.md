@@ -83,6 +83,9 @@ node tests/pacman.mjs
 node tests/tetris.mjs
 node tests/zombie-survival-engine.mjs
 node tests/zombie-survival-objectives.mjs
+node tests/zombie-survival-content.mjs
+node tests/zombie-survival-settings.mjs
+node tests/zombie-survival-persistence.mjs
 ```
 
 Para verificar a sintaxe dos scripts JavaScript em PowerShell:

@@ -11,11 +11,11 @@
   <!-- TELA DE TUTORIAL -->
 <div class="screen hidden" id="tutorial-screen">
   <h1 class="title" style="font-size:34px;">TUTORIAL</h1>
-  <div id="tutorial-message" class="tagline" style="font-size:18px;">Use WASD para se mover</div>
+  <div id="tutorial-message" class="tagline" style="font-size:18px;" data-i18n="menu.startingTip">Use WASD para se mover</div>
   <div id="tutorial-progress" style="color:var(--olive-lt);font-size:12px;margin-top:8px;">Passo 1/8</div>
   <div class="menu-actions">
-    <button class="btn" id="tutorial-next-btn">CONTINUAR</button>
-    <button class="btn" id="skip-tutorial-btn">PULAR TUTORIAL</button>
+    <button class="btn" id="tutorial-next-btn" data-i18n="ui.confirm">CONTINUAR</button>
+    <button class="btn" id="skip-tutorial-btn" data-i18n="ui.skip">PULAR TUTORIAL</button>
   </div>
 </div>
   <canvas id="game" width="960" height="600"></canvas>
@@ -39,27 +39,27 @@
 
   <div id="hud">
     <div class="hud-panel" id="topleft">
-      <div class="label">Vitals</div>
+      <div class="label" data-i18n="hud.vitals">Vitals</div>
       <div class="row"><div id="healthbar-outer"><div id="healthbar-inner"></div></div></div>
       <div class="row"><div id="staminabar-outer"><div id="staminabar-inner"></div></div></div>
       <div class="row"><div id="armorbar-outer"><div id="armorbar-inner"></div></div></div>
-      <div class="label" style="margin-top:6px;">Minimap</div>
+      <div class="label" style="margin-top:6px;" data-i18n="hud.minimap">Minimap</div>
       <canvas id="minimap" width="140" height="96"></canvas>
-      <div class="label" style="margin-top:6px;">Utility</div>
-      <div class="row"><span>MEDKIT</span><span id="medkit-count">0</span></div>
-      <div class="row"><span>DASH</span><div id="dashbar-outer"><div id="dashbar-inner"></div></div></div>
-      <div class="label" style="margin-top:6px;">Status</div>
+      <div class="label" style="margin-top:6px;" data-i18n="hud.utility">Utility</div>
+      <div class="row"><span data-i18n="hud.medkit">MEDKIT</span><span id="medkit-count">0</span></div>
+      <div class="row"><span data-i18n="hud.dash">DASH</span><div id="dashbar-outer"><div id="dashbar-inner"></div></div></div>
+      <div class="label" style="margin-top:6px;" data-i18n="hud.status">Status</div>
       <div id="right-status">
-        <div id="right-status-title">PLAYER STATUS</div>
+        <div id="right-status-title" data-i18n="hud.playerStatus">PLAYER STATUS</div>
         <div id="right-status-body"></div>
       </div>
     </div>
     <div class="hud-panel" id="topright">
-      <div class="label">Night</div>
+      <div class="label" data-i18n="hud.night">Night</div>
       <div class="row" style="justify-content:flex-end;font-size:20px;color:var(--rust-lt);" id="wave-num">1</div>
-      <div class="label" style="margin-top:4px;">Kills</div>
+      <div class="label" style="margin-top:4px;" data-i18n="hud.kills">Kills</div>
       <div class="row" style="justify-content:flex-end;" id="kill-count">0</div>
-      <div class="label" style="margin-top:4px;">Level</div>
+      <div class="label" style="margin-top:4px;" data-i18n="hud.level">Level</div>
       <div class="row" style="justify-content:flex-end;" id="level-num">1</div>
       <div class="row" style="justify-content:flex-end;margin-top:4px;">
         <div id="xpbar-outer"><div id="xpbar-inner"></div></div>
@@ -70,7 +70,7 @@
       <div id="buffs-row"></div>
     </div>
 <div class="hud-panel" id="ammo-panel">
-  <div class="label">Ammo <span style="opacity:0.6;">(active weapon)</span></div>
+  <div class="label"><span data-i18n="hud.ammo">Ammo</span> <span style="opacity:0.6;" data-i18n="hud.activeWeapon">(active weapon)</span></div>
   <div id="ammo-active-row">
     <span class="ammo-name" id="ammo-active-name">Pistol</span>
     <span class="ammo-count" id="ammo-active-count">12/60</span>
@@ -83,17 +83,17 @@
     <div id="wave-banner">NIGHT <span id="banner-num">1</span><span class="sub" id="banner-sub">THEY ARE COMING</span></div>
     <div id="center-msg"></div>
     <div class="hud-panel" id="run-info">
-      <div class="label">Run</div>
-      <div class="row"><span>TIME</span><span id="run-time">0:00</span></div>
-      <div class="row"><span>REMAINING</span><span id="wave-remaining">0</span></div>
-      <div class="row"><span>WEATHER</span><span id="weather-label">CLEAR</span></div>
+      <div class="label" data-i18n="hud.run">Run</div>
+      <div class="row"><span data-i18n="hud.time">TIME</span><span id="run-time">0:00</span></div>
+      <div class="row"><span data-i18n="hud.remaining">REMAINING</span><span id="wave-remaining">0</span></div>
+      <div class="row"><span data-i18n="hud.weather">WEATHER</span><span id="weather-label">CLEAR</span></div>
     </div>
     <div id="bossbar-wrap" class="hidden">
       <div id="bossbar-name">BOSS</div>
       <div id="bossbar-outer"><div id="bossbar-inner"></div></div>
     </div>
     <div id="objective-wrap" class="hidden">
-      <div id="objective-label">OBJECTIVE</div>
+      <div id="objective-label" data-i18n="hud.objective">OBJECTIVE</div>
       <div id="objective-text"></div>
       <div id="objective-bar-outer"><div id="objective-bar-inner"></div></div>
     </div>
@@ -122,12 +122,12 @@
       <b>WASD</b> move &nbsp;•&nbsp; <b>MOUSE</b> aim &nbsp;•&nbsp; <b>CLICK</b> shoot &nbsp;•&nbsp; <b>RIGHT CLICK</b> called shot<br>
       <b>SHIFT</b> sprint &nbsp;•&nbsp; <b>R</b> reload &nbsp;•&nbsp; <b>1-9/0, SCROLL</b> switch weapon &nbsp;•&nbsp; <b>F</b> melee<br>
       <b>SPACE</b> dash &nbsp;•&nbsp; <b>Q</b> use medkit &nbsp;•&nbsp;
-      <b>ESC</b> pause &nbsp;•&nbsp; 13 weapons, 15 enemy types, 16 perks — survive boss nights every 5 waves.
+      <b>ESC</b> pause &nbsp;•&nbsp; 13 weapons, 15 enemy types, 19 perks — survive boss nights every 5 waves.
       Survive endless nights. Ammo & health crates drop from the fallen.
     </div>
     <div id="start-options">
       <div class="setting-row">
-        <span class="setting-label">DIFFICULTY</span>
+        <span class="setting-label" data-i18n="menu.difficulty">DIFFICULTY</span>
         <select id="difficulty-select">
           <option value="rookie">ROOKIE</option>
           <option value="survivor" selected>SURVIVOR</option>
@@ -135,7 +135,7 @@
         </select>
       </div>
       <div class="setting-row">
-        <span class="setting-label">CLASS</span>
+        <span class="setting-label" data-i18n="menu.class">CLASS</span>
         <select id="class-select">
           <option value="assault" selected>ASSAULT (+AMMO, +DAMAGE)</option>
           <option value="medic">MEDIC (+HEALING, +MEDKITS)</option>
@@ -144,7 +144,7 @@
         </select>
       </div>
       <div class="setting-row">
-        <span class="setting-label">MODE</span>
+        <span class="setting-label" data-i18n="menu.mode">MODE</span>
         <select id="mode-select">
           <option value="standard" selected>STANDARD</option>
           <option value="bossrush">BOSS RUSH</option>
@@ -153,12 +153,16 @@
         </select>
       </div>
       <div class="setting-row">
-        <span class="setting-label">MAP</span>
+        <span class="setting-label" data-i18n="menu.map">MAP</span>
         <select id="map-select">
           <option value="random">🎲 RANDOM</option>
           <option value="forest" selected>ROTTEN FOREST</option>
           <option value="city">DEAD CITY BLOCKS</option>
           <option value="graveyard">OLD GRAVEYARD</option>
+          <option value="wasteland">TOXIC WASTELAND</option>
+          <option value="desert">DEAD DESERT</option>
+          <option value="subway">SUBWAY TUNNELS</option>
+          <option value="ironworks">IRONWORKS</option>
         </select>
       </div>
     </div>
@@ -166,33 +170,33 @@
     <div class="tagline" id="best-run">BEST: 0 KILLS | NIGHT 0 | LV 1</div>
     <div class="tagline" id="lifetime-stats">TOTAL: 0 KILLS | 0 RUNS | 0 ACHIEVEMENTS</div>
     <div class="menu-actions">
-      <button class="btn" id="start-btn">▶ ENTER THE DARK</button>
-      <button class="btn" id="safehouse-btn">⚙️ SAFEHOUSE</button>
-      <button class="btn" id="customize-btn">CUSTOMIZE SURVIVOR</button>
-      <button class="btn" id="achievements-btn">🏆 ACHIEVEMENTS</button>
-  <button class="btn" id="bestiary-btn">📖 BESTIARY</button>
-  <button class="btn" id="armory-btn">🔫 ARMORY</button>
+      <button class="btn" id="start-btn" data-i18n="menu.enterDark">▶ ENTER THE DARK</button>
+      <button class="btn" id="safehouse-btn" data-i18n="menu.safehouse">⚙️ SAFEHOUSE</button>
+      <button class="btn" id="customize-btn" data-i18n="menu.customize">CUSTOMIZE SURVIVOR</button>
+      <button class="btn" id="achievements-btn" data-i18n="menu.achievements">🏆 ACHIEVEMENTS</button>
+  <button class="btn" id="bestiary-btn" data-i18n="menu.bestiary">📖 BESTIARY</button>
+  <button class="btn" id="armory-btn" data-i18n="menu.armory">🔫 ARMORY</button>
       <button class="btn" id="fullscreen-btn">FULLSCREEN: OFF</button>
     </div>
   </div>
 
   <!-- SAFEHOUSE SCREEN -->
   <div class="screen hidden" id="safehouse-screen">
-    <h1 class="title" style="font-size:34px;">SAFEHOUSE</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.safehouseTitle">SAFEHOUSE</h1>
     <div class="tagline">SCRAP AVAILABLE: <span id="safehouse-scrap-count" class="num">0</span></div>
     <div id="safehouse-upgrades-list"></div>
     <div class="menu-actions" style="margin-top:12px;">
-      <button class="btn" id="back-safehouse-btn">BACK</button>
+      <button class="btn" id="back-safehouse-btn" data-i18n="ui.back">BACK</button>
     </div>
   </div>
 
   <!-- ACHIEVEMENTS SCREEN -->
   <div class="screen hidden" id="achievements-screen">
-    <h1 class="title" style="font-size:34px;">ACHIEVEMENTS</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.achievementsTitle">ACHIEVEMENTS</h1>
     <div class="tagline" id="achievements-progress">0 / 0 UNLOCKED</div>
     <div id="achievements-list"></div>
     <div class="menu-actions">
-      <button class="btn" id="back-achievements-btn">BACK</button>
+      <button class="btn" id="back-achievements-btn" data-i18n="ui.back">BACK</button>
     </div>
   </div>
 
@@ -207,7 +211,7 @@
 
   <!-- CUSTOMIZE SCREEN -->
   <div class="screen hidden" id="customize-screen">
-    <h1 class="title" style="font-size:34px;">CUSTOMIZE</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.customizeTitle">CUSTOMIZE</h1>
     <div class="tagline">Build your survivor look</div>
     <div id="customize-panel">
       <div class="setting-row">
@@ -265,14 +269,14 @@
       <canvas id="custom-preview" width="120" height="120"></canvas>
     </div>
     <div class="menu-actions">
-      <button class="btn" id="apply-custom-btn">APPLY</button>
-      <button class="btn" id="back-custom-btn">BACK</button>
+      <button class="btn" id="apply-custom-btn" data-i18n="menu.apply">APPLY</button>
+      <button class="btn" id="back-custom-btn" data-i18n="ui.back">BACK</button>
     </div>
   </div>
 
   <!-- PERK SCREEN -->
   <div class="screen hidden" id="perk-screen">
-    <h1 class="title" style="font-size:34px;">LEVEL UP</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.levelUp">LEVEL UP</h1>
     <div class="tagline" id="perk-desc">Choose one perk</div>
     <div id="perk-choices">
       <button class="btn perk-btn" id="perk-a">PERK A</button>
@@ -283,24 +287,24 @@
 
   <!-- BESTIARY / ARMORY SCREENS (simple) -->
   <div class="screen hidden" id="bestiary-screen">
-    <h1 class="title" style="font-size:34px;">BESTIARY</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.bestiaryTitle">BESTIARY</h1>
     <div id="bestiary-list"></div>
-    <div class="menu-actions"><button class="btn" id="back-bestiary-btn">BACK</button></div>
+    <div class="menu-actions"><button class="btn" id="back-bestiary-btn" data-i18n="ui.back">BACK</button></div>
   </div>
   <div class="screen hidden" id="armory-screen">
-    <h1 class="title" style="font-size:34px;">ARMORY</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.armoryTitle">ARMORY</h1>
     <div id="armory-list"></div>
-    <div class="menu-actions"><button class="btn" id="back-armory-btn">BACK</button></div>
+    <div class="menu-actions"><button class="btn" id="back-armory-btn" data-i18n="ui.back">BACK</button></div>
   </div>
   <div class="screen hidden" id="death-screen">
-    <h1 class="title" style="font-size:38px;">YOU DIED</h1>
+    <h1 class="title" id="result-title" style="font-size:38px;">YOU DIED</h1>
     <div id="deathstats">
-      <div>NIGHTS SURVIVED: <span class="num" id="stat-wave">1</span></div>
-      <div>ZOMBIES SLAIN: <span class="num" id="stat-kills">0</span></div>
-      <div>LEVEL REACHED: <span class="num" id="stat-level">1</span></div>
-      <div>TIME SURVIVED: <span class="num" id="stat-time">0:00</span></div>
-      <div>BEST COMBO: <span class="num" id="stat-combo">x1.0</span></div>
-      <div>BEST RUN: <span class="num" id="stat-best">0 KILLS | NIGHT 0 | LV 1</span></div>
+      <div data-i18n="menu.death.nights">NIGHTS SURVIVED: <span class="num" id="stat-wave">1</span></div>
+      <div data-i18n="menu.death.kills">ZOMBIES SLAIN: <span class="num" id="stat-kills">0</span></div>
+      <div data-i18n="menu.death.level">LEVEL REACHED: <span class="num" id="stat-level">1</span></div>
+      <div data-i18n="menu.death.time">TIME SURVIVED: <span class="num" id="stat-time">0:00</span></div>
+      <div data-i18n="menu.death.combo">BEST COMBO: <span class="num" id="stat-combo">x1.0</span></div>
+      <div data-i18n="menu.death.best">BEST RUN: <span class="num" id="stat-best">0 KILLS | NIGHT 0 | LV 1</span></div>
     </div>
     <div id="death-new-achievements"></div>
     <div class="menu-actions" style="display:flex; gap:12px; margin-top:8px;">
@@ -311,7 +315,7 @@
 
   <!-- PAUSE / SETTINGS -->
   <div class="screen hidden" id="pause-screen">
-    <h1 class="title" style="font-size:34px;">PAUSED</h1>
+    <h1 class="title" style="font-size:34px;" data-i18n="menu.paused">PAUSED</h1>
     <div class="tagline">HOLD THE NIGHT</div>
     <div id="pause-settings">
       <div class="setting-row">
@@ -325,10 +329,10 @@
         <button class="btn" id="pause-fullscreen-btn">FULLSCREEN: OFF</button>
       </div>
       <div class="setting-row">
-        <button class="btn" id="menu-btn">🏠 MENU</button>
+        <button class="btn" id="menu-btn" data-i18n="ui.menu">🏠 MENU</button>
       </div>
     </div>
-    <button class="btn" id="resume-btn">▶ RESUME</button>
+    <button class="btn" id="resume-btn" data-i18n="menu.resume">▶ RESUME</button>
   </div>
 </div>
 

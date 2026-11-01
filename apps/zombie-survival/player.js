@@ -5,8 +5,8 @@ import { keys, mouseX, mouseY, rightMouseDown, touchFiring, mouseDown, joystickV
 import { state, isWeaponUnlocked } from './state.js';
 import { spawnBloodSplat, spawnFloatText, dropPickup, addParticle } from './pickups.js';
 import { flashHit, onPlayerDeath, openPerkChoice, refreshWeaponSlots } from './game.js';
-import { addBullet, addGrenade } from './projectiles.js';
-import { killZombie } from './enemies.js';
+import { addBullet, addGrenade, fireLightningBeam } from './projectiles.js';
+import { killZombie, summonMinion } from './enemies.js';
 import { triggerDamageIndicator } from './ui.js';
 import { checkAchievements } from './achievements.js';
 
@@ -27,6 +27,8 @@ export function resetPlayerState(classMod) {
   state.player.level = 1;
   state.player.xp = 0;
   state.player.nextXp = 40;
+  state.player.xpMul = 1;
+  state.player.staminaOnKill = 0;
   state.player.dmgMul = classMod.dmgMul * (1 + upg.damage * 0.06);
   state.player.alive = true;
   state.player.invuln = 0;
@@ -135,6 +137,23 @@ export function shoot() {
     return;
   }
 
+  if (w.type === 'summon') {
+    if (state.fireTimer > 0 || state.reloading) return;
+    const ammo = state.ammoState[state.player.weaponIdx];
+    if (ammo.mag <= 0) {
+      if (ammo.reserve > 0) reload();
+      return;
+    }
+    if (!summonMinion(w)) {
+      state.fireTimer = 0.25;
+      return;
+    }
+    ammo.mag--;
+    state.fireTimer = w.fireRate;
+    playSound(420, 0.14, 'sine', 0.06);
+    return;
+  }
+
   if(w.type === 'grenade') {
     if(state.fireTimer > 0) return;
     if (w.name === 'Rocket') throwRocket();
@@ -181,6 +200,13 @@ export function shoot() {
   const critMul = CRIT_MUL + (state.player.critMulBonus || 0);
   const finalDmg = w.dmg * currentDmgMul() * shotMul;
   const spreadMul0 = state.player.spreadMul || 1;
+
+  if (w.type === 'lightning') {
+    fireLightningBeam(state.player.angle, w.range, finalDmg, w.chainCount, w.name);
+    playSound(760, 0.12, 'sawtooth', 0.06);
+    state.screenShake = Math.min(state.screenShake + 1.5, 8);
+    return;
+  }
 
   for(let p=0; p<w.pellets; p++) {
     const spreadMulCalled = calledShot ? 0.5 : 1;
@@ -354,10 +380,13 @@ export function onKillLifesteal() {
   if (state.player.lifesteal > 0 && state.player.alive) {
     state.player.hp = clamp(state.player.hp + state.player.lifesteal, 0, state.player.maxHp);
   }
+  if (state.player.staminaOnKill > 0 && state.player.alive) {
+    state.player.stamina = clamp(state.player.stamina + state.player.staminaOnKill, 0, state.player.maxStamina);
+  }
 }
 
 export function gainXP(amount) {
-  state.player.xp += Math.round(amount * state.difficultyMod.xpMul);
+  state.player.xp += Math.round(amount * state.difficultyMod.xpMul * (state.player.xpMul || 1));
   if(state.player.xp >= state.player.nextXp && !state.perkPending) {
     openPerkChoice();
   }

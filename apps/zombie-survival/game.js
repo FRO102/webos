@@ -1,18 +1,21 @@
 import { MAPS, WEAPONS, PERKS, PERK_RARITY_WEIGHTS, RARITY_COLOR, WORLD_W, WORLD_H, STORAGE_KEY, DIFFICULTY_MODS, CLASS_MODS, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY, SAFEHOUSE_UPGRADES, OBJECTIVES, SAFEHOUSE_MILESTONES, GAME_MODES } from './constants.js';
 import { clamp, rand, randInt } from './utils.js';
 import { initAudioIfNeeded, playSound, resumeAudio } from './audio.js';
-import { keys, mouseDown, touchFiring, rightMouseDown, joystickVec, mouseX, mouseY } from './input.js';
+import { keys, mouseDown, touchFiring, rightMouseDown, joystickVec, mouseX, mouseY, clearInputState } from './input.js';
 import { state, isWeaponUnlocked, resetState } from './state.js';
 import { resetPlayerState, shoot, reload, switchWeapon, cycleWeapon, tryUseMedkit, tryDash, meleeAttack, gainXP, applyIncomingDamage } from './player.js';
-import { waveComposition, spawnZombie, killZombie, updateZombies, resetEnemies, pickBossVariant } from './enemies.js';
-import { updateBullets, updateGrenades, updateEnemyProjectiles, updateShockwaves } from './projectiles.js';
+import { waveComposition, spawnZombie, killZombie, updateZombies, updateMinions, resetEnemies, pickBossVariant } from './enemies.js';
+import { updateBullets, updateGrenades, updateEnemyProjectiles, updateShockwaves, updateLightningBeams } from './projectiles.js';
 import { updatePickups, updateParticles, spawnFloatText, spawnBloodSplat, addParticle } from './pickups.js';
-import { updateWeather, updateAmbient, obstacles,  buildGround, buildDebris, buildObstacles, currentMapMechanics, pickRandomMap  } from './world.js';
+import { updateWeather, updateAmbient, initAmbient, obstacles, buildGround, buildDebris, buildObstacles, currentMapMechanics, pickRandomMap, resetMapMechanics } from './world.js';
 import { render, setCamera, setShake, initRenderer } from './render.js';
 import { dom, syncHUD, updateDamageIndicators, decayCombo, triggerDamageIndicator, damageIndicators, initUI, refreshWeaponSlotsUI, syncObjectiveUI, syncRightStatusPanel, syncBottomStatusPanel } from './ui.js';
 import { playerLook, applyCharacterLook, drawCharacterPreview, initCharacter, loadCharacterLook, saveCharacterLook } from './character.js';
 import { loadAchievements, loadLifetimeStats, saveLifetimeStats, checkAchievements, renderAchievementsScreen, resetExplosiveKillCounter, unlockedCount, ACHIEVEMENTS } from './achievements.js';
 import { getStoredValue, setStoredValue } from './persistence.js';
+import { chooseObjective, getObjectiveOutcome, advanceObjectiveTimer, settleObjective, markEliteTargetLost } from './objective-rules.js';
+import { getModeStartWave, isModeComplete, getModeResultCopy } from './mode-rules.js';
+import { mergeSettings } from './settings-rules.js';
 
 let canvas, ctx, W, H;
 let hpBeforeWave = 100; // usado para o achievement "Untouched"
@@ -50,8 +53,21 @@ export function loadSettings() {
     const raw = getStoredValue('nightnine-settings-v1');
     if (!raw) return;
     const parsed = JSON.parse(raw);
-    if (parsed && parsed.difficulty) state.selectedDifficulty = parsed.difficulty;
-    if (parsed && parsed.playerClass) state.selectedClass = parsed.playerClass;
+    if (parsed && parsed.difficulty && DIFFICULTY_MODS[parsed.difficulty]) {
+      state.selectedDifficulty = parsed.difficulty;
+      const difficultySelect = document.getElementById('difficulty-select');
+      if (difficultySelect) difficultySelect.value = parsed.difficulty;
+    }
+    if (parsed && parsed.playerClass && CLASS_MODS[parsed.playerClass]) {
+      state.selectedClass = parsed.playerClass;
+      const classSelect = document.getElementById('class-select');
+      if (classSelect) classSelect.value = parsed.playerClass;
+    }
+    if (parsed && GAME_MODES.some(mode => mode.id === parsed.gameMode)) {
+      state.selectedMode = parsed.gameMode;
+      const modeSelect = document.getElementById('mode-select');
+      if (modeSelect) modeSelect.value = parsed.gameMode;
+    }
   } catch (err) { }
 }
 
@@ -93,7 +109,7 @@ export function renderSafehouseScreen() {
     const row = document.createElement('div');
     row.className = 'ach-row';
     row.innerHTML = `
-      <div class="ach-icon">ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â</div>
+      <div class="ach-icon">⚙️</div>
       <div class="ach-text">
         <div class="ach-name">${u.name} (Lvl ${lvl}/${u.maxLevel})</div>
         <div class="ach-desc">${u.desc}</div>
@@ -128,7 +144,7 @@ export function applyGameSettings() {
   state.difficultyMod = DIFFICULTY_MODS[diff];
   state.classMod = CLASS_MODS[cls] || CLASS_MODS.assault;
   try {
-    setStoredValue('nightnine-settings-v1', JSON.stringify({ difficulty: diff, playerClass: cls }));
+    setStoredValue('nightnine-settings-v1', mergeSettings(getStoredValue('nightnine-settings-v1'), { difficulty: diff, playerClass: cls }));
   } catch (err) { }
 }
 
@@ -136,7 +152,7 @@ export function applyGameSettings() {
 export function startWave(w) {
   state.wave = w;
   const mode = GAME_MODES.find(m => m.id === state.runMode) || GAME_MODES[0];
-  state.waveSpawnQueue = waveComposition(w);
+  state.waveSpawnQueue = waveComposition(w, mode.bossEvery || 5);
   if (mode.spawnMul) state.waveSpawnQueue = state.waveSpawnQueue.concat(Array.from({length: Math.round(state.waveSpawnQueue.length * (mode.spawnMul - 1))}, () => (state.waveSpawnQueue[Math.floor(Math.random()*state.waveSpawnQueue.length)] || 'walker')));
   state.waveZombiesRemaining = state.waveSpawnQueue.length;
   state.waveActive = true;
@@ -164,6 +180,23 @@ export function refreshWeaponSlots() {
   refreshWeaponSlotsUI();
 }
 
+function resolveObjective(objective, completed) {
+  const reward = settleObjective(objective, completed);
+  if (reward === null) return;
+  if (completed) {
+    if (reward.scrap) state.scrap += reward.scrap;
+    if (reward.medkit) state.medkits = (state.medkits || 0) + reward.medkit;
+    if (reward.xp) gainXP(reward.xp);
+    saveScrapAndUpgrades();
+  }
+  spawnFloatText(
+    state.player.x,
+    state.player.y - 30,
+    completed ? 'OBJECTIVE COMPLETE' : 'OBJECTIVE FAILED',
+    completed ? '#8fae3c' : '#c45b4b'
+  );
+}
+
 // ---- Flash e morte ----
 export function flashHit() {
   const flashEl = document.getElementById('flash');
@@ -172,13 +205,23 @@ export function flashHit() {
 }
 
 export function onPlayerDeath() {
-  state.player.alive = false;
+  finishRun(false);
+}
+
+function finishRun(won) {
+  if (state.perkPending) {
+    state.pendingRunResult = won ? 'victory' : 'defeat';
+    return;
+  }
+  if (!state.gameRunning) return;
+  state.pendingRunResult = null;
+  if (!won) state.player.alive = false;
   state.gameRunning = false;
-  playSound(55, 0.3, 'sawtooth', 0.1);
+  if (!won) playSound(55, 0.3, 'sawtooth', 0.1);
   saveScrapAndUpgrades();
   // NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºmeros de ondas efetivamente concluÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­das para esta run (nunca contar
   // a onda ainda ativa quando o jogador morre).
-  const completedWaves = state.waveActive ? Math.max(0, state.wave - 1) : state.wave;
+  const completedWaves = won ? state.wave : (state.waveActive ? Math.max(0, state.wave - 1) : state.wave);
 
   const isBest = state.killCount > state.bestRun.kills || (state.killCount === state.bestRun.kills && completedWaves > state.bestRun.wave);
   if (isBest) {
@@ -191,6 +234,11 @@ export function onPlayerDeath() {
   saveLifetimeStats();
   syncBestRunUI();
   setTimeout(() => {
+    const mode = GAME_MODES.find(candidate => candidate.id === state.runMode) || GAME_MODES[0];
+    const language = window.os?.i18n?.language === 'en' ? 'en' : 'pt';
+    const resultCopy = getModeResultCopy(mode, won, language);
+    document.getElementById('result-title').textContent = resultCopy.title;
+    document.getElementById('retry-btn').textContent = resultCopy.primary;
     document.getElementById('stat-wave').textContent = completedWaves;
     document.getElementById('stat-kills').textContent = state.killCount;
     document.getElementById('stat-level').textContent = state.player.level;
@@ -338,7 +386,9 @@ export function updateWaveLogic(dt) {
 
   if (state.waveActive && state.waveSpawnQueue.length === 0 && state.zombies.length === 0) {
     state.waveActive = false;
-    state.waveTransitionTimer = 2.5;
+    const mode = GAME_MODES.find(candidate => candidate.id === state.runMode) || GAME_MODES[0];
+    const modeComplete = isModeComplete(mode, state.wave);
+    state.waveTransitionTimer = modeComplete ? 0 : 2.5;
     state.medkits += 1;
     state.scrap += 15;
     saveScrapAndUpgrades();
@@ -356,91 +406,57 @@ export function updateWaveLogic(dt) {
       }
     });
     if (state.objective && state.objective.active) {
-      const obj = state.objective;
-      const done = (obj.type === 'protect' && obj.timer <= 0) ||
-                   (obj.type === 'recover' && obj.collected) ||
-                   (obj.type === 'eliminate' && obj.killed);
-      if (done) {
-        const r = obj.reward || {};
-        if (r.scrap) state.scrap += r.scrap;
-        if (r.medkit) state.medkits = (state.medkits || 0) + r.medkit;
-        if (r.xp) { state.player.xp += r.xp; }
-        saveScrapAndUpgrades();
-        spawnFloatText(state.player.x, state.player.y - 30, 'OBJECTIVE COMPLETE', '#8fae3c');
-      }
-      obj.active = false;
+      resolveObjective(state.objective, getObjectiveOutcome(state.objective) === 'completed');
     }
     checkAchievements({ type:'wave', wave: state.wave });
     if (state.player.hp >= hpBeforeWave) {
       checkAchievements({ type:'waveNoDamage' });
     }
     saveLifetimeStats();
+    if (modeComplete) finishRun(true);
   }
   // ---- AtualizaÃ§Ã£o de objetivos ativos ----
   if (state.objective && state.objective.active) {
     const obj = state.objective;
-    if (obj.type === 'protect' && obj.target) {
-      const dd = Math.hypot(state.player.x - obj.target.x, state.player.y - obj.target.y);
-      if (dd <= (obj.target.r || 130)) obj.timer -= dt;
-      else obj.timer -= dt * 0.35;
-      if (obj.timer <= 0) {
-        obj.timer = 0;
-        const r = obj.reward || {};
-        if (r.scrap) state.scrap += r.scrap;
-        if (r.medkit) state.medkits = (state.medkits || 0) + r.medkit;
-        if (r.xp) state.player.xp += r.xp;
-        saveScrapAndUpgrades();
-        spawnFloatText(state.player.x, state.player.y - 30, 'OBJECTIVE COMPLETE', '#8fae3c');
-        obj.active = false;
-      }
-    } else {
-      obj.timer -= dt;
-      if (obj.timer <= 0) {
-        obj.active = false;
-      }
+    markEliteTargetLost(obj, state.zombies.map(zombie => zombie.id));
+    advanceObjectiveTimer(obj, dt, state.player);
+    const outcome = getObjectiveOutcome(obj);
+    if (outcome) {
+      resolveObjective(obj, outcome === 'completed');
     }
   }
 
   // ---- Objetivos opcionais ----
-  if (state.waveActive && !state.objective.active && !state.tutorialMode) {
-    // weight-based selection
-    const candidates = OBJECTIVES.filter(o => (o.minWave || 1) <= state.wave);
-    const totalWeight = candidates.reduce((s, o) => s + (o.weight || 1), 0);
-    let roll = Math.random() * totalWeight;
-    let o = candidates[0];
-    for (const c of candidates) {
-      roll -= (c.weight || 1);
-      if (roll <= 0) { o = c; break; }
-    }
-    state.objective = {
-      type: o.id,
-      label: o.label,
-      icon: o.icon,
-      timer: o.time,
-      initialTime: o.time,
-      progress: 0,
-      active: true,
-      target: o.id === 'protect' ? { x: state.player.x, y: state.player.y, r: 135 } : null,
-      collected: false,
-      killed: false,
-      reward: o.reward
-    };
-    const centerMsg = document.getElementById('center-msg');
-    if (centerMsg) {
-      centerMsg.textContent = o.icon + ' ' + o.label.toUpperCase();
-      centerMsg.classList.add('show');
-      setTimeout(() => centerMsg.classList.remove('show'), 2000);
-    }
-  }
-  // per-type timer already handled above; keep safe guard
-  if (state.objective && state.objective.active && state.objective.type !== 'protect') {
-    state.objective.timer -= dt;
-    if (state.objective.timer <= 0) {
-      state.objective.active = false;
+  if (state.waveActive && state.objectiveAttemptedWave !== state.wave && !state.tutorialMode) {
+    state.objectiveAttemptedWave = state.wave;
+    const mode = GAME_MODES.find(candidate => candidate.id === state.runMode) || GAME_MODES[0];
+    const o = chooseObjective(OBJECTIVES, state.wave, mode.objectiveChance ?? 1);
+    if (o) {
+      state.objective = {
+        type: o.id,
+        label: o.label,
+        icon: o.icon,
+        timer: o.time,
+        initialTime: o.time,
+        progress: 0,
+        active: true,
+        status: 'active',
+        targetCount: o.targetCount || 0,
+        target: o.id === 'protect' ? { x: state.player.x, y: state.player.y, r: 135 } : null,
+        collected: false,
+        killed: false,
+        reward: o.reward
+      };
+      const centerMsg = document.getElementById('center-msg');
+      if (centerMsg) {
+        centerMsg.textContent = o.icon + ' ' + o.label.toUpperCase();
+        centerMsg.classList.add('show');
+        setTimeout(() => centerMsg.classList.remove('show'), 2000);
+      }
     }
   }
 
-  if (!state.waveActive && state.waveTransitionTimer > 0) {
+  if (!state.tutorialMode && !state.waveActive && state.waveTransitionTimer > 0) {
     state.waveTransitionTimer -= dt;
     if (state.waveTransitionTimer <= 0) {
       document.getElementById('center-msg').classList.remove('show');
@@ -455,28 +471,39 @@ export function resetGame() {
 }
 
 export function initGameState(tutorial) {
+  clearInputState();
       // Se o mapa selecionado for 'random', sortear um mapa real
   // Preserve user preference; if 'random', choose runtime map without persisting preference
   if (state.selectedMap === 'random') {
     state.runtimeMap = pickRandomMap();
-    // Reconstruir o mundo com o mapa sorteado
-    buildGround();
-    buildDebris();
-    buildObstacles();
-    initAmbient();
   } else {
     state.runtimeMap = state.selectedMap;
   }
+  resetMapMechanics();
+  buildGround();
+  buildDebris();
+  buildObstacles();
+  initAmbient();
 
 
+  state.wave = 0;
+  state.waveActive = false;
+  state.waveTransitionTimer = 0;
+  state.waveSpawnQueue.length = 0;
+  state.spawnTimer = 0;
   state.tutorialMode = !!tutorial;
   state.runMode = state.selectedMode || 'standard';
+  state.objectiveAttemptedWave = 0;
+  state.pendingRunResult = null;
+  state.objective = { zone: null, type: null, progress: 0, timer: 0, active: false, target: null };
   applyGameSettings();
   resetPlayerState(state.classMod);
   resetEnemies();
   resetExplosiveKillCounter();
   state.zombies.length = 0;
+  state.minions.length = 0;
   state.bullets.length = 0;
+  state.lightningBeams.length = 0;
   state.grenades.length = 0;
   state.enemyProjectiles.length = 0;
   state.particles.length = 0;
@@ -519,7 +546,8 @@ export function initGameState(tutorial) {
     state.tutorialWeaponsUnlocked = true;
   } else {
     state.tutorialWeaponsUnlocked = false;
-    startWave(1);
+    const mode = GAME_MODES.find(candidate => candidate.id === state.runMode) || GAME_MODES[0];
+    startWave(getModeStartWave(mode));
   }
 
   switchWeapon(0);
@@ -573,7 +601,10 @@ export function openPerkChoice() {
   state.perkPending = true;
   state.gameRunning = false;
   state.perkChoices = randomPerkChoices(3);
-  document.getElementById('perk-desc').textContent = 'Choose one perk for level ' + (state.player.level + 1);
+  const isEn = window.os?.i18n?.language === 'en';
+  document.getElementById('perk-desc').textContent = isEn
+    ? 'Choose one perk for level ' + (state.player.level + 1)
+    : 'Escolhe um perk para o nível ' + (state.player.level + 1);
   const buttons = [
     document.getElementById('perk-a'),
     document.getElementById('perk-b'),
@@ -593,7 +624,7 @@ export function choosePerk(idx) {
   if (!state.perkPending) return;
   const choice = state.perkChoices[idx];
   if (!choice) return;
-  const result = choice.apply(state.player, state.medkits);
+  const result = choice.apply(state.player, state.medkits, state.ammoState);
   if (result !== undefined) state.medkits = result;
   state.player.level += 1;
   state.player.xp -= state.player.nextXp;
@@ -607,6 +638,13 @@ export function choosePerk(idx) {
   document.getElementById('perk-screen').classList.add('hidden');
   if (state.player.xp >= state.player.nextXp) {
     openPerkChoice();
+    return;
+  }
+  if (state.pendingRunResult) {
+    const won = state.pendingRunResult === 'victory';
+    state.pendingRunResult = null;
+    state.gameRunning = true;
+    finishRun(won);
     return;
   }
   state.gameRunning = true;
@@ -636,10 +674,12 @@ export function loop(ts) {
     state.dayNightClock += dt;
     updatePlayer(dt);
     updateZombies(dt);
+    updateMinions(dt);
     updateBullets(dt);
     updateGrenades(dt);
     updateEnemyProjectiles(dt);
     updateShockwaves(dt);
+    updateLightningBeams(dt);
     updateAmbient(dt);
     updateParticles(dt);
     updatePickups(dt);

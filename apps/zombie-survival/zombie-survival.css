@@ -428,6 +428,7 @@ canvas {
     outline: 2px solid var(--sick-green);
     outline-offset: 2px;
   }
+  #mobile-controls{ display:none; }
   #aim-zone{
     display:none;
     position:absolute; right:18px; bottom:18px; width:110px; height:110px;
@@ -469,27 +470,6 @@ canvas {
       color:var(--bone); font-size:11px; letter-spacing:1px;
       display:flex; align-items:center; justify-content:center;
       pointer-events:auto; touch-action: manipulation;
-    }
-  }
-    #mobile-controls{
-      display:block; position:absolute; inset:0; pointer-events:none;
-    }
-    #joystick-zone{
-      position:absolute; left:18px; bottom:18px; width:110px; height:110px;
-      border-radius:50%; background:rgba(140,160,90,0.12); border:2px solid rgba(140,160,90,0.4);
-      pointer-events:auto;
-    }
-    #joystick-nub{
-      position:absolute; width:46px; height:46px; border-radius:50%;
-      background:rgba(140,160,90,0.5); border:2px solid var(--sick-green);
-      left:32px; top:32px; pointer-events:none;
-    }
-    #fire-btn{
-      position:absolute; right:26px; bottom:30px; width:78px; height:78px; border-radius:50%;
-      background:rgba(165,21,42,0.35); border:3px solid var(--rust-lt);
-      color:var(--bone); font-size:11px; letter-spacing:1px;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:auto;
     }
   }
 

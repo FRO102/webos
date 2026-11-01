@@ -17,8 +17,9 @@ const IDX = {
   smg: WEAPONS.findIndex(w => w.name === 'SMG'),
   grenade: WEAPONS.findIndex(w => w.name === 'Grenade'),
   shotgun: WEAPONS.findIndex(w => w.name === 'Shotgun'),
-  rifle: WEAPONS.findIndex(w => w.name === 'Rifle'),
-  lmg: WEAPONS.findIndex(w => w.name === 'LMG'),
+  carbine: WEAPONS.findIndex(w => w.name === 'Burst Carbine'),
+  lightning: WEAPONS.findIndex(w => w.name === 'Lança-Raios'),
+  summoner: WEAPONS.findIndex(w => w.name === 'Invocadora de Minions'),
   flamethrower: WEAPONS.findIndex(w => w.name === 'Flamethrower'),
   minigun: WEAPONS.findIndex(w => w.name === 'Minigun')
 };
@@ -78,10 +79,11 @@ export function updatePickups(dt) {
         if (IDX.shotgun >= 0) state.ammoState[IDX.shotgun].reserve += 6;
         spawnFloatText(p.x, p.y - 10, '+GRENADE', '#ffd76b');
       } else if (p.type === 'heavyAmmo') {
-        if (IDX.rifle >= 0) state.ammoState[IDX.rifle].reserve += 15;
-        if (IDX.lmg >= 0) state.ammoState[IDX.lmg].reserve += 40;
+        if (IDX.carbine >= 0) state.ammoState[IDX.carbine].reserve += 24;
         if (IDX.minigun >= 0) state.ammoState[IDX.minigun].reserve += 60;
         if (IDX.flamethrower >= 0) state.ammoState[IDX.flamethrower].reserve += 50;
+        if (IDX.lightning >= 0) state.ammoState[IDX.lightning].reserve += 12;
+        if (IDX.summoner >= 0) state.ammoState[IDX.summoner].reserve += 2;
         spawnFloatText(p.x, p.y - 10, '+HEAVY AMMO', '#ffb347');
       } else if (p.type === 'armor') {
         state.player.armor = clamp(state.player.armor + 28, 0, state.player.maxArmor);

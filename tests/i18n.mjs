@@ -35,6 +35,9 @@ for (const [path, expected] of [
 	assert.ok((await readFile(new URL(`../${path}`, import.meta.url), 'utf8')).includes(expected), `${path} must use the active locale`);
 }
 
+const zombieSurvivalHtml = await readFile(new URL('../apps/zombie-survival/index.html', import.meta.url), 'utf8');
+assert.match(zombieSurvivalHtml, /data-i18n=/, 'zombie survival UI should declare translatable text keys');
+
 const appDirectories = await readdir(new URL('../apps/', import.meta.url), { withFileTypes: true });
 for (const directory of appDirectories.filter(entry => entry.isDirectory())) {
 	let html;

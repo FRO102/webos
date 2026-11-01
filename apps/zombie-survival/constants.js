@@ -19,18 +19,18 @@ export const WEAPONS = [
   { name:'Machete',     icon:'🔪', dmg:38,  fireRate:0.45, spread:0,    mag:1,  reserve:0,   reloadTime:0,   speedMul:1.05, bulletSpeed:0,   pellets:1, unlockedWave:1,  type:'melee', range:64, arc:1.5 },
   { name:'SMG',         icon:'⚡', dmg:11,  fireRate:0.09, spread:0.08, mag:28, reserve:120, reloadTime:1.4, speedMul:0.98, bulletSpeed:640, pellets:1, unlockedWave:3  },
   { name:'Shotgun',     icon:'💥', dmg:20,  fireRate:0.7,  spread:0.25, mag:6,  reserve:36,  reloadTime:1.8, speedMul:0.92, bulletSpeed:480, pellets:5, unlockedWave:4  },
-  { name:'Rifle',       icon:'🎯', dmg:34,  fireRate:0.42, spread:0.03, mag:10, reserve:50,  reloadTime:1.8, speedMul:0.95, bulletSpeed:760, pellets:1, unlockedWave:5  },
   { name:'Magnum',      icon:'🔫', dmg:58,  fireRate:0.5,  spread:0.02, mag:6,  reserve:36,  reloadTime:1.6, speedMul:0.97, bulletSpeed:820, pellets:1, unlockedWave:6, pierce:2 },
   { name:'Sniper',      icon:'🔭', dmg:75,  fireRate:1.2,  spread:0.01, mag:5,  reserve:25,  reloadTime:2.5, speedMul:0.88, bulletSpeed:900, pellets:1, unlockedWave:7, pierce:3 },
   { name:'Flamethrower',icon:'🔥', dmg:6,   fireRate:0.045,spread:0.16, mag:100,reserve:300, reloadTime:2.4, speedMul:0.90, bulletSpeed:380, pellets:1, unlockedWave:9, type:'flame', range:170 },
-  { name:'LMG',         icon:'🧱', dmg:15,  fireRate:0.07, spread:0.12, mag:60, reserve:240, reloadTime:3.0, speedMul:0.85, bulletSpeed:580, pellets:1, unlockedWave:10 },
-  { name:'Crossbow',    icon:'🏹', dmg:45,  fireRate:0.6,  spread:0.02, mag:1,  reserve:20,  reloadTime:1.2, speedMul:1.0,  bulletSpeed:300, pellets:1, unlockedWave:13, pierce:99 },
   { name:'Minigun',     icon:'🌀', dmg:13,  fireRate:0.045,spread:0.15, mag:120,reserve:360, reloadTime:3.6, speedMul:0.78, bulletSpeed:600, pellets:1, unlockedWave:15, spinUp:true },
-  { name:'Rocket',      icon:'🚀', dmg:180, fireRate:1.5,  spread:0,    mag:1,  reserve:10,  reloadTime:2.8, speedMul:0.80, bulletSpeed:200, pellets:1, unlockedWave:16, type:'grenade' }
+  { name:'Rocket',      icon:'🚀', dmg:180, fireRate:1.5,  spread:0,    mag:1,  reserve:10,  reloadTime:2.8, speedMul:0.80, bulletSpeed:200, pellets:1, unlockedWave:16, type:'grenade' },
+  { name:'Burst Carbine', icon:'🔰', dmg:18, fireRate:0.16, spread:0.055, mag:24, reserve:144, reloadTime:1.7, speedMul:0.98, bulletSpeed:680, pellets:1, unlockedWave:8 },
+  { name:'Lança-Raios', icon:'⚡', dmg:34, fireRate:0.55, spread:0, mag:8, reserve:48, reloadTime:1.9, speedMul:0.92, bulletSpeed:0, pellets:1, unlockedWave:11, type:'lightning', range:440, chainCount:3 },
+  { name:'Invocadora de Minions', icon:'🧿', dmg:22, fireRate:1.8, spread:0, mag:3, reserve:12, reloadTime:2.4, speedMul:0.86, bulletSpeed:0, pellets:1, unlockedWave:14, type:'summon', minionDamage:22, minionDuration:12, minionLimit:3 }
 ];
 
 // ---------------------------------------------------------------------------
-// PERKS — 16 perks divididos por raridade. Raridade influencia a frequência
+// PERKS — 19 perks divididos por raridade. Raridade influencia a frequência
 // com que aparecem nas 3 escolhas de level-up (ver randomPerkChoices em game.js).
 // ---------------------------------------------------------------------------
 export const PERKS = [
@@ -87,6 +87,13 @@ export const PERKS = [
     desc: '-25% weapon spread',
     apply: (player) => { player.spreadMul = (player.spreadMul || 1) * 0.75; }
   },
+  {
+    id: 'field_rations', name: 'Field Rations', rarity:'common', icon:'📦',
+    desc: '+20% reserve ammo for every weapon',
+    apply: (player, medkits, ammoState) => {
+      for (const ammo of ammoState || []) ammo.reserve = Math.round(ammo.reserve * 1.2);
+    }
+  },
   // RAROS
   {
     id: 'adrenaline', name: 'Adrenaline', rarity:'rare', icon:'⚡',
@@ -117,6 +124,16 @@ export const PERKS = [
     id: 'field_medic', name: 'Field Medic', rarity:'rare', icon:'⛑️',
     desc: 'Medkits and health pickups heal 60% more',
     apply: (player) => { player.medkitBonus = (player.medkitBonus || 0) + 0.6; }
+  },
+  {
+    id: 'blood_runner', name: 'Blood Runner', rarity:'rare', icon:'🩸',
+    desc: 'Kills restore 6 stamina',
+    apply: (player) => { player.staminaOnKill = (player.staminaOnKill || 0) + 6; }
+  },
+  {
+    id: 'battle_hardened', name: 'Battle Hardened', rarity:'rare', icon:'📈',
+    desc: '+15% XP gained',
+    apply: (player) => { player.xpMul = (player.xpMul || 1) * 1.15; }
   },
   // ÉPICOS
   {
@@ -228,11 +245,11 @@ export const MASK_PRESETS = {
 export const MAPS = {
   forest: {
     label: 'ROTTEN FOREST',
-    desc: 'The original woods — overgrown and familiar.',
+    desc: 'Overgrown woodland, fallen timber and dense old trees.',
     ground: { g1:'#232819', g2:'#1c2015', g3:'#2a3020' },
     bounds: '#050603',
     debrisMix: { rock:0.5, bush:0.5 },
-    obstacleMix: { crate:0.5, barrel:0.5 },
+    obstacleMix: { tree:0.55, crate:0.2, barrel:0.25 },
     tint: 'rgba(18,28,46,1)',
     fogBase: 0,
     vignetteColor: 'rgba(18,28,46,0.45)',
@@ -245,11 +262,11 @@ export const MAPS = {
   },
   city: {
     label: 'DEAD CITY BLOCKS',
-    desc: 'Concrete, rubble and the husks of cars.',
+    desc: 'Concrete blocks lined with burned-out cars and roadside wreckage.',
     ground: { g1:'#22242a', g2:'#1a1c21', g3:'#2b2e35' },
     bounds: '#08090c',
     debrisMix: { rock:0.85, bush:0.15 },
-    obstacleMix: { crate:0.35, barrel:0.65 },
+    obstacleMix: { car:0.55, crate:0.2, barrel:0.25 },
     tint: 'rgba(28,26,38,1)',
     fogBase: 0.03,
     vignetteColor: 'rgba(28,26,38,0.5)',
@@ -257,16 +274,16 @@ export const MAPS = {
       visibility: 0.85,
       fogMul: 1.15,
       hazards: [],
-      interactives: [{ type: 'door', x: 1520, y: 760, requires: 'key' }]
+      interactives: [{ type: 'cache', x: 1520, y: 760, reward: { scrap: 40, medkit: 1 } }]
     }
   },
   graveyard: {
     label: 'OLD GRAVEYARD',
-    desc: 'Fog clings to the headstones at night.',
+    desc: 'Fog, crowded headstones, crypts and twisted dead trees.',
     ground: { g1:'#1e2420', g2:'#171c19', g3:'#242c27' },
     bounds: '#040605',
     debrisMix: { rock:0.7, bush:0.3 },
-    obstacleMix: { crate:0.2, barrel:0.3, grave:0.5 },
+    obstacleMix: { grave:0.5, crypt:0.25, deadTree:0.25 },
     tint: 'rgba(20,34,30,1)',
     fogBase: 0.06,
     vignetteColor: 'rgba(20,34,30,0.6)',
@@ -279,11 +296,11 @@ export const MAPS = {
   },
   wasteland: {
     label: 'TOXIC WASTELAND',
-    desc: 'Sludge pools and radiation hubs.',
+    desc: 'Sludge pools, toxic drums and abandoned armored wrecks.',
     ground: { g1:'#1a1c15', g2:'#12160f', g3:'#22281a' },
     bounds: '#050603',
     debrisMix: { rock:0.55, bush:0.45 },
-    obstacleMix: { crate:0.3, barrel:0.4, grave:0.3 },
+    obstacleMix: { toxicDrum:0.5, ruinedTank:0.3, crate:0.2 },
     tint: 'rgba(10,20,12,1)',
     fogBase: 0.05,
     vignetteColor: 'rgba(10,20,12,0.55)',
@@ -291,16 +308,68 @@ export const MAPS = {
   },
   desert: {
     label: 'DEAD DESERT',
-    desc: 'Sun-scorched wastes with mirages and ambushes.',
+    desc: 'Sun-scorched wastes dotted with cacti and eroded stone pillars.',
     ground: { g1:'#3a3220', g2:'#2a2418', g3:'#4a4230' },
     bounds: '#0a0804',
     debrisMix: { rock:0.6, bush:0.4 },
-    obstacleMix: { crate:0.45, barrel:0.35, grave:0.2 },
+    obstacleMix: { cactus:0.55, rockPillar:0.25, barrel:0.2 },
     tint: 'rgba(46,28,18,1)',
     fogBase: 0.02,
     vignetteColor: 'rgba(46,28,18,0.5)',
     mechanics: { visibility: 1.15, fogMul:0.9, hazards:[{ type:'slow', x:1200, y:500, r:200, amount:0.2}], interactives:[{ type:'cache', x:600, y:900, reward:{ scrap:35 } }] }
+  },
+  subway: {
+    label: 'SUBWAY TUNNELS',
+    desc: 'Derelict subway cars and signal cabinets line flooded tunnels.',
+    ground: { g1:'#24282a', g2:'#191d20', g3:'#303638' },
+    bounds: '#050708',
+    debrisMix: { rock:0.9, bush:0.1 },
+    obstacleMix: { subwayCar:0.55, signalBox:0.25, barrel:0.2 },
+    tint: 'rgba(18,34,38,1)',
+    fogBase: 0.08,
+    vignetteColor: 'rgba(12,28,32,0.65)',
+    mechanics: {
+      visibility: 0.65,
+      fogMul: 1.45,
+      hazards: [{ type:'slow', x:900, y:600, r:240, amount:0.3 }],
+      interactives: [{ type:'cache', x:1540, y:940, reward:{ scrap:45, medkit:1 } }]
+    }
+  },
+  ironworks: {
+    label: 'IRONWORKS',
+    desc: 'Cold furnaces and stacked pipes choke the abandoned foundry.',
+    ground: { g1:'#302720', g2:'#211c18', g3:'#40352b' },
+    bounds: '#080604',
+    debrisMix: { rock:0.75, bush:0.25 },
+    obstacleMix: { furnace:0.45, pipeStack:0.35, crate:0.2 },
+    tint: 'rgba(44,26,18,1)',
+    fogBase: 0.025,
+    vignetteColor: 'rgba(44,22,12,0.55)',
+    mechanics: {
+      visibility: 0.95,
+      fogMul: 1.0,
+      hazards: [{ type:'damage', x:1100, y:360, r:175, amount:6 }],
+      interactives: [{ type:'altar', x:320, y:860, effect:'heal' }]
+    }
   }
+};
+
+export const OBSTACLE_DIMENSIONS = {
+  crate: { w:28, h:28 },
+  barrel: { w:28, h:28 },
+  grave: { w:22, h:30 },
+  tree: { w:42, h:42 },
+  car: { w:66, h:38 },
+  crypt: { w:52, h:44 },
+  deadTree: { w:32, h:42 },
+  toxicDrum: { w:28, h:34 },
+  ruinedTank: { w:58, h:40 },
+  cactus: { w:24, h:42 },
+  rockPillar: { w:34, h:40 },
+  subwayCar: { w:82, h:42 },
+  signalBox: { w:32, h:42 },
+  furnace: { w:48, h:52 },
+  pipeStack: { w:58, h:32 }
 };
 
 export const STORAGE_KEY = 'nightnine-best-run-v1';
@@ -335,7 +404,9 @@ export const CALLED_SHOT_MUL = 1.35;
 export const OBJECTIVES = [
   { id: 'protect', label: 'Protect the zone', icon: '🛡️', time: 15, weight: 1, minWave: 1, reward: { scrap: 30, medkit: 1, xp: 40 }, desc: 'Stay inside the highlighted zone.' },
   { id: 'recover', label: 'Recover supplies', icon: '📦', time: 16, weight: 1, minWave: 1, reward: { scrap: 20, xp: 25 }, desc: 'Collect any supply.' },
-  { id: 'eliminate', label: 'Eliminate the elite', icon: '🎯', time: 25, weight: 0.8, minWave: 4, reward: { scrap: 50, xp: 70 }, desc: 'Kill the marked enemy.' }
+  { id: 'eliminate', label: 'Eliminate the elite', icon: '🎯', time: 25, weight: 0.8, minWave: 4, reward: { scrap: 50, xp: 70 }, desc: 'Kill an elite enemy before time runs out.' },
+  { id: 'clear', label: 'Thin the horde', icon: '☠️', time: 30, targetCount: 8, weight: 0.9, minWave: 3, reward: { scrap: 30, xp: 35 }, desc: 'Kill 8 zombies before time runs out.' },
+  { id: 'precision', label: 'Precision kills', icon: '🎯', time: 35, targetCount: 3, weight: 0.7, minWave: 6, reward: { scrap: 45, xp: 55 }, desc: 'Land 3 headshots before time runs out.' }
 ];
 
 export const BESTIARY = [
@@ -358,10 +429,10 @@ export const BESTIARY = [
 
 
 export const GAME_MODES = [
-  { id:'standard', name:'STANDARD', desc:'Classic survivor mode.', minWave:1, endless:false, bossEvery:5, objectiveChance:0.9 },
+  { id:'standard', name:'STANDARD', desc:'Classic endless survivor mode.', minWave:1, endless:true, bossEvery:5, objectiveChance:0.9 },
   { id:'bossrush', name:'BOSS RUSH', desc:'Face bosses every wave.', minWave:1, endless:true, bossEvery:1, objectiveChance:0.6 },
   { id:'horde', name:'HORDE ENDLESS', desc:'Infinite waves, increasing density.', minWave:1, endless:true, bossEvery:8, spawnMul:1.4, objectiveChance:0.7 },
-  { id:'challenge', name:'NIGHTMARE CHALLENGE', desc:'Harder, shorter survival.', minWave:8, endless:false, bossEvery:4, spawnMul:1.25, objectiveChance:0.85 }
+  { id:'challenge', name:'NIGHTMARE CHALLENGE', desc:'Survive five nights, from Night 8 to Night 12.', minWave:8, maxWave:12, endless:false, bossEvery:5, spawnMul:1.12, objectiveChance:0.72 }
 ];
 
 export const GAME_MODE_STORAGE_KEY = 'nightnine-game-mode-v1';

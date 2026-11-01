@@ -10,6 +10,81 @@ import { renderAchievementsScreen } from './achievements.js';
 import { MAPS, MAP_STORAGE_KEY, SCRAP_STORAGE_KEY, UPGRADES_STORAGE_KEY } from './constants.js';
 import { initAppStorage, getStoredValue, setStoredValue } from './persistence.js';
 import { startTutorial, advanceTutorial, finishTutorial } from './tutorial.js';
+import { mergeSettings } from './settings-rules.js';
+import { restoreMapSelection } from './map-rules.js';
+
+const ZOMBIE_I18N = {
+  'hud.vitals': { pt: 'Vitals', en: 'Vitals' },
+  'hud.minimap': { pt: 'Minimap', en: 'Minimap' },
+  'hud.utility': { pt: 'Utilidade', en: 'Utility' },
+  'hud.medkit': { pt: 'MEDKIT', en: 'MEDKIT' },
+  'hud.dash': { pt: 'DASH', en: 'DASH' },
+  'hud.status': { pt: 'Estado', en: 'Status' },
+  'hud.playerStatus': { pt: 'ESTADO DO JOGADOR', en: 'PLAYER STATUS' },
+  'hud.night': { pt: 'Noite', en: 'Night' },
+  'hud.kills': { pt: 'Mortes', en: 'Kills' },
+  'hud.level': { pt: 'Nível', en: 'Level' },
+  'hud.ammo': { pt: 'Munição', en: 'Ammo' },
+  'hud.activeWeapon': { pt: '(arma ativa)', en: '(active weapon)' },
+  'hud.run': { pt: 'Run', en: 'Run' },
+  'hud.time': { pt: 'TEMPO', en: 'TIME' },
+  'hud.remaining': { pt: 'RESTANTES', en: 'REMAINING' },
+  'hud.weather': { pt: 'CLIMA', en: 'WEATHER' },
+  'hud.objective': { pt: 'OBJETIVO', en: 'OBJECTIVE' },
+  'menu.difficulty': { pt: 'DIFICULDADE', en: 'DIFFICULTY' },
+  'menu.class': { pt: 'CLASSE', en: 'CLASS' },
+  'menu.mode': { pt: 'MODO', en: 'MODE' },
+  'menu.map': { pt: 'MAPA', en: 'MAP' },
+  'menu.safehouse': { pt: 'SAFEHOUSE', en: 'SAFEHOUSE' },
+  'menu.customize': { pt: 'PERSONALIZAR', en: 'CUSTOMIZE SURVIVOR' },
+  'menu.achievements': { pt: 'CONQUISTAS', en: 'ACHIEVEMENTS' },
+  'menu.bestiary': { pt: 'BESTIÁRIO', en: 'BESTIARY' },
+  'menu.armory': { pt: 'ARMAMENTO', en: 'ARMORY' },
+  'menu.back': { pt: 'VOLTAR', en: 'BACK' },
+  'menu.enterDark': { pt: '▶ ENTRAR NA NOITE', en: '▶ ENTER THE DARK' },
+  'menu.randomMap': { pt: '🎲 Um mapa aleatório será escolhido ao iniciar a run.', en: '🎲 A random map will be chosen when you start a run.' },
+  'menu.startingTip': { pt: 'Use WASD para se mover', en: 'Use WASD to move' },
+  'menu.death.nights': { pt: 'NOITES SOBREVIVIDAS: ', en: 'NIGHTS SURVIVED: ' },
+  'menu.death.kills': { pt: 'ZOMBIES ELIMINADOS: ', en: 'ZOMBIES SLAIN: ' },
+  'menu.death.level': { pt: 'NÍVEL ALCANÇADO: ', en: 'LEVEL REACHED: ' },
+  'menu.death.time': { pt: 'TEMPO SOBREVIVIDO: ', en: 'TIME SURVIVED: ' },
+  'menu.death.combo': { pt: 'MELHOR COMBO: ', en: 'BEST COMBO: ' },
+  'menu.death.best': { pt: 'MELHOR RUN: ', en: 'BEST RUN: ' },
+  'menu.safehouseTitle': { pt: 'SAFEHOUSE', en: 'SAFEHOUSE' },
+  'menu.achievementsTitle': { pt: 'CONQUISTAS', en: 'ACHIEVEMENTS' },
+  'menu.bestiaryTitle': { pt: 'BESTIÁRIO', en: 'BESTIARY' },
+  'menu.armoryTitle': { pt: 'ARMAMENTO', en: 'ARMORY' },
+  'menu.customizeTitle': { pt: 'PERSONALIZAR', en: 'CUSTOMIZE' },
+  'menu.levelUp': { pt: 'NÍVEL UP', en: 'LEVEL UP' },
+  'menu.paused': { pt: 'PAUSADO', en: 'PAUSED' },
+  'menu.resume': { pt: '▶ CONTINUAR', en: '▶ RESUME' },
+  'menu.apply': { pt: 'APLICAR', en: 'APPLY' },
+  'menu.fullscreen': { pt: 'ECRÃ COMPLETO: OFF', en: 'FULLSCREEN: OFF' },
+  'menu.mute': { pt: 'MUTE: OFF', en: 'MUTE: OFF' },
+  'ui.confirm': { pt: 'CONTINUAR', en: 'CONTINUE' },
+  'ui.skip': { pt: 'PULAR TUTORIAL', en: 'SKIP TUTORIAL' },
+  'ui.back': { pt: 'VOLTAR', en: 'BACK' },
+  'ui.menu': { pt: '🏠 MENU', en: '🏠 MENU' },
+  'ui.retry': { pt: '↺ RISE AGAIN', en: '↺ RISE AGAIN' },
+  'ui.achievementUnlocked': { pt: 'CONQUISTA DESBLOQUEADA', en: 'ACHIEVEMENT UNLOCKED' },
+};
+
+function currentZombieLanguage() {
+  return window.os?.i18n?.language === 'en' ? 'en' : 'pt';
+}
+
+function applyZombieLanguage() {
+  const lang = currentZombieLanguage();
+  const nodes = document.querySelectorAll('[data-i18n]');
+  for (const node of nodes) {
+    const key = node.dataset.i18n;
+    const text = ZOMBIE_I18N[key]?.[lang];
+    if (text) node.textContent = text;
+  }
+  if (document.documentElement) {
+    document.documentElement.lang = lang === 'en' ? 'en' : 'pt-PT';
+  }
+}
 
 async function startGame() {
 await initAppStorage([
@@ -35,7 +110,7 @@ const W = canvas.width, H = canvas.height;
 (function loadInitialMap() {
   try {
     const raw = getStoredValue(MAP_STORAGE_KEY);
-    if (raw && MAPS[raw]) state.selectedMap = raw;
+    state.selectedMap = restoreMapSelection(raw, MAPS);
     const rawSettings = getStoredValue('nightnine-settings-v1');
     if (rawSettings) {
       const parsed = JSON.parse(rawSettings);
@@ -52,6 +127,10 @@ initAmbient();
 
 // Inicializar módulos
 initUI();
+applyZombieLanguage();
+if (window.os?.i18n?.onChange) {
+  window.os.i18n.onChange(() => applyZombieLanguage());
+}
 initGame(canvas, ctx, W, H);
 
 initCharacter();
@@ -94,13 +173,17 @@ document.getElementById('perk-b').addEventListener('click', () => choosePerk(1))
 document.getElementById('perk-c').addEventListener('click', () => choosePerk(2));
 
 document.getElementById('resume-btn').addEventListener('click', () => togglePause(false));
+function syncAudioControls(volume, muted) {
+  document.getElementById('volume-slider').value = Math.round(volume * 100);
+  document.getElementById('mute-btn').textContent = 'MUTE: ' + (muted ? 'ON' : 'OFF');
+}
 document.getElementById('mute-btn').addEventListener('click', () => {
-  const muted = document.getElementById('mute-btn').textContent.includes('ON');
-  const next = !muted;
+  const next = !getAudioState().muted;
   setAudioMuted(next);
+  const audioState = getAudioState();
+  syncAudioControls(audioState.volume, audioState.muted);
   try {
-    const as = getAudioState();
-    setStoredValue('nightnine-settings-v1', JSON.stringify({ difficulty: state.selectedDifficulty, playerClass: state.selectedClass, audioVolume: as.volume, audioMuted: next }));
+    setStoredValue('nightnine-settings-v1', mergeSettings(getStoredValue('nightnine-settings-v1'), { difficulty: state.selectedDifficulty, playerClass: state.selectedClass, audioVolume: audioState.volume, audioMuted: audioState.muted }));
   } catch (e) {}
 });
 document.getElementById('volume-slider').addEventListener('input', (e) => {
@@ -108,7 +191,8 @@ document.getElementById('volume-slider').addEventListener('input', (e) => {
   setAudioVolume(v);
   try {
     const as = getAudioState();
-    setStoredValue('nightnine-settings-v1', JSON.stringify({ difficulty: state.selectedDifficulty, playerClass: state.selectedClass, audioVolume: v, audioMuted: as.muted }));
+    syncAudioControls(as.volume, as.muted);
+    setStoredValue('nightnine-settings-v1', mergeSettings(getStoredValue('nightnine-settings-v1'), { difficulty: state.selectedDifficulty, playerClass: state.selectedClass, audioVolume: v, audioMuted: as.muted }));
   } catch (e) {}
 });
 
@@ -196,9 +280,7 @@ document.getElementById('mode-select')?.addEventListener('change', (e) => {
   state.selectedMode = e.target.value;
   try {
     const raw = getStoredValue('nightnine-settings-v1');
-    const parsed = raw ? JSON.parse(raw) : {};
-    parsed.gameMode = e.target.value;
-    setStoredValue('nightnine-settings-v1', JSON.stringify(parsed));
+    setStoredValue('nightnine-settings-v1', mergeSettings(raw, { gameMode: e.target.value }));
   } catch (err) {}
 });
 document.getElementById('class-select').addEventListener('change', applyGameSettings);
@@ -209,7 +291,7 @@ function syncMapDescription() {
   const label = document.getElementById('map-desc-label');
   if (!mapSelect || !label) return;
   if (mapSelect.value === 'random') {
-    label.textContent = '🎲 A random map will be chosen when you start a run.';
+    label.textContent = ZOMBIE_I18N['menu.randomMap'][currentZombieLanguage()];
   } else {
     const map = MAPS[mapSelect.value] || MAPS.forest;
     label.textContent = map.desc;
@@ -225,6 +307,7 @@ if (mapSelectEl) {
   mapSelectEl.addEventListener('change', () => {
     const value = mapSelectEl.value;
     state.selectedMap = value;
+    state.runtimeMap = value === 'random' ? null : value;
     setStoredValue(MAP_STORAGE_KEY, value);
     syncMapDescription();
     // Se for 'random', não reconstruímos já; o sorteio acontece no início da run
@@ -247,10 +330,11 @@ try {
   const muted = (parsed && typeof parsed.audioMuted === 'boolean') ? parsed.audioMuted : false;
   setAudioVolume(vol);
   setAudioMuted(muted);
+  syncAudioControls(vol, muted);
 } catch (err) {
   setAudioVolume(0.7);
-window.runtimeGameMode = 'standard';
   setAudioMuted(false);
+  syncAudioControls(0.7, false);
 }
 syncFullscreenButtons();
 

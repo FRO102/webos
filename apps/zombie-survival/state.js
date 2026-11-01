@@ -19,8 +19,11 @@ export const state = {
   waveActive: false,
   waveTransitionTimer: 0,
   waveSpawnQueue: [],
+  objectiveAttemptedWave: 0,
+  pendingRunResult: null,
   spawnTimer: 0,
   zombies: [],
+  minions: [],
   bossVariant: null,
 
   // Câmara
@@ -41,6 +44,8 @@ export const state = {
     armor: 0, maxArmor: 100,
     stamina: 100, maxStamina: 100,
     level: 1, xp: 0, nextXp: 40,
+    xpMul: 1,
+    staminaOnKill: 0,
     dmgMul: 1,
     pickupRadius: 12,
     angle: 0,
@@ -123,6 +128,7 @@ export const state = {
 
   // Coleções de entidades
   bullets: [],
+  lightningBeams: [],
   grenades: [],
   enemyProjectiles: [],
   particles: [],
@@ -152,6 +158,8 @@ export function resetState() {
   state.waveActive = false;
   state.waveTransitionTimer = 0;
   state.waveSpawnQueue = [];
+  state.objectiveAttemptedWave = 0;
+  state.pendingRunResult = null;
   state.spawnTimer = 0;
   state.gameStartTime = 0;
   state.tutorialMode = false;
@@ -173,6 +181,8 @@ export function resetState() {
   p.armor = 0; p.maxArmor = 100;
   p.stamina = 100; p.maxStamina = 100;
   p.level = 1; p.xp = 0; p.nextXp = 40;
+  p.xpMul = 1;
+  p.staminaOnKill = 0;
   p.dmgMul = 1;
   p.pickupRadius = 12;
   p.alive = true;
@@ -207,7 +217,9 @@ export function resetState() {
   state.dayNightClock = 0;
   state.shieldTimer = 0;
   state.zombies.length = 0;
+  state.minions.length = 0;
   state.bullets.length = 0;
+  state.lightningBeams.length = 0;
   state.grenades.length = 0;
   state.enemyProjectiles.length = 0;
   state.particles.length = 0;
@@ -216,4 +228,5 @@ export function resetState() {
   state.bloodPools.length = 0;
   state.ambientParticles.length = 0;
   state.damageIndicators = { top: 0, right: 0, bottom: 0, left: 0 };
+  state.objective = { zone: null, type: null, progress: 0, timer: 0, active: false, target: null };
 }

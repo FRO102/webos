@@ -70,9 +70,19 @@ function buildWeaponSlots() {
     slot.className = 'slot' + (i === 0 ? ' active' : '');
     slot.id = 'slot' + (i + 1);
     slot.title = w.name;
+    slot.tabIndex = 0;
+    slot.setAttribute('role', 'button');
+    slot.setAttribute('aria-label', `Selecione a arma ${w.name}`);
+    slot.setAttribute('aria-pressed', String(i === state.player.weaponIdx));
     slot.innerHTML = `<span class="key">${keyLabelForIndex(i)}</span>${w.icon}`;
     slot.addEventListener('click', () => {
       import('./player.js').then(m => m.switchWeapon(i));
+    });
+    slot.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        import('./player.js').then(m => m.switchWeapon(i));
+      }
     });
     container.appendChild(slot);
     slotEls.push(slot);
@@ -114,6 +124,7 @@ export function refreshWeaponSlotsUI() {
     const unlocked = isWeaponUnlocked(i);
     slot.classList.toggle('locked', !unlocked);
     slot.classList.toggle('active', state.player.weaponIdx === i);
+    slot.setAttribute('aria-pressed', String(state.player.weaponIdx === i));
     // Badge "NEW" temporário quando a arma acabou de desbloquear nesta wave
     const justUnlocked = unlocked && !previousUnlocked[i] && state.wave === WEAPONS[i].unlockedWave && state.wave > 0;
     let badge = slot.querySelector('.slot-new-badge');
@@ -215,6 +226,7 @@ export function syncObjectiveUI() {
   if (o.type === 'protect') text += ' (' + Math.ceil(o.timer || 0) + 's)';
   if (o.type === 'eliminate') text += o.killed ? ' (DONE)' : '';
   if (o.type === 'recover') text += o.collected ? ' (COLLECTED)' : '';
+  if (o.targetCount) text += ' (' + Math.min(o.progress || 0, o.targetCount) + '/' + o.targetCount + ')';
   if (dom.objectiveText) dom.objectiveText.textContent = text;
   if (dom.objectiveBar) {
     const total = (o.initialTime && o.initialTime > 0) ? o.initialTime : ((o.timer && o.timer > 0) ? o.timer : 1);
