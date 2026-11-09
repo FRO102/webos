@@ -28,7 +28,6 @@
   "diario",
   "ferramentas-dev",
   "meteo",
-  "kanban",
   "news-feed",
   "radio",
   "pdfwebos",
@@ -38,8 +37,7 @@
   "pacman",
   "tetris",
   "air-hockey",
-  "retro-ping-pong",
   "stick-hero",
   "escape-road",
-  "geometry-dash"
+  "crossy-road"
 ]

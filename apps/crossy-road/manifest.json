@@ -1,12 +1,17 @@
 {
-  "id": "geometry-dash",
-  "name": "Geometry Dash",
+  "id": "crossy-road",
+  "name": "Crossy Road",
   "version": "1.0.0",
   "category": { "id": "games", "name": "Jogos", "nameEn": "Games" },
   "icon": "icon.svg",
   "entry": "index.html",
   "allowSameOrigin": true,
-  "window": { "width": 960, "height": 700, "minWidth": 640, "minHeight": 420 },
+  "window": {
+    "width": 480,
+    "height": 720,
+    "minWidth": 360,
+    "minHeight": 600
+  },
   "singleInstance": true,
   "permissions": []
 }
