@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Retro Ping-Pong</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header id="hud">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">RPP</span>
+        <div class="brand-text">
+          <span class="brand-title">Retro Ping-Pong</span>
+          <span class="brand-tagline">
+            Primeiro a atingir o alvo vence. Servico automatico no centro.
+          </span>
+        </div>
+      </div>
+
+      <button id="btn-hide-hud" type="button" class="gear" aria-label="Esconder cabeçalho">Ocultar HUD</button>
+
+      <div class="scoreboard" aria-label="Placar">
+        <div class="player" role="group" aria-label="Jogador">
+          <span class="label">Jogador</span>
+          <span class="value" id="score-player" aria-live="polite">0</span>
+          <span class="sub">P1 · Setas ou W/S</span>
+        </div>
+
+        <div class="meta">
+          <div class="versus">vs</div>
+          <div class="row" id="mode-row">VS CPU · Normal · 10</div>
+          <div class="row small" id="record-row">Recorde: 0 · 0 jogos</div>
+        </div>
+
+        <div class="player cpu" role="group" aria-label="CPU">
+          <span class="label">CPU</span>
+          <span class="value" id="score-cpu" aria-live="polite">0</span>
+          <span class="sub">IA adaptativa</span>
+        </div>
+      </div>
+
+      <div class="controls" role="group" aria-label="Controlos do jogo">
+        <button id="btn-start" type="button" class="primary" aria-label="Iniciar partida">
+          <span class="icon" aria-hidden="true">!</span>
+          <span>Iniciar</span>
+        </button>
+        <button id="btn-pause" type="button" aria-label="Pausar jogo">
+          <span class="icon" aria-hidden="true">II</span>
+          <span>Pausar</span>
+        </button>
+        <button id="btn-restart" type="button" aria-label="Reiniciar partida">
+          <span class="icon" aria-hidden="true">R</span>
+          <span>Reiniciar</span>
+        </button>
+        <button id="btn-settings" type="button" aria-expanded="false"
+          aria-label="Dificuldade e opções da partida">
+          <span class="icon" aria-hidden="true">O</span>
+          <span>Dificuldade</span>
+        </button>
+        <button id="btn-fullscreen" type="button" aria-label="Modo ecra inteiro">
+          <span class="icon" aria-hidden="true">F</span>
+          <span>Ecra inteiro</span>
+        </button>
+      </div>
+
+      <div id="options" class="options hidden" role="group" aria-label="Opcoes de partida">
+        <div class="field">
+          <label for="difficulty">Dificuldade</label>
+          <div class="segmented" role="radiogroup" aria-label="Dificuldade">
+            <button class="seg" data-diff="easy" type="button">Facil</button>
+            <button class="seg active" data-diff="normal" type="button">Normal</button>
+            <button class="seg" data-diff="hard" type="button">Dificil</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="target">Pontos</label>
+          <div class="stepper">
+            <button id="target-dec" type="button" aria-label="Menos pontos">-</button>
+            <span id="target-value" aria-live="polite">10</span>
+            <button id="target-inc" type="button" aria-label="Mais pontos">+</button>
+          </div>
+        </div>
+
+        <div class="field toggle">
+          <label for="audio-enabled">Som</label>
+          <button id="audio-toggle" type="button" role="switch" aria-checked="true" class="switch">
+            <span class="knob"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <span id="status-text" class="status" role="status" aria-live="polite"></span>
+        <span id="new-record" class="record-badge hidden" role="status">
+          Novo recorde!
+        </span>
+      </div>
+    </header>
+
+    <main class="game-shell">
+      <div class="arena">
+        <div class="canvas-stage">
+          <canvas id="gameCanvas" width="800" height="600" tabindex="0"
+                  aria-label="Jogo Retro Ping-Pong" role="application"></canvas>
+          <div id="overlay" class="overlay hidden" role="dialog"
+               aria-live="assertive" aria-labelledby="overlay-title">
+            <div class="overlay-card">
+              <h2 id="overlay-title">Retro Ping-Pong</h2>
+              <p id="overlay-message" class="overlay-text">
+                Mover jogador com rato, toque ou teclado.
+              </p>
+              <button id="overlay-cta" type="button" class="primary cta">Iniciar</button>
+              <ul class="help-list" aria-label="Controlos">
+                <li><kbd>Rato / Toque</kbd><span>Mover paddle</span></li>
+                <li><kbd>Setas ou W / S</kbd><span>Mover paddle</span></li>
+                <li><kbd>Space</kbd><span>Pausar</span></li>
+                <li><kbd>Enter / R</kbd><span>Reiniciar</span></li>
+                <li><kbd>M</kbd><span>Som</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="../../system/sdk/os-sdk.js"></script>
+  <script src="../../system/sdk/os-dialogs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

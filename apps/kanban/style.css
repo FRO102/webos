@@ -1,0 +1,117 @@
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--os-bg, #1e1e1e);
+  color: var(--os-fg, #ffffff);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  padding: 12px 16px;
+  background: var(--os-surface, #2d2d2d);
+  border-bottom: 1px solid var(--os-border, #3d3d3d);
+  gap: 10px;
+  align-items: center;
+}
+
+.header input, .header select {
+  padding: 6px 10px;
+  background: var(--os-field, #1a1a1a);
+  border: 1px solid var(--os-border, #3d3d3d);
+  color: var(--os-fg, #fff);
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.header input {
+  flex: 1;
+}
+
+.header button {
+  padding: 6px 14px;
+  background: var(--os-btn, #3a3a3a);
+  border: 1px solid var(--os-border, #4d4d4d);
+  color: var(--os-fg, #fff);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.header button:hover {
+  background: var(--os-accent, #007acc);
+}
+
+.board {
+  display: flex;
+  flex: 1;
+  padding: 16px;
+  gap: 16px;
+  overflow-x: auto;
+}
+
+.column {
+  flex: 1;
+  min-width: 240px;
+  background: var(--os-surface, #2d2d2d);
+  border: 1px solid var(--os-border, #3d3d3d);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.column-header {
+  padding: 12px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--os-border, #3d3d3d);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-list {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-card {
+  background: var(--os-field, #1a1a1a);
+  border: 1px solid var(--os-border, #3d3d3d);
+  border-radius: 6px;
+  padding: 10px;
+  cursor: grab;
+  position: relative;
+}
+
+.task-card:active {
+  cursor: grabbing;
+}
+
+.task-title {
+  font-weight: bold;
+  font-size: 0.95rem;
+  padding-right: 20px;
+  word-break: break-word;
+}
+
+.task-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--os-muted, #aaa);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.task-delete:hover {
+  color: #ff5555;
+}
