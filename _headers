@@ -1,0 +1,5 @@
+﻿/apps/registry.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
+**/manifest.json
+  Cache-Control: no-cache, no-store, must-revalidate
