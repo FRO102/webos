@@ -1,4 +1,4 @@
-﻿/apps/registry.json
+/apps/registry.json
   Cache-Control: no-cache, no-store, must-revalidate
 
 /apps/*/manifest.json
