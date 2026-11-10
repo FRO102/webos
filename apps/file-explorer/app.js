@@ -197,7 +197,16 @@ $('empty-trash').onclick = async () => {
   if (await os.dialog.confirm({ title: 'Esvaziar lixeira', message: 'Apagar permanentemente todos os itens?', okLabel: 'Esvaziar', danger: true })) act(() => os.fs.emptyTrash());
 };
 $('upload').onclick = () => fileInput.click();
+let lastImportTime = 0;
+let lastImportKey = '';
 async function importFiles(files) {
+  const now = Date.now();
+  const fileArray = [...(files ?? [])];
+  const sig = fileArray.map(f => `${f.name}:${f.size}`).join('|');
+  if (now - lastImportTime < 600 && sig === lastImportKey) return;
+  lastImportTime = now;
+  lastImportKey = sig;
+
   const dt = (typeof event !== 'undefined' && event?.dataTransfer) || (window.event?.dataTransfer) || null;
   const entries = [];
   if (dt && dt.items) {

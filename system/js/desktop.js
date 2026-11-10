@@ -193,14 +193,15 @@ export function initDesktop(apps) {
     }
     return candidate;
   };
+  let currentDropDataTransfer = null;
   const importFilesToDirectory = async (files, targetDir = desktopPath) => {
-    const droppedFiles = Array.isArray(files) ? files : [...(files?.files ?? files?.items ? [] : [files])];
-    const items = files?.items;
+    const droppedFiles = Array.isArray(files) ? files : [...(files ?? [])];
+    const dt = currentDropDataTransfer || (typeof event !== 'undefined' && event?.dataTransfer) || (window.event?.dataTransfer) || null;
     let imported = 0;
     const failures = [];
     const entries = [];
-    if (items) {
-      for (const item of items) {
+    if (dt && dt.items) {
+      for (const item of dt.items) {
         if (item.kind === 'file') {
           const entry = item.webkitGetAsEntry?.();
           if (entry) entries.push(entry);
@@ -307,6 +308,7 @@ export function initDesktop(apps) {
       if (!hasFiles(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
+      currentDropDataTransfer = event.dataTransfer;
       dragDepth += 1;
       node.classList.add('is-folder-drop-target');
       hideDropOverlay();
@@ -315,6 +317,7 @@ export function initDesktop(apps) {
       if (!hasFiles(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
+      currentDropDataTransfer = event.dataTransfer;
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
       node.classList.add('is-folder-drop-target');
     });
@@ -332,6 +335,7 @@ export function initDesktop(apps) {
       if (!hasFiles(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
+      currentDropDataTransfer = event.dataTransfer;
       clearTarget();
       hideDropOverlay();
       const files = event.dataTransfer?.files;
@@ -356,6 +360,7 @@ export function initDesktop(apps) {
     if (!hasFiles(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
+    currentDropDataTransfer = e.dataTransfer;
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
     dragDepth += 1;
     showDropOverlay();
@@ -364,6 +369,7 @@ export function initDesktop(apps) {
     if (!hasFiles(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
+    currentDropDataTransfer = e.dataTransfer;
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
     showDropOverlay();
   });
@@ -377,6 +383,7 @@ export function initDesktop(apps) {
     if (!hasFiles(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
+    currentDropDataTransfer = e.dataTransfer;
     dragDepth = 0;
     hideDropOverlay();
     const files = e.dataTransfer?.files;
