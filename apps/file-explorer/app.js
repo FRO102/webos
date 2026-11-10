@@ -198,21 +198,86 @@ $('empty-trash').onclick = async () => {
 };
 $('upload').onclick = () => fileInput.click();
 async function importFiles(files) {
-  if (!files.length) return;
+  const dt = (typeof event !== 'undefined' && event?.dataTransfer) || (window.event?.dataTransfer) || null;
+  const entries = [];
+  if (dt && dt.items) {
+    for (const item of dt.items) {
+      if (item.kind === 'file') {
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) entries.push(entry);
+      }
+    }
+  }
+
   let imported = 0;
   const failures = [];
-  for (const file of files) {
-    try {
-      const path = join(cwd, file.name);
-      if (await os.fs.exists(path)) {
-        const replace = await os.dialog.confirm({ title: 'Substituir ficheiro?', message: `Já existe "${file.name}". Queres substituir?`, okLabel: 'Substituir', danger: true });
-        if (!replace) continue;
+  if (entries.length > 0) {
+    const walk = async (entry, currentDir) => {
+      if (entry.isFile) {
+        await new Promise((resolve) => {
+          entry.file(async (file) => {
+            try {
+              const path = join(currentDir, file.name);
+              if (await os.fs.exists(path)) {
+                const replace = await os.dialog.confirm({ title: 'Substituir ficheiro?', message: `Já existe "${file.name}". Queres substituir?`, okLabel: 'Substituir', danger: true });
+                if (!replace) { resolve(); return; }
+              }
+              await os.fs.write(path, file, file.type || 'application/octet-stream');
+              imported++;
+              resolve();
+            } catch (error) {
+              failures.push(`${file.name}: ${error.message}`);
+              resolve();
+            }
+          }, (err) => {
+            failures.push(`${entry.name}: ${err?.message || 'erro ao ler.'}`);
+            resolve();
+          });
+        });
+      } else if (entry.isDirectory) {
+        const dirName = entry.name;
+        const newDir = join(currentDir, dirName);
+        try {
+          await os.fs.mkdir(newDir);
+        } catch {}
+        const reader = entry.createReader();
+        await new Promise((resolve) => {
+          const readAll = () => {
+            reader.readEntries(async (results) => {
+              if (!results || results.length === 0) {
+                resolve();
+                return;
+              }
+              for (const sub of results) {
+                await walk(sub, newDir);
+              }
+              readAll();
+            }, () => resolve());
+          };
+          readAll();
+        });
       }
-      await os.fs.write(path, file, file.type || 'application/octet-stream');
-      imported++;
-    } catch (error) { failures.push(`${file.name}: ${error.message}`); }
+    };
+    for (const entry of entries) {
+      await walk(entry, cwd);
+    }
+  } else {
+    const fileArray = [...(files ?? [])];
+    if (!fileArray.length) return;
+    for (const file of fileArray) {
+      try {
+        const path = join(cwd, file.name);
+        if (await os.fs.exists(path)) {
+          const replace = await os.dialog.confirm({ title: 'Substituir ficheiro?', message: `Já existe "${file.name}". Queres substituir?`, okLabel: 'Substituir', danger: true });
+          if (!replace) continue;
+        }
+        await os.fs.write(path, file, file.type || 'application/octet-stream');
+        imported++;
+      } catch (error) { failures.push(`${file.name}: ${error.message}`); }
+    }
   }
-  say(failures.length ? `${imported} importado(s); ${failures.length} falha(s): ${failures.join(' · ')}` : `${imported} ${imported === 1 ? 'ficheiro importado.' : 'ficheiros importados.'}`);
+  say(failures.length ? `${imported} importado(s); ${failures.length} falha(s): ${failures.join(' · ')}` : `${imported} ${imported === 1 ? 'item importado.' : 'itens importados.'}`);
+  await go(cwd);
 }
 fileInput.onchange = async () => {
   const files = [...(fileInput.files ?? [])];

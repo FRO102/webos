@@ -194,30 +194,104 @@ export function initDesktop(apps) {
     return candidate;
   };
   const importFilesToDirectory = async (files, targetDir = desktopPath) => {
-    const droppedFiles = [...files];
-    const list = droppedFiles.slice(0, MAX_DROP_FILES);
+    const droppedFiles = Array.isArray(files) ? files : [...(files?.files ?? files?.items ? [] : [files])];
+    const items = files?.items;
     let imported = 0;
     const failures = [];
-    if (droppedFiles.length > MAX_DROP_FILES) failures.push(`${droppedFiles.length - MAX_DROP_FILES} ficheiro(s) excedem o limite de ${MAX_DROP_FILES}.`);
-    for (const file of list) {
-      if (!file || typeof file.name !== 'string') continue;
-      if (file.size > MAX_DROP_FILE_SIZE) { failures.push(`${file.name}: ficheiro demasiado grande.`); continue; }
-      const name = safeDroppedName(file.name);
-      if (!name) { failures.push(`${file.name}: nome inválido.`); continue; }
-      try {
-        const finalName = await collisionName(targetDir, name);
-        await writeFile(`${targetDir}/${finalName}`, file, file.type || 'application/octet-stream');
-        imported++;
-      } catch (error) {
-        failures.push(`${file.name}: ${error?.message || 'erro ao importar.'}`);
+    const entries = [];
+    if (items) {
+      for (const item of items) {
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry?.();
+          if (entry) entries.push(entry);
+        }
+      }
+    }
+    if (entries.length > 0) {
+      const walk = async (entry, currentDir) => {
+        if (imported >= MAX_DROP_FILES) return;
+        if (entry.isFile) {
+          await new Promise((resolve) => {
+            entry.file(async (file) => {
+              try {
+                if (file.size > MAX_DROP_FILE_SIZE) {
+                  failures.push(`${file.name}: ficheiro demasiado grande.`);
+                  resolve();
+                  return;
+                }
+                const name = safeDroppedName(file.name);
+                if (!name) {
+                  failures.push(`${file.name}: nome inválido.`);
+                  resolve();
+                  return;
+                }
+                const finalName = await collisionName(currentDir, name);
+                await writeFile(`${currentDir}/${finalName}`, file, file.type || 'application/octet-stream');
+                imported++;
+                resolve();
+              } catch (error) {
+                failures.push(`${file.name}: ${error?.message || 'erro ao importar.'}`);
+                resolve();
+              }
+            }, (err) => {
+              failures.push(`${entry.name}: ${err?.message || 'erro ao ler.'}`);
+              resolve();
+            });
+          });
+        } else if (entry.isDirectory) {
+          const dirName = safeDroppedName(entry.name);
+          if (!dirName) return;
+          const finalDirName = await collisionName(currentDir, dirName);
+          const newDir = `${currentDir}/${finalDirName}`;
+          try {
+            await makeDirectory(newDir);
+          } catch {}
+          const reader = entry.createReader();
+          await new Promise((resolve) => {
+            const readAll = () => {
+              reader.readEntries(async (results) => {
+                if (!results || results.length === 0) {
+                  resolve();
+                  return;
+                }
+                for (const sub of results) {
+                  if (imported >= MAX_DROP_FILES) break;
+                  await walk(sub, newDir);
+                }
+                readAll();
+              }, () => resolve());
+            };
+            readAll();
+          });
+        }
+      };
+      for (const entry of entries) {
+        if (imported >= MAX_DROP_FILES) break;
+        await walk(entry, targetDir);
+      }
+    } else {
+      const list = droppedFiles.slice(0, MAX_DROP_FILES);
+      if (droppedFiles.length > MAX_DROP_FILES) failures.push(`${droppedFiles.length - MAX_DROP_FILES} ficheiro(s) excedem o limite de ${MAX_DROP_FILES}.`);
+      for (const file of list) {
+        if (!file || typeof file.name !== 'string') continue;
+        if (file.size > MAX_DROP_FILE_SIZE) { failures.push(`${file.name}: ficheiro demasiado grande.`); continue; }
+        const name = safeDroppedName(file.name);
+        if (!name) { failures.push(`${file.name}: nome inválido.`); continue; }
+        try {
+          const finalName = await collisionName(targetDir, name);
+          await writeFile(`${targetDir}/${finalName}`, file, file.type || 'application/octet-stream');
+          imported++;
+        } catch (error) {
+          failures.push(`${file.name}: ${error?.message || 'erro ao importar.'}`);
+        }
       }
     }
     if (imported > 0) {
-      bus.emit('notify', { app: 'WebOS', message: imported === 1 ? '1 ficheiro adicionado ao WebOS.' : `${imported} ficheiros adicionados ao WebOS.` });
-      if (targetDir === desktopPath) renderDesktopEntries();
+      bus.emit('notify', { app: 'WebOS', message: imported === 1 ? '1 item adicionado ao WebOS.' : `${imported} itens adicionados ao WebOS.` });
+      if (targetDir === desktopPath || targetDir.startsWith(`${desktopPath}/`)) renderDesktopEntries();
     }
     if (failures.length) {
-      bus.emit('notify', { app: 'WebOS', message: `${failures.length} ficheiro(s) não importado(s): ${failures.slice(0, 3).join(' · ')}${failures.length > 3 ? ' …' : ''}` });
+      bus.emit('notify', { app: 'WebOS', message: `${failures.length} item(ns) não importado(s): ${failures.slice(0, 3).join(' · ')}${failures.length > 3 ? ' …' : ''}` });
     }
   };
 

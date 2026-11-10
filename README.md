@@ -18,7 +18,7 @@ Um ambiente de trabalho virtual que corre no browser. O WebOS reúne janelas, á
 
 ## Aplicações
 
-O projeto inclui 35 aplicações, organizadas em três secções no Menu Iniciar e na app Aplicações: **Sistema**, **Aplicações** e **Jogos**. Cada app declara uma destas categorias no próprio manifest.
+O projeto inclui 42 aplicações, organizadas em três secções no Menu Iniciar e na app Aplicações: **Sistema**, **Aplicações** e **Jogos**. Cada app declara uma destas categorias no próprio manifest.
 
 O Desktop inclui atalhos para a Lixeira, Pasta pessoal, Jogos e Sistema, além dos ficheiros e pastas guardados em `User/Desktop`. O Sudoku inclui notas, dicas, contador de erros e controlos de teclado. O Terminal trabalha apenas com ficheiros e serviços do WebOS: `rm` envia itens para a Lixeira e `purge` pede confirmação antes de os apagar permanentemente.
 
@@ -75,12 +75,14 @@ Executa a partir da raiz do projeto:
 node tests/validate-manifests.mjs
 node tests/smoke.mjs
 node tests/i18n.mjs
+node tests/sandbox.mjs
 node tests/filesystem-paths.mjs
 node tests/filesystem-content.mjs
 node tests/sudoku.mjs
 node tests/excel-data.mjs
 node tests/pacman.mjs
 node tests/tetris.mjs
+node tests/zombie-defense.mjs
 node tests/zombie-survival-engine.mjs
 node tests/zombie-survival-objectives.mjs
 node tests/zombie-survival-content.mjs
