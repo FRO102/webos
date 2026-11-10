@@ -9,7 +9,7 @@ const loader = await readFile(join(root, 'system/js/app-loader.js'), 'utf8');
 const desktop = await readFile(join(root, 'system/js/desktop.js'), 'utf8');
 const explorer = await readFile(join(appRoot, 'file-explorer/app.js'), 'utf8');
 const expectedExceptions = new Set([
-  'chess', 'escape-road', 'geometry-dash',
+  'chess', 'crossy-road', 'escape-road',
   'pacman', 'puzzle', 'tetris', 'zombie-survival',
 ]);
 
