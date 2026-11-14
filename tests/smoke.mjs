@@ -12,17 +12,18 @@ const mustContain = async (relative, terms) => {
 
 await mustContain('system/js/storage.js', ['DB_VERSION = 2', 'audit']);
 await mustContain('system/js/storage.js', ['webos-profile-backup', 'caminho inválido']);
-await mustContain('system/js/filesystem.js', ['export async function trash', 'export async function restore', 'export async function search', 'export async function exists']);
+await mustContain('system/js/filesystem.js', ['export async function trash', 'export async function restore', 'export async function search', 'export async function exists', 'export async function copy']);
 await mustContain('system/js/filesystem.js', ['Não é possível mover a pasta pessoal para a lixeira.', 'Não é possível mover a pasta pessoal.']);
 await mustContain('system/js/filesystem.js', ["'/home/user/Desktop'", 'changed(to)']);
 await mustContain('system/js/desktop.js', ['list as listFiles', 'renderDesktopEntries', "path === desktopPath", 'data-filesystem-entry']);
-await mustContain('system/js/desktop.js', ['const enableFolderDrop = (node, folderPath) => {', 'importFilesToDirectory(files, folderPath)', 'excedem o limite']);
+await mustContain('system/js/desktop.js', ['const enableFolderDrop = (node, folderPath) => {', 'importFilesToDirectory(files, folderPath, event.dataTransfer)', 'excedem o limite']);
+await mustContain('system/js/desktop.js', ["const INTERNAL_PATH_TYPE = 'application/x-webos-path'", 'setPointerCapture(e.pointerId)', 'gridColumn', 'gridRow', "moveDroppedItem(internalPath, desktopPath, 'move')"]);
 await mustContain('system/js/filesystem.js', ['normalizeFsPath', 'fileContentSize', 'isBinaryFileContent']);
 await mustContain('system/js/fs-paths.js', ['resolveScopedFsPath', "value.split('/').includes('..')"]);
 await mustContain('system/js/fs-content.js', ['encodeBackupContent', 'decodeBackupContent', 'fileContentSize']);
 await mustContain('apps/file-explorer/index.html', ['type="file" multiple']);
-await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files)', 'window.addEventListener(\'drop\'', 'await importFiles([...(event.dataTransfer?.files ?? [])])', 'content instanceof Blob']);
-await mustContain('apps/file-explorer/app.js', ["event.data?.type !== 'webos:file-drop'", 'Array.isArray(event.data.files)']);
+await mustContain('apps/file-explorer/app.js', ['const files = [...(fileInput.files ?? [])]', 'async function importFiles(files, dataTransfer = null)', 'window.addEventListener(\'drop\'', 'await importFiles([...(event.dataTransfer?.files ?? [])], event.dataTransfer)', 'content instanceof Blob']);
+await mustContain('apps/file-explorer/app.js', ["event.data?.type !== 'webos:file-drop'", "event.data?.type === 'webos:path-drop'", 'Array.isArray(event.data.files)']);
 await mustContain('system/js/desktop.js', ["target?.dataset.appId === 'file-explorer'", "type: 'webos:file-drop'"]);
 await mustContain('apps/file-explorer/app.js', ['async function refreshCurrentFolder()', 'A pasta atual foi removida.', 'Este item já não existe nesta pasta.']);
 await mustContain('apps/pdfwebos/app.js', ['if (!(await os.fs.exists(path)))', 'await removeRecent(path)', 'for (const path of storedRecent)', 'Erro ao abrir o PDF:']);

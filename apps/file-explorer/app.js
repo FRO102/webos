@@ -3,6 +3,13 @@ const rows = $('rows'), addr = $('addr'), status = $('status');
 const fileInput = $('file-input');
 const searchInput = $('search'), sortSelect = $('sort');
 let home = '/home/user', cwd = home, entries = [], sel = null, ctxMenu = null;
+const MAX_IMPORT_FILES = 100;
+const MAX_IMPORT_FILE_SIZE = 100 * 1024 * 1024;
+let importInProgress = false;
+let importCancelled = false;
+document.addEventListener('keydown', event => {
+  if (importInProgress && event.key === 'Escape') importCancelled = true;
+});
 
 const say = msg => { status.textContent = msg; };
 const join = (dir, name) => (dir === '/' ? '' : dir) + '/' + name;
@@ -48,6 +55,11 @@ function render() {
   visibleEntries.forEach(en => {
     const tr = document.createElement('tr');
     tr.dataset.path = en.path;
+    tr.draggable = true;
+    tr.addEventListener('dragstart', event => {
+      event.dataTransfer?.setData('application/x-webos-path', en.path);
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+    });
     tr.tabIndex = 0;
     tr.classList.toggle('sel', sel === en.path);
     const cells = [`${en.type === 'dir' ? '📁' : '📄'} ${en.name}`, en.type === 'dir' ? '' : size(en.size), os.i18n.date(en.mtime, { dateStyle: 'short', timeStyle: 'short' })];
@@ -199,18 +211,19 @@ $('empty-trash').onclick = async () => {
 $('upload').onclick = () => fileInput.click();
 let lastImportTime = 0;
 let lastImportKey = '';
-async function importFiles(files) {
+async function importFiles(files, dataTransfer = null) {
   const now = Date.now();
   const fileArray = [...(files ?? [])];
   const sig = fileArray.map(f => `${f.name}:${f.size}`).join('|');
   if (now - lastImportTime < 600 && sig === lastImportKey) return;
   lastImportTime = now;
   lastImportKey = sig;
+  importInProgress = true;
+  importCancelled = false;
 
-  const dt = (typeof event !== 'undefined' && event?.dataTransfer) || (window.event?.dataTransfer) || null;
   const entries = [];
-  if (dt && dt.items) {
-    for (const item of dt.items) {
+  if (dataTransfer?.items) {
+    for (const item of dataTransfer.items) {
       if (item.kind === 'file') {
         const entry = item.webkitGetAsEntry?.();
         if (entry) entries.push(entry);
@@ -222,10 +235,14 @@ async function importFiles(files) {
   const failures = [];
   if (entries.length > 0) {
     const walk = async (entry, currentDir) => {
+      if (importCancelled) return;
       if (entry.isFile) {
         await new Promise((resolve) => {
           entry.file(async (file) => {
             try {
+              if (importCancelled) { resolve(); return; }
+              if (imported >= MAX_IMPORT_FILES) { failures.push('Limite de itens atingido.'); resolve(); return; }
+              if (file.size > MAX_IMPORT_FILE_SIZE) { failures.push(`${file.name}: ficheiro demasiado grande.`); resolve(); return; }
               const path = join(currentDir, file.name);
               if (await os.fs.exists(path)) {
                 const replace = await os.dialog.confirm({ title: 'Substituir ficheiro?', message: `Já existe "${file.name}". Queres substituir?`, okLabel: 'Substituir', danger: true });
@@ -268,13 +285,16 @@ async function importFiles(files) {
       }
     };
     for (const entry of entries) {
+      if (importCancelled || imported >= MAX_IMPORT_FILES) break;
       await walk(entry, cwd);
     }
   } else {
     const fileArray = [...(files ?? [])];
-    if (!fileArray.length) return;
-    for (const file of fileArray) {
+    if (!fileArray.length) { importInProgress = false; return; }
+    for (const file of fileArray.slice(0, MAX_IMPORT_FILES)) {
+      if (importCancelled) break;
       try {
+        if (file.size > MAX_IMPORT_FILE_SIZE) { failures.push(`${file.name}: ficheiro demasiado grande.`); continue; }
         const path = join(cwd, file.name);
         if (await os.fs.exists(path)) {
           const replace = await os.dialog.confirm({ title: 'Substituir ficheiro?', message: `Já existe "${file.name}". Queres substituir?`, okLabel: 'Substituir', danger: true });
@@ -284,8 +304,11 @@ async function importFiles(files) {
         imported++;
       } catch (error) { failures.push(`${file.name}: ${error.message}`); }
     }
+    if (fileArray.length > MAX_IMPORT_FILES) failures.push(`${fileArray.length - MAX_IMPORT_FILES} ficheiro(s) excedem o limite de ${MAX_IMPORT_FILES}.`);
   }
-  say(failures.length ? `${imported} importado(s); ${failures.length} falha(s): ${failures.join(' · ')}` : `${imported} ${imported === 1 ? 'item importado.' : 'itens importados.'}`);
+  const cancelledMessage = importCancelled ? ' Importação cancelada.' : '';
+  say(failures.length ? `${imported} importado(s); ${failures.length} falha(s): ${failures.join(' · ')}${cancelledMessage}` : `${imported} ${imported === 1 ? 'item importado.' : 'itens importados.'}${cancelledMessage}`);
+  importInProgress = false;
   await go(cwd);
 }
 fileInput.onchange = async () => {
@@ -302,38 +325,77 @@ dropOverlay.textContent = 'Largar para importar nesta pasta';
 document.body.append(dropOverlay);
 let fileDragDepth = 0;
 const hasDroppedFiles = event => !!event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files');
+const droppedPath = event => {
+  const path = event.dataTransfer?.getData?.('application/x-webos-path');
+  return typeof path === 'string' && path.startsWith(`${home}/`) ? path : '';
+};
+const applyInternalDrop = async (from, operation) => {
+  const name = from.split('/').pop();
+  if (!name) return;
+  try {
+    let targetName = name;
+    let counter = 1;
+    while (await os.fs.exists(join(cwd, targetName))) {
+      const dot = name.lastIndexOf('.');
+      const base = dot > 0 ? name.slice(0, dot) : name;
+      const extension = dot > 0 ? name.slice(dot) : '';
+      targetName = `${base} (${counter++})${extension}`;
+    }
+    await (operation === 'copy' ? os.fs.copy(from, join(cwd, targetName)) : os.fs.move(from, join(cwd, targetName)));
+    await go(cwd);
+  } catch (error) { say(error.message); }
+};
+const chooseInternalDrop = (from, x = innerWidth / 2, y = innerHeight / 2) => {
+  showCtxMenu(x, y, [
+    { label: 'Mover para esta pasta', action: () => applyInternalDrop(from, 'move') },
+    { label: 'Copiar para esta pasta', action: () => applyInternalDrop(from, 'copy') },
+    { label: 'Cancelar' },
+  ]);
+};
 const hideFileDropOverlay = () => {
   fileDragDepth = 0;
   dropOverlay.hidden = true;
   document.body.classList.remove('is-file-drop-target');
 };
 window.addEventListener('dragenter', event => {
-  if (!hasDroppedFiles(event)) return;
+  if (!hasDroppedFiles(event) && !droppedPath(event)) return;
   event.preventDefault();
   fileDragDepth++;
   dropOverlay.hidden = false;
   document.body.classList.add('is-file-drop-target');
 }, true);
 window.addEventListener('dragover', event => {
-  if (!hasDroppedFiles(event)) return;
+  if (!hasDroppedFiles(event) && !droppedPath(event)) return;
   event.preventDefault();
-  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+  if (event.dataTransfer) event.dataTransfer.dropEffect = droppedPath(event) ? 'move' : 'copy';
 }, true);
 window.addEventListener('dragleave', event => {
-  if (!hasDroppedFiles(event)) return;
+  if (!hasDroppedFiles(event) && !droppedPath(event)) return;
   fileDragDepth = Math.max(0, fileDragDepth - 1);
   if (fileDragDepth === 0 && !event.relatedTarget) hideFileDropOverlay();
 }, true);
 window.addEventListener('drop', async event => {
-  if (!hasDroppedFiles(event)) return;
+  if (!hasDroppedFiles(event) && !droppedPath(event)) return;
   event.preventDefault();
   event.stopPropagation();
   hideFileDropOverlay();
-  await importFiles([...(event.dataTransfer?.files ?? [])]);
+  const from = droppedPath(event);
+  if (from) {
+    chooseInternalDrop(from, event.clientX, event.clientY);
+    return;
+  }
+  await importFiles([...(event.dataTransfer?.files ?? [])], event.dataTransfer);
 }, true);
 window.addEventListener('message', async event => {
-  if (event.source !== parent || event.data?.type !== 'webos:file-drop') return;
-  await importFiles(Array.isArray(event.data.files) ? event.data.files : []);
+  if (event.source !== parent) return;
+  if (event.data?.type === 'webos:path-drop') {
+    const from = typeof event.data.path === 'string' && event.data.path.startsWith(`${home}/`) ? event.data.path : '';
+    if (!from) return;
+    chooseInternalDrop(from);
+    return;
+  }
+  if (event.data?.type !== 'webos:file-drop' || !Array.isArray(event.data.files)) return;
+  await importFiles(event.data.files);
 });
 async function download(enParam = current()) {
   const en = enParam;

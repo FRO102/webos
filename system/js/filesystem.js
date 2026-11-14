@@ -139,6 +139,20 @@ export async function move(from, to) {
   changed(to);
 }
 
+export async function copy(from, to) {
+  from = norm(from); to = norm(to);
+  if (from === '/' || to.startsWith(from + '/')) throw new Error('Cópia inválida.');
+  const nodes = await subtree(from);
+  if (!nodes.length) throw new Error(`Não existe: ${from}`);
+  if (await get(to)) throw new Error(`Já existe: ${to}`);
+  await assertParent(to);
+  await tx('fs', s => nodes.forEach(n => {
+    const path = to + n.path.slice(from.length);
+    s.put({ ...n, path, parent: parentOf(path), ctime: Date.now(), mtime: Date.now() });
+  }));
+  changed(to);
+}
+
 export async function ensureUserHome(userId) {
   const home = `/home/${String(userId || 'user').replace(/[^a-z0-9-]/gi, '') || 'user'}`;
   for (const path of [home, 'Desktop', 'Documentos', 'Imagens', 'Música', 'Vídeos', 'Downloads'].map(name => name.startsWith('/') ? name : `${home}/${name}`)) {

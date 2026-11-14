@@ -98,6 +98,7 @@ Object.assign(methods, {
   'fs.restore': { perm: W, fn: (c, { path }) => fs.restore(scopedPath(path)) },
   'fs.emptyTrash': { perm: W, fn: () => fs.emptyTrash() },
   'fs.move':   { perm: W, fn: (c, { from, to }) => { const [source, target] = scopedMove(from, to); return fs.move(source, target); } },
+  'fs.copy':   { perm: W, fn: (c, { from, to }) => { const [source, target] = scopedMove(from, to); return fs.copy(source, target); } },
   // armazenamento privado: cada app só vê as suas chaves
   'storage.get':    { fn: (c, { key }) => kv.get(`app:${c.appId}:${key}`) },
   'storage.set':    { fn: (c, { key, value }) => kv.set(`app:${c.appId}:${key}`, value) },

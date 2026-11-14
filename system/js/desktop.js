@@ -2,7 +2,7 @@ import { launchApp } from './app-loader.js';
 import { showContextMenu } from './context-menu.js';
 import { getCurrentUser } from './users.js';
 import { bus } from './event-bus.js';
-import { list as listFiles, read as readDesktopFile, stat as statDesktopFile, write as writeFile, exists as fileExists, mkdir as makeDirectory, trash as trashFile, remove as removeFile } from './filesystem.js';
+import { list as listFiles, read as readDesktopFile, stat as statDesktopFile, write as writeFile, exists as fileExists, mkdir as makeDirectory, trash as trashFile, remove as removeFile, move as moveFile, copy as copyFile } from './filesystem.js';
 import { getSettings, WALLPAPERS } from './settings.js';
 
 export function initDesktop(apps) {
@@ -28,7 +28,33 @@ export function initDesktop(apps) {
     desktop.style.background = (WALLPAPERS[settings.wallpaper] ?? WALLPAPERS.aurora).css;
   };
   try { positions = JSON.parse(localStorage.getItem('webos:desktop-positions') || '{}'); } catch { localStorage.removeItem('webos:desktop-positions'); }
-  const savePositions = () => { try { localStorage.setItem('webos:desktop-positions', JSON.stringify(Object.fromEntries([...ul.children].filter(li => li.dataset.key && li.style.order).map(li => [li.dataset.key, li.style.order])))); } catch {} };
+  const gridSize = () => ({ column: 94, row: 84 });
+  const readPosition = (li, fallback = { column: 1, row: 1 }) => {
+    const column = Number(li.dataset.gridColumn), row = Number(li.dataset.gridRow);
+    if (Number.isInteger(column) && Number.isInteger(row)) return { column, row };
+    const rect = li.getBoundingClientRect(), desktopRect = ul.getBoundingClientRect();
+    const size = gridSize();
+    return rect.width && desktopRect.width
+      ? { column: Math.max(1, Math.round((rect.left - desktopRect.left) / size.column) + 1), row: Math.max(1, Math.round((rect.top - desktopRect.top) / size.row) + 1) }
+      : fallback;
+  };
+  const setPosition = (li, position) => {
+    const maxColumn = Math.max(1, Math.floor((ul.clientWidth - 24 + 6) / 94));
+    const maxRow = Math.max(1, Math.floor((ul.clientHeight - 24 + 6) / 84));
+    const column = Math.max(1, Math.min(maxColumn, Math.round(position.column)));
+    const row = Math.max(1, Math.min(maxRow, Math.round(position.row)));
+    li.dataset.gridColumn = String(column);
+    li.dataset.gridRow = String(row);
+    li.style.gridColumn = String(column);
+    li.style.gridRow = String(row);
+  };
+  const savePositions = () => {
+    try {
+      localStorage.setItem('webos:desktop-positions', JSON.stringify(Object.fromEntries(
+        [...ul.children].filter(li => li.dataset.key).map(li => [li.dataset.key, readPosition(li)])
+      )));
+    } catch {}
+  };
   const select = (el, additive = false) => {
     if (!additive) ul.querySelectorAll('.selected').forEach(x => x.classList.remove('selected'));
     el?.classList.toggle('selected', additive ? !el.classList.contains('selected') : true);
@@ -37,7 +63,8 @@ export function initDesktop(apps) {
     const li = document.createElement('li');
     li.dataset.key = key;
     if (className) li.classList.add(className);
-    if (positions[key]) li.style.order = positions[key];
+    const storedPosition = positions[key];
+    if (storedPosition && typeof storedPosition === 'object') setPosition(li, storedPosition);
     const b = document.createElement('button');
     b.className = 'd-icon';
     const visual = document.createElement('span');
@@ -84,31 +111,50 @@ export function initDesktop(apps) {
       if (e.button !== 0) return;
       const startX = e.clientX, startY = e.clientY;
       let dragged = false;
+      if (!b.classList.contains('selected')) select(b, e.ctrlKey || e.metaKey);
+      const selectedItems = [...ul.querySelectorAll('.d-icon.selected')].map(button => button.parentElement);
+      const initialPositions = new Map(selectedItems.map(item => [item, readPosition(item, { column: 1, row: 1 })]));
+      try { b.setPointerCapture(e.pointerId); } catch {}
       const move = ev => {
         if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
         dragged = true;
-        li.style.position = 'relative';
-        li.style.left = `${ev.clientX - startX}px`;
-        li.style.top = `${ev.clientY - startY}px`;
+        const { column, row } = gridSize();
+        const deltaColumn = Math.round((ev.clientX - startX) / column);
+        const deltaRow = Math.round((ev.clientY - startY) / row);
+        const origin = initialPositions.get(li) || { column: 1, row: 1 };
+        for (const item of selectedItems) {
+          const position = initialPositions.get(item);
+          if (position) setPosition(item, { column: position.column + deltaColumn, row: position.row + deltaRow });
+        }
+        li.dataset.dragOrigin = `${origin.column},${origin.row}`;
       };
       const up = ev => {
-        li.style.left = ''; li.style.top = '';
         if (dragged) {
-          li.style.order = Math.max(0, Math.round((ev.clientY - 12) / 82));
           savePositions();
         }
         b.removeEventListener('pointermove', move);
         b.removeEventListener('pointerup', up);
+        b.removeEventListener('lostpointercapture', cancel);
         b.removeEventListener('pointercancel', cancel);
       };
       const cancel = () => {
-        li.style.left = ''; li.style.top = '';
+        for (const [item, position] of initialPositions) setPosition(item, position);
         b.removeEventListener('pointermove', move);
         b.removeEventListener('pointerup', up);
+        b.removeEventListener('lostpointercapture', cancel);
+        b.removeEventListener('pointercancel', cancel);
       };
       b.addEventListener('pointermove', move); b.addEventListener('pointerup', up, { once: true });
       b.addEventListener('pointercancel', cancel, { once: true });
+      b.addEventListener('lostpointercapture', cancel, { once: true });
     });
+    if (key.startsWith('filesystem:')) {
+      b.draggable = true;
+      b.addEventListener('dragstart', event => {
+        event.dataTransfer?.setData('application/x-webos-path', key.slice('filesystem:'.length));
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+      });
+    }
     li.append(b);
     ul.append(li);
     return li;
@@ -174,6 +220,7 @@ export function initDesktop(apps) {
 
   const MAX_DROP_FILES = 100;
   const MAX_DROP_FILE_SIZE = 100 * 1024 * 1024;
+  const INTERNAL_PATH_TYPE = 'application/x-webos-path';
   const normalizeDroppedName = name => String(name ?? '').replace(/\\/g, '/').split('/').filter(Boolean).pop()?.replace(/[\u0000-\u001f]/g, '') || '';
   const safeDroppedName = name => {
     const value = normalizeDroppedName(name).trim();
@@ -193,15 +240,17 @@ export function initDesktop(apps) {
     }
     return candidate;
   };
-  let currentDropDataTransfer = null;
-  const importFilesToDirectory = async (files, targetDir = desktopPath) => {
+  const getDroppedPath = dataTransfer => {
+    const path = dataTransfer?.getData?.(INTERNAL_PATH_TYPE);
+    return typeof path === 'string' && path.startsWith(`${home}/`) ? path : '';
+  };
+  const importFilesToDirectory = async (files, targetDir = desktopPath, dataTransfer = null) => {
     const droppedFiles = Array.isArray(files) ? files : [...(files ?? [])];
-    const dt = currentDropDataTransfer || (typeof event !== 'undefined' && event?.dataTransfer) || (window.event?.dataTransfer) || null;
     let imported = 0;
     const failures = [];
     const entries = [];
-    if (dt && dt.items) {
-      for (const item of dt.items) {
+    if (dataTransfer?.items) {
+      for (const item of dataTransfer.items) {
         if (item.kind === 'file') {
           const entry = item.webkitGetAsEntry?.();
           if (entry) entries.push(entry);
@@ -297,6 +346,19 @@ export function initDesktop(apps) {
   };
 
   const hasFiles = dt => !!dt && Array.from(dt.types || []).includes('Files');
+  const moveDroppedItem = async (from, targetDir, operation = 'move', targetName = null) => {
+    if (!from || from === targetDir || from.startsWith(`${targetDir}/`)) return;
+    const name = targetName || from.split('/').pop();
+    if (!name) return;
+    const target = `${targetDir}/${name}`;
+    try {
+      await (operation === 'copy' ? copyFile(from, target) : moveFile(from, target));
+      bus.emit('notify', { app: 'WebOS', message: `"${name}" ${operation === 'copy' ? 'copiado' : 'movido'}.` });
+      renderDesktopEntries();
+    } catch (error) {
+      bus.emit('notify', { app: 'WebOS', message: error?.message || 'Não foi possível mover o item.' });
+    }
+  };
 
   const enableFolderDrop = (node, folderPath) => {
     let dragDepth = 0;
@@ -305,24 +367,22 @@ export function initDesktop(apps) {
       node.classList.remove('is-folder-drop-target');
     };
     node.addEventListener('dragenter', event => {
-      if (!hasFiles(event.dataTransfer)) return;
+      if (!hasFiles(event.dataTransfer) && !getDroppedPath(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
-      currentDropDataTransfer = event.dataTransfer;
       dragDepth += 1;
       node.classList.add('is-folder-drop-target');
       hideDropOverlay();
     });
     node.addEventListener('dragover', event => {
-      if (!hasFiles(event.dataTransfer)) return;
+      if (!hasFiles(event.dataTransfer) && !getDroppedPath(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
-      currentDropDataTransfer = event.dataTransfer;
-      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      if (event.dataTransfer) event.dataTransfer.dropEffect = getDroppedPath(event.dataTransfer) ? 'move' : 'copy';
       node.classList.add('is-folder-drop-target');
     });
     node.addEventListener('dragleave', event => {
-      if (!hasFiles(event.dataTransfer)) return;
+      if (!hasFiles(event.dataTransfer) && !getDroppedPath(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
       dragDepth = Math.max(0, dragDepth - 1);
@@ -332,14 +392,23 @@ export function initDesktop(apps) {
       }
     });
     node.addEventListener('drop', async event => {
-      if (!hasFiles(event.dataTransfer)) return;
+      if (!hasFiles(event.dataTransfer) && !getDroppedPath(event.dataTransfer)) return;
       event.preventDefault();
       event.stopPropagation();
-      currentDropDataTransfer = event.dataTransfer;
       clearTarget();
       hideDropOverlay();
+      const internalPath = getDroppedPath(event.dataTransfer);
+      if (internalPath) {
+        showContextMenu(event.clientX, event.clientY, [
+          { label: 'Mover para a pasta', action: () => moveDroppedItem(internalPath, folderPath, 'move') },
+          { label: 'Copiar para a pasta', action: () => moveDroppedItem(internalPath, folderPath, 'copy') },
+          { label: 'Manter ambos', action: async () => moveDroppedItem(internalPath, folderPath, 'copy', await collisionName(folderPath, internalPath.split('/').pop())) },
+          { label: 'Cancelar' },
+        ]);
+        return;
+      }
       const files = event.dataTransfer?.files;
-      if (files?.length) await importFilesToDirectory(files, folderPath);
+      if (files?.length) await importFilesToDirectory(files, folderPath, event.dataTransfer);
     });
     return node;
   };
@@ -357,49 +426,65 @@ export function initDesktop(apps) {
   const showDropOverlay = () => { if (dropOverlay.hidden) { dropOverlay.hidden = false; desktop.classList.add('is-drop-target'); } };
   const hideDropOverlay = () => { dropOverlay.hidden = true; desktop.classList.remove('is-drop-target'); };
   desktop.addEventListener('dragenter', e => {
-    if (!hasFiles(e.dataTransfer)) return;
+    if (!hasFiles(e.dataTransfer) && !getDroppedPath(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
-    currentDropDataTransfer = e.dataTransfer;
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    if (e.dataTransfer) e.dataTransfer.dropEffect = getDroppedPath(e.dataTransfer) ? 'move' : 'copy';
     dragDepth += 1;
     showDropOverlay();
   });
   desktop.addEventListener('dragover', e => {
-    if (!hasFiles(e.dataTransfer)) return;
+    if (!hasFiles(e.dataTransfer) && !getDroppedPath(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
-    currentDropDataTransfer = e.dataTransfer;
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    if (e.dataTransfer) e.dataTransfer.dropEffect = getDroppedPath(e.dataTransfer) ? 'move' : 'copy';
     showDropOverlay();
   });
   desktop.addEventListener('dragleave', e => {
-    if (!hasFiles(e.dataTransfer)) return;
+    if (!hasFiles(e.dataTransfer) && !getDroppedPath(e.dataTransfer)) return;
     e.preventDefault();
     dragDepth = Math.max(0, dragDepth - 1);
     if (dragDepth === 0) hideDropOverlay();
   });
   desktop.addEventListener('drop', async e => {
-    if (!hasFiles(e.dataTransfer)) return;
+    if (!hasFiles(e.dataTransfer) && !getDroppedPath(e.dataTransfer)) return;
     e.preventDefault();
     e.stopPropagation();
-    currentDropDataTransfer = e.dataTransfer;
     dragDepth = 0;
     hideDropOverlay();
+    const internalPath = getDroppedPath(e.dataTransfer);
+    if (internalPath) {
+      showContextMenu(e.clientX, e.clientY, [
+        { label: 'Mover para o Desktop', action: () => moveDroppedItem(internalPath, desktopPath, 'move') },
+        { label: 'Copiar para o Desktop', action: () => moveDroppedItem(internalPath, desktopPath, 'copy') },
+        { label: 'Manter ambos', action: async () => moveDroppedItem(internalPath, desktopPath, 'copy', await collisionName(desktopPath, internalPath.split('/').pop())) },
+        { label: 'Cancelar' },
+      ]);
+      return;
+    }
     const files = e.dataTransfer?.files;
-    if (files && files.length) await importFilesToDirectory(files, desktopPath);
+    if (files && files.length) await importFilesToDirectory(files, desktopPath, e.dataTransfer);
   });
 
   // captura global de segurança para drops sobre iframes/janelas
   document.addEventListener('dragover', e => {
-    if (hasFiles(e.dataTransfer)) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; }
+    if (hasFiles(e.dataTransfer) || getDroppedPath(e.dataTransfer)) {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = getDroppedPath(e.dataTransfer) ? 'move' : 'copy';
+    }
   }, true);
   document.addEventListener('drop', e => {
-    if (!hasFiles(e.dataTransfer)) return;
+    if (!hasFiles(e.dataTransfer) && !getDroppedPath(e.dataTransfer)) return;
     e.preventDefault();
     const target = e.target instanceof HTMLIFrameElement ? e.target : document.elementFromPoint(e.clientX, e.clientY)?.closest('iframe');
     if (target?.dataset.appId === 'file-explorer' && target.contentWindow) {
-      target.contentWindow.postMessage({ type: 'webos:file-drop', files: [...(e.dataTransfer?.files ?? [])] }, '*');
+      const path = getDroppedPath(e.dataTransfer);
+      target.contentWindow.postMessage(
+        path
+          ? { type: 'webos:path-drop', path }
+          : { type: 'webos:file-drop', files: [...(e.dataTransfer?.files ?? [])] },
+        '*'
+      );
       e.stopPropagation();
     }
     dragDepth = 0;
@@ -407,7 +492,7 @@ export function initDesktop(apps) {
     desktop.querySelectorAll('.is-folder-drop-target').forEach(node => node.classList.remove('is-folder-drop-target'));
   }, true);
   document.addEventListener('dragleave', e => {
-    if (!hasFiles(e.dataTransfer) || e.relatedTarget) return;
+    if ((!hasFiles(e.dataTransfer) && !getDroppedPath(e.dataTransfer)) || e.relatedTarget) return;
     dragDepth = 0;
     hideDropOverlay();
     desktop.querySelectorAll('.is-folder-drop-target').forEach(node => node.classList.remove('is-folder-drop-target'));

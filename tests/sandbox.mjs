@@ -15,9 +15,11 @@ const expectedExceptions = new Set([
 
 assert.ok(loader.includes("const sandbox = ['allow-scripts', 'allow-forms', 'allow-modals', 'allow-popups', 'allow-downloads']"));
 assert.ok(loader.includes("if (m.allowSameOrigin === true) sandbox.push('allow-same-origin')"));
-assert.ok(desktop.includes("target.contentWindow.postMessage({ type: 'webos:file-drop', files:"));
-assert.ok(desktop.includes("}, '*')"));
-assert.ok(explorer.includes("event.source !== parent || event.data?.type !== 'webos:file-drop'"));
+assert.ok(desktop.includes("type: 'webos:file-drop'"));
+assert.ok(desktop.includes("type: 'webos:path-drop'"));
+assert.ok(desktop.includes("'*'"));
+assert.ok(explorer.includes("if (event.source !== parent) return;"));
+assert.ok(explorer.includes("event.data?.type !== 'webos:file-drop'"));
 
 const appIds = (await readdir(appRoot, { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name);
 const actualExceptions = new Set();

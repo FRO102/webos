@@ -128,6 +128,7 @@
       restore: path => call('fs.restore', { path }),
       emptyTrash: () => call('fs.emptyTrash'),
       move: (from, to) => call('fs.move', { from, to }),
+      copy: (from, to) => call('fs.copy', { from, to }),
     },
     storage: { // privado a cada app
       get: key => call('storage.get', { key }),

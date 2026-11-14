@@ -22,6 +22,8 @@ O projeto inclui 42 aplicações, organizadas em três secções no Menu Iniciar
 
 O Desktop inclui atalhos para a Lixeira, Pasta pessoal, Jogos e Sistema, além dos ficheiros e pastas guardados em `User/Desktop`. O Sudoku inclui notas, dicas, contador de erros e controlos de teclado. O Terminal trabalha apenas com ficheiros e serviços do WebOS: `rm` envia itens para a Lixeira e `purge` pede confirmação antes de os apagar permanentemente.
 
+Os itens do Desktop e do Explorador de Ficheiros podem ser arrastados entre pastas. Ao largar um item interno, escolhe-se no menu se deve ser movido, copiado ou cancelado; ficheiros externos são importados para a pasta de destino.
+
 Cada aplicação vive na sua própria pasta dentro de [`apps/`](apps/).
 
 ## Começar
@@ -78,6 +80,7 @@ node tests/i18n.mjs
 node tests/sandbox.mjs
 node tests/filesystem-paths.mjs
 node tests/filesystem-content.mjs
+node tests/desktop-dnd.mjs
 node tests/sudoku.mjs
 node tests/excel-data.mjs
 node tests/pacman.mjs
