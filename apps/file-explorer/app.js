@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 const rows = $('rows'), addr = $('addr'), status = $('status');
 const fileInput = $('file-input');
 const searchInput = $('search'), sortSelect = $('sort');
-let home = '/home/user', cwd = home, entries = [], sel = null, ctxMenu = null;
+let home = '/home/user', cwd = home, entries = [], sel = null, selectedPaths = new Set(), ctxMenu = null;
 const MAX_IMPORT_FILES = 100;
 const MAX_IMPORT_FILE_SIZE = 100 * 1024 * 1024;
 let importInProgress = false;
@@ -22,7 +22,7 @@ document.head.append(styleEl);
 
 
 async function go(p) {
-  try { entries = await os.fs.list(p); cwd = p; sel = null; render(); }
+  try { entries = await os.fs.list(p); cwd = p; sel = null; selectedPaths.clear(); render(); }
   catch (e) { say(e.message); }
 }
 
@@ -37,6 +37,7 @@ function render() {
   rows.replaceChildren();
   const query = searchInput.value.trim().toLocaleLowerCase(os.i18n.locale);
   const visibleEntries = entries.filter(entry => entry.name.toLocaleLowerCase(os.i18n.locale).includes(query));
+  selectedPaths = new Set([...selectedPaths].filter(path => visibleEntries.some(entry => entry.path === path)));
   if (sel && !visibleEntries.some(entry => entry.path === sel)) sel = null;
   const sortBy = sortSelect.value;
   visibleEntries.sort((a, b) => {
@@ -57,14 +58,16 @@ function render() {
     tr.dataset.path = en.path;
     tr.draggable = true;
     tr.addEventListener('dragstart', event => {
-      event.dataTransfer?.setData('application/x-webos-path', en.path);
+      const paths = selectedPaths.has(en.path) ? [...selectedPaths] : [en.path];
+      event.dataTransfer?.setData('application/x-webos-paths', JSON.stringify(paths));
+      event.dataTransfer?.setData('application/x-webos-path', paths[0]);
       if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
     });
     tr.tabIndex = 0;
-    tr.classList.toggle('sel', sel === en.path);
+    tr.classList.toggle('sel', selectedPaths.has(en.path));
     const cells = [`${en.type === 'dir' ? '📁' : '📄'} ${en.name}`, en.type === 'dir' ? '' : size(en.size), os.i18n.date(en.mtime, { dateStyle: 'short', timeStyle: 'short' })];
     cells.forEach(t => { const td = document.createElement('td'); td.textContent = t; tr.append(td); });
-    tr.onclick = () => select(en.path);
+    tr.onclick = event => select(en.path, event.ctrlKey || event.metaKey);
     tr.onfocus = () => select(en.path);
     tr.ondblclick = () => activate(en);
     tr.onkeydown = e => {
@@ -94,9 +97,12 @@ function render() {
   say(query ? `${visibleEntries.length} de ${entries.length} itens` : `${entries.length} ${entries.length === 1 ? 'item' : 'itens'}`);
 }
 
-function select(p) {
+function select(p, additive = false) {
+  if (!additive) selectedPaths.clear();
+  if (additive && selectedPaths.has(p)) selectedPaths.delete(p);
+  else selectedPaths.add(p);
   sel = p;
-  [...rows.querySelectorAll('tr[data-path]')].forEach(row => row.classList.toggle('sel', row.dataset.path === p));
+  [...rows.querySelectorAll('tr[data-path]')].forEach(row => row.classList.toggle('sel', selectedPaths.has(row.dataset.path)));
 }
 const current = () => entries.find(e => e.path === sel);
 
@@ -160,6 +166,30 @@ document.querySelectorAll('#places [data-place]').forEach(button => {
     go(place === 'home' ? home : place === 'trash' ? '/.Trash' : `${home}/${place}`);
   };
 });
+const trashPlace = document.querySelector('#places [data-place="trash"]');
+if (trashPlace) {
+  trashPlace.addEventListener('dragover', event => {
+    if (!droppedPaths(event).length) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    trashPlace.classList.add('is-trash-drop-target');
+  });
+  trashPlace.addEventListener('dragleave', () => trashPlace.classList.remove('is-trash-drop-target'));
+  trashPlace.addEventListener('drop', async event => {
+    const paths = droppedPaths(event);
+    if (!paths.length) return;
+    event.preventDefault();
+    event.stopPropagation();
+    trashPlace.classList.remove('is-trash-drop-target');
+    const failures = [];
+    for (const path of paths) {
+      try { await os.fs.trash(path); } catch (error) { failures.push(`${path.split('/').pop()}: ${error.message}`); }
+    }
+    say(failures.length ? failures.join(' · ') : `${paths.length} item(ns) movido(s) para a lixeira.`);
+    if (cwd === '/.Trash') await go(cwd);
+  });
+}
 async function createFolder() {
   const n = await os.dialog.prompt({ title: 'Nova pasta', message: 'Nome da nova pasta:', okLabel: 'Criar' });
   const name = n?.trim();
@@ -325,30 +355,39 @@ dropOverlay.textContent = 'Largar para importar nesta pasta';
 document.body.append(dropOverlay);
 let fileDragDepth = 0;
 const hasDroppedFiles = event => !!event.dataTransfer && Array.from(event.dataTransfer.types || []).includes('Files');
-const droppedPath = event => {
-  const path = event.dataTransfer?.getData?.('application/x-webos-path');
-  return typeof path === 'string' && path.startsWith(`${home}/`) ? path : '';
+const droppedPaths = event => {
+  let paths = [];
+  try { paths = JSON.parse(event.dataTransfer?.getData?.('application/x-webos-paths') || '[]'); } catch {}
+  if (!Array.isArray(paths) || !paths.length) paths = [event.dataTransfer?.getData?.('application/x-webos-path')];
+  return [...new Set(paths.filter(path => typeof path === 'string' && path.startsWith(`${home}/`)))];
 };
-const applyInternalDrop = async (from, operation) => {
-  const name = from.split('/').pop();
-  if (!name) return;
-  try {
-    let targetName = name;
-    let counter = 1;
-    while (await os.fs.exists(join(cwd, targetName))) {
-      const dot = name.lastIndexOf('.');
-      const base = dot > 0 ? name.slice(0, dot) : name;
-      const extension = dot > 0 ? name.slice(dot) : '';
-      targetName = `${base} (${counter++})${extension}`;
-    }
-    await (operation === 'copy' ? os.fs.copy(from, join(cwd, targetName)) : os.fs.move(from, join(cwd, targetName)));
-    await go(cwd);
-  } catch (error) { say(error.message); }
+const droppedPath = event => droppedPaths(event)[0] || '';
+const applyInternalDrop = async (fromPaths, operation, targetDir = cwd) => {
+  const failures = [];
+  let completed = 0;
+  for (const from of fromPaths) {
+    const name = from.split('/').pop();
+    if (!name || from === targetDir || from.startsWith(`${targetDir}/`)) continue;
+    try {
+      let targetName = name;
+      let counter = 1;
+      while (await os.fs.exists(join(targetDir, targetName))) {
+        const dot = name.lastIndexOf('.');
+        const base = dot > 0 ? name.slice(0, dot) : name;
+        const extension = dot > 0 ? name.slice(dot) : '';
+        targetName = `${base} (${counter++})${extension}`;
+      }
+      await (operation === 'copy' ? os.fs.copy(from, join(targetDir, targetName)) : os.fs.move(from, join(targetDir, targetName)));
+      completed += 1;
+    } catch (error) { failures.push(`${name}: ${error.message}`); }
+  }
+  if (failures.length) say(`${completed} concluído(s); ${failures.join(' · ')}`);
+  await go(cwd);
 };
-const chooseInternalDrop = (from, x = innerWidth / 2, y = innerHeight / 2) => {
+const chooseInternalDrop = (fromPaths, targetDir = cwd, x = innerWidth / 2, y = innerHeight / 2) => {
   showCtxMenu(x, y, [
-    { label: 'Mover para esta pasta', action: () => applyInternalDrop(from, 'move') },
-    { label: 'Copiar para esta pasta', action: () => applyInternalDrop(from, 'copy') },
+    { label: 'Mover para esta pasta', action: () => applyInternalDrop(fromPaths, 'move', targetDir) },
+    { label: 'Copiar para esta pasta', action: () => applyInternalDrop(fromPaths, 'copy', targetDir) },
     { label: 'Cancelar' },
   ]);
 };
@@ -368,6 +407,10 @@ window.addEventListener('dragover', event => {
   if (!hasDroppedFiles(event) && !droppedPath(event)) return;
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = droppedPath(event) ? 'move' : 'copy';
+  rows.querySelectorAll('tr.is-folder-drop-target').forEach(row => row.classList.remove('is-folder-drop-target'));
+  const row = event.target.closest?.('tr[data-path]');
+  const entry = entries.find(item => item.path === row?.dataset.path);
+  if (entry?.type === 'dir') row.classList.add('is-folder-drop-target');
 }, true);
 window.addEventListener('dragleave', event => {
   if (!hasDroppedFiles(event) && !droppedPath(event)) return;
@@ -379,9 +422,12 @@ window.addEventListener('drop', async event => {
   event.preventDefault();
   event.stopPropagation();
   hideFileDropOverlay();
-  const from = droppedPath(event);
-  if (from) {
-    chooseInternalDrop(from, event.clientX, event.clientY);
+  rows.querySelectorAll('tr.is-folder-drop-target').forEach(row => row.classList.remove('is-folder-drop-target'));
+  const paths = droppedPaths(event);
+  if (paths.length) {
+    const row = event.target.closest?.('tr[data-path]');
+    const target = entries.find(entry => entry.path === row?.dataset.path && entry.type === 'dir')?.path || cwd;
+    chooseInternalDrop(paths, target, event.clientX, event.clientY);
     return;
   }
   await importFiles([...(event.dataTransfer?.files ?? [])], event.dataTransfer);
@@ -389,9 +435,10 @@ window.addEventListener('drop', async event => {
 window.addEventListener('message', async event => {
   if (event.source !== parent) return;
   if (event.data?.type === 'webos:path-drop') {
-    const from = typeof event.data.path === 'string' && event.data.path.startsWith(`${home}/`) ? event.data.path : '';
-    if (!from) return;
-    chooseInternalDrop(from);
+    const paths = Array.isArray(event.data.paths) ? event.data.paths : [event.data.path];
+    const validPaths = paths.filter(path => typeof path === 'string' && path.startsWith(`${home}/`));
+    if (!validPaths.length) return;
+    chooseInternalDrop(validPaths);
     return;
   }
   if (event.data?.type !== 'webos:file-drop' || !Array.isArray(event.data.files)) return;

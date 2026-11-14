@@ -18,7 +18,7 @@ await mustContain('system/js/filesystem.js', ["'/home/user/Desktop'", 'changed(t
 await mustContain('system/js/main.js', ['await initFS()', 'await ensureUserHome(getCurrentUser()?.id)']);
 await mustContain('system/js/desktop.js', ['list as listFiles', 'renderDesktopEntries();', "path === desktopPath", 'data-filesystem-entry']);
 await mustContain('system/js/desktop.js', ['const enableFolderDrop = (node, folderPath) => {', 'importFilesToDirectory(files, folderPath, event.dataTransfer)', 'excedem o limite']);
-await mustContain('system/js/desktop.js', ["const INTERNAL_PATH_TYPE = 'application/x-webos-path'", 'setPointerCapture(e.pointerId)', 'gridColumn', 'gridRow', "moveDroppedItem(internalPath, desktopPath, 'move')"]);
+await mustContain('system/js/desktop.js', ["const INTERNAL_PATH_TYPE = 'application/x-webos-path'", 'const INTERNAL_PATHS_TYPE', 'setPointerCapture(e.pointerId)', 'gridColumn', 'gridRow', "moveDroppedItems(internalPaths, desktopPath, 'move')", 'enableTrashDrop']);
 await mustContain('system/js/filesystem.js', ['normalizeFsPath', 'fileContentSize', 'isBinaryFileContent']);
 await mustContain('system/js/fs-paths.js', ['resolveScopedFsPath', "value.split('/').includes('..')"]);
 await mustContain('system/js/fs-content.js', ['encodeBackupContent', 'decodeBackupContent', 'fileContentSize']);

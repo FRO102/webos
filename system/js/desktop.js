@@ -151,7 +151,13 @@ export function initDesktop(apps) {
     if (key.startsWith('filesystem:')) {
       b.draggable = true;
       b.addEventListener('dragstart', event => {
-        event.dataTransfer?.setData('application/x-webos-path', key.slice('filesystem:'.length));
+        const selectedPaths = [...ul.querySelectorAll('.d-icon.selected')]
+          .map(button => button.parentElement?.dataset.key)
+          .filter(value => value?.startsWith('filesystem:'))
+          .map(value => value.slice('filesystem:'.length));
+        const paths = selectedPaths.length ? selectedPaths : [key.slice('filesystem:'.length)];
+        event.dataTransfer?.setData('application/x-webos-paths', JSON.stringify(paths));
+        event.dataTransfer?.setData('application/x-webos-path', paths[0]);
         if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
       });
     }
@@ -206,7 +212,7 @@ export function initDesktop(apps) {
     folderButton = folder.querySelector('button');
   };
 
-  createIcon({ label: 'Lixeira', icon: '🗑️', open: () => launchApp('file-explorer', { path: '/.Trash' }), contextLabel: 'Abrir lixeira' });
+  const trashIcon = createIcon({ label: 'Lixeira', icon: '🗑️', open: () => launchApp('file-explorer', { path: '/.Trash' }), contextLabel: 'Abrir lixeira' });
   createIcon({ label: 'Pasta pessoal', icon: '🏠', open: () => launchApp('file-explorer', { path: `/home/${getCurrentUser()?.id || 'user'}` }) });
   const systemCategory = apps.find(app => app.manifest.category?.id === 'system')?.manifest.category;
   const gamesCategory = apps.find(app => app.manifest.category?.id === 'games')?.manifest.category;
@@ -221,6 +227,7 @@ export function initDesktop(apps) {
   const MAX_DROP_FILES = 100;
   const MAX_DROP_FILE_SIZE = 100 * 1024 * 1024;
   const INTERNAL_PATH_TYPE = 'application/x-webos-path';
+  const INTERNAL_PATHS_TYPE = 'application/x-webos-paths';
   const normalizeDroppedName = name => String(name ?? '').replace(/\\/g, '/').split('/').filter(Boolean).pop()?.replace(/[\u0000-\u001f]/g, '') || '';
   const safeDroppedName = name => {
     const value = normalizeDroppedName(name).trim();
@@ -240,10 +247,13 @@ export function initDesktop(apps) {
     }
     return candidate;
   };
-  const getDroppedPath = dataTransfer => {
-    const path = dataTransfer?.getData?.(INTERNAL_PATH_TYPE);
-    return typeof path === 'string' && path.startsWith(`${home}/`) ? path : '';
+  const getDroppedPaths = dataTransfer => {
+    let paths = [];
+    try { paths = JSON.parse(dataTransfer?.getData?.(INTERNAL_PATHS_TYPE) || '[]'); } catch {}
+    if (!Array.isArray(paths) || !paths.length) paths = [dataTransfer?.getData?.(INTERNAL_PATH_TYPE)];
+    return [...new Set(paths.filter(path => typeof path === 'string' && path.startsWith(`${home}/`)))];
   };
+  const getDroppedPath = dataTransfer => getDroppedPaths(dataTransfer)[0] || '';
   const importFilesToDirectory = async (files, targetDir = desktopPath, dataTransfer = null) => {
     const droppedFiles = Array.isArray(files) ? files : [...(files ?? [])];
     let imported = 0;
@@ -346,18 +356,24 @@ export function initDesktop(apps) {
   };
 
   const hasFiles = dt => !!dt && Array.from(dt.types || []).includes('Files');
-  const moveDroppedItem = async (from, targetDir, operation = 'move', targetName = null) => {
-    if (!from || from === targetDir || from.startsWith(`${targetDir}/`)) return;
-    const name = targetName || from.split('/').pop();
-    if (!name) return;
-    const target = `${targetDir}/${name}`;
-    try {
-      await (operation === 'copy' ? copyFile(from, target) : moveFile(from, target));
-      bus.emit('notify', { app: 'WebOS', message: `"${name}" ${operation === 'copy' ? 'copiado' : 'movido'}.` });
-      renderDesktopEntries();
-    } catch (error) {
-      bus.emit('notify', { app: 'WebOS', message: error?.message || 'Não foi possível mover o item.' });
+  const moveDroppedItems = async (fromPaths, targetDir, operation = 'move') => {
+    const paths = [...new Set(fromPaths)].filter(path => path && path !== targetDir && !path.startsWith(`${targetDir}/`));
+    const failures = [];
+    let completed = 0;
+    for (const from of paths) {
+      const name = from.split('/').pop();
+      if (!name) continue;
+      try {
+        const target = `${targetDir}/${await collisionName(targetDir, name)}`;
+        await (operation === 'copy' ? copyFile(from, target) : moveFile(from, target));
+        completed += 1;
+      } catch (error) {
+        failures.push(`${name}: ${error?.message || 'erro'}`);
+      }
     }
+    if (completed) bus.emit('notify', { app: 'WebOS', message: `${completed} item(ns) ${operation === 'copy' ? 'copiado(s)' : 'movido(s)'}.` });
+    if (failures.length) bus.emit('notify', { app: 'WebOS', message: `${failures.length} item(ns) não processado(s): ${failures.slice(0, 3).join(' · ')}` });
+    renderDesktopEntries();
   };
 
   const enableFolderDrop = (node, folderPath) => {
@@ -397,12 +413,11 @@ export function initDesktop(apps) {
       event.stopPropagation();
       clearTarget();
       hideDropOverlay();
-      const internalPath = getDroppedPath(event.dataTransfer);
-      if (internalPath) {
+      const internalPaths = getDroppedPaths(event.dataTransfer);
+      if (internalPaths.length) {
         showContextMenu(event.clientX, event.clientY, [
-          { label: 'Mover para a pasta', action: () => moveDroppedItem(internalPath, folderPath, 'move') },
-          { label: 'Copiar para a pasta', action: () => moveDroppedItem(internalPath, folderPath, 'copy') },
-          { label: 'Manter ambos', action: async () => moveDroppedItem(internalPath, folderPath, 'copy', await collisionName(folderPath, internalPath.split('/').pop())) },
+          { label: 'Mover para a pasta', action: () => moveDroppedItems(internalPaths, folderPath, 'move') },
+          { label: 'Copiar para a pasta', action: () => moveDroppedItems(internalPaths, folderPath, 'copy') },
           { label: 'Cancelar' },
         ]);
         return;
@@ -412,6 +427,33 @@ export function initDesktop(apps) {
     });
     return node;
   };
+  const enableTrashDrop = node => {
+    const clear = () => node.classList.remove('is-trash-drop-target');
+    node.classList.add('trash-drop-target');
+    node.addEventListener('dragover', event => {
+      const paths = getDroppedPaths(event.dataTransfer);
+      if (!paths.length) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.dataTransfer.dropEffect = 'move';
+      node.classList.add('is-trash-drop-target');
+    });
+    node.addEventListener('dragleave', clear);
+    node.addEventListener('drop', async event => {
+      const paths = getDroppedPaths(event.dataTransfer);
+      if (!paths.length) return;
+      event.preventDefault();
+      event.stopPropagation();
+      clear();
+      const failures = [];
+      for (const path of paths) {
+        try { await trashFile(path); } catch (error) { failures.push(`${path.split('/').pop()}: ${error.message}`); }
+      }
+      bus.emit('notify', { app: 'WebOS', message: failures.length ? failures.join(' · ') : `${paths.length} item(ns) movido(s) para a lixeira.` });
+      renderDesktopEntries();
+    });
+  };
+  enableTrashDrop(trashIcon);
 
   // overlay visual para indicar que se pode largar ficheiros
   const dropOverlay = document.createElement('div');
@@ -452,12 +494,11 @@ export function initDesktop(apps) {
     e.stopPropagation();
     dragDepth = 0;
     hideDropOverlay();
-    const internalPath = getDroppedPath(e.dataTransfer);
-    if (internalPath) {
+    const internalPaths = getDroppedPaths(e.dataTransfer);
+    if (internalPaths.length) {
       showContextMenu(e.clientX, e.clientY, [
-        { label: 'Mover para o Desktop', action: () => moveDroppedItem(internalPath, desktopPath, 'move') },
-        { label: 'Copiar para o Desktop', action: () => moveDroppedItem(internalPath, desktopPath, 'copy') },
-        { label: 'Manter ambos', action: async () => moveDroppedItem(internalPath, desktopPath, 'copy', await collisionName(desktopPath, internalPath.split('/').pop())) },
+        { label: 'Mover para o Desktop', action: () => moveDroppedItems(internalPaths, desktopPath, 'move') },
+        { label: 'Copiar para o Desktop', action: () => moveDroppedItems(internalPaths, desktopPath, 'copy') },
         { label: 'Cancelar' },
       ]);
       return;
@@ -478,10 +519,10 @@ export function initDesktop(apps) {
     e.preventDefault();
     const target = e.target instanceof HTMLIFrameElement ? e.target : document.elementFromPoint(e.clientX, e.clientY)?.closest('iframe');
     if (target?.dataset.appId === 'file-explorer' && target.contentWindow) {
-      const path = getDroppedPath(e.dataTransfer);
+      const paths = getDroppedPaths(e.dataTransfer);
       target.contentWindow.postMessage(
-        path
-          ? { type: 'webos:path-drop', path }
+        paths.length
+          ? { type: 'webos:path-drop', path: paths[0], paths }
           : { type: 'webos:file-drop', files: [...(e.dataTransfer?.files ?? [])] },
         '*'
       );

@@ -24,6 +24,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; font-family: var(--font)
 .d-icon:hover { background: rgba(255, 255, 255, .1); }
 .d-icon.selected, .d-icon:focus-visible { background: rgba(60, 182, 164, .3); border-color: rgba(60, 182, 164, .8); outline: none; }
 .filesystem-entry.is-folder-drop-target .d-icon { background: rgba(60, 182, 164, .38); border-color: rgba(102, 230, 207, .95); }
+.trash-drop-target.is-trash-drop-target .d-icon { background: rgba(220, 84, 84, .42); border-color: rgba(255, 150, 150, .95); }
 .d-icon img { display: block; width: 44px; height: 44px; margin: 0 auto 4px; }
 .desktop-folder-popup {
   position: fixed; z-index: 9996; width: min(260px, calc(100vw - 24px));

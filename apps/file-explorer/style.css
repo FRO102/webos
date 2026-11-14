@@ -13,6 +13,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--os-accent, 
 .places-heading { padding: 0 8px 5px; color: var(--os-muted, #60716a); font-size: 11px; font-weight: 700; text-transform: uppercase; }
 #places button { width: 100%; overflow: hidden; text-align: left; text-overflow: ellipsis; background: transparent; }
 #places button:hover, #places button[aria-current="location"] { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 20%, var(--os-surface, #eef1f3)); }
+#places button.is-trash-drop-target { background: color-mix(in srgb, #d85454 35%, var(--os-surface, #eef1f3)); outline: 2px solid #d85454; }
+tr.is-folder-drop-target { background: color-mix(in srgb, var(--os-accent, #3cb6a4) 28%, transparent); outline: 1px solid var(--os-accent, #3cb6a4); }
 #wrap { flex: 1; min-width: 0; overflow: auto; }
 table { width: 100%; border-collapse: collapse; }
 th { position: sticky; top: 0; padding: 7px 10px; background: var(--os-bg, #fff); border-bottom: 1px solid var(--os-border, #d3dce2); text-align: left; font-weight: 600; }

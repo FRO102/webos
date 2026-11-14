@@ -20,7 +20,10 @@ operativo de desktop.
   - Lixeira e restauro;
   - Pesquisa, cópia, movimento e importação de ficheiros.
 - Drag and drop entre o Desktop e o Explorador de Ficheiros.
-- Escolha entre mover, copiar ou cancelar ao largar itens internos.
+- Movimento de um ou vários itens entre pastas, Desktop e várias janelas do
+  Explorador.
+- Escolha entre mover, copiar ou cancelar ao largar itens internos; arrastar
+  para a Lixeira move diretamente e preserva a origem para restauro.
 - Importação de ficheiros e pastas do computador para o filesystem virtual.
 - Temas, wallpapers, idioma, acessibilidade e modo de ecrã inteiro.
 - Backup e restauro das definições, dados das aplicações e pasta pessoal.
