@@ -1,77 +1,92 @@
 # WebOS
 
-Um ambiente de trabalho virtual que corre no browser. O WebOS reúne janelas, áreas de trabalho, um sistema de ficheiros virtual e aplicações isoladas, sem backend nem processo de build.
+Um ambiente de trabalho virtual executado no browser, construído com HTML,
+CSS e JavaScript puro. O projeto disponibiliza janelas, aplicações isoladas,
+um filesystem virtual persistente e uma interface inspirada num sistema
+operativo de desktop.
 
-> Projeto experimental, construído com HTML, CSS e JavaScript.
+> Projeto experimental e sem backend. Os dados do utilizador ficam localmente
+> no browser através do IndexedDB.
 
-## O que inclui
+## Funcionalidades
 
-- Ambiente de trabalho com janelas redimensionáveis, minimizáveis e encaixáveis.
-- Menu Iniciar, barra de tarefas, quatro áreas de trabalho e alternador de janelas.
-- Sistema de ficheiros virtual persistente no browser, com Pasta pessoal, Desktop e Lixeira; os itens em `User/Desktop` aparecem como ícones na área de trabalho.
-- O filesystem fica no IndexedDB local do browser; Cloudflare Pages serve a aplicação estática, sem disco remoto nem sincronização entre dispositivos.
-- Definições de tema, papel de parede, acessibilidade e idioma.
-- Opção para colocar o WebOS em ecrã inteiro através das Definições.
-- Notificações, perfil único `User` e cópia de segurança/restauro dos dados desse perfil.
-- Aplicações executadas em iframes sandbox e integradas com o sistema através de um SDK próprio.
-- Interface em Português e Inglês. Textos ainda sem tradução mantêm a língua de origem.
+- Ambiente de trabalho com ícones, grelha, seleção e arrastar/soltar.
+- Janelas redimensionáveis, minimizáveis, maximizáveis e encaixáveis.
+- Menu Iniciar, barra de tarefas e quatro áreas de trabalho.
+- Filesystem virtual com:
+  - Pasta pessoal;
+  - Desktop;
+  - Documentos, Imagens, Música, Vídeos e Downloads;
+  - Lixeira e restauro;
+  - Pesquisa, cópia, movimento e importação de ficheiros.
+- Drag and drop entre o Desktop e o Explorador de Ficheiros.
+- Escolha entre mover, copiar ou cancelar ao largar itens internos.
+- Importação de ficheiros e pastas do computador para o filesystem virtual.
+- Temas, wallpapers, idioma, acessibilidade e modo de ecrã inteiro.
+- Backup e restauro das definições, dados das aplicações e pasta pessoal.
+- Aplicações executadas em iframes sandboxed através de um SDK próprio.
+- Interface em Português e Inglês.
 
-## Aplicações
+## Aplicações incluídas
 
-O projeto inclui 42 aplicações, organizadas em três secções no Menu Iniciar e na app Aplicações: **Sistema**, **Aplicações** e **Jogos**. Cada app declara uma destas categorias no próprio manifest.
+O repositório contém **43 aplicações**, distribuídas pelas categorias:
 
-O Desktop inclui atalhos para a Lixeira, Pasta pessoal, Jogos e Sistema, além dos ficheiros e pastas guardados em `User/Desktop`. O Sudoku inclui notas, dicas, contador de erros e controlos de teclado. O Terminal trabalha apenas com ficheiros e serviços do WebOS: `rm` envia itens para a Lixeira e `purge` pede confirmação antes de os apagar permanentemente.
+- **Sistema** — Definições, Explorador de Ficheiros, Terminal, Downloads,
+  Calculadora, Relógio, Calendário e outras ferramentas.
+- **Aplicações** — Browser, Notepad, WordWebOS, ExcelWebOS, Kanban,
+  Diagramas, Desenhador, PDFWebOS, Rádio e aplicações de produtividade.
+- **Jogos** — Sudoku, Xadrez, Tetris, Pacman, Puzzle, Snake, Zombie
+  Survival e outros jogos.
 
-Os itens do Desktop e do Explorador de Ficheiros podem ser arrastados entre pastas. Ao largar um item interno, escolhe-se no menu se deve ser movido, copiado ou cancelado; ficheiros externos são importados para a pasta de destino.
+A lista de aplicações carregada em produção está em
+[`apps/registry.json`](apps/registry.json). Cada aplicação tem uma pasta
+própria em [`apps/`](apps/).
 
-Cada aplicação vive na sua própria pasta dentro de [`apps/`](apps/).
-
-## Começar
+## Executar localmente
 
 ### Requisitos
 
-- Um browser moderno com suporte para JavaScript modules, IndexedDB e iframes sandbox.
-- Python ou PHP para servir o projeto localmente. Também podes usar Five Server no VS Code.
+- Browser moderno com suporte para:
+  - JavaScript modules;
+  - IndexedDB;
+  - Web Components básicos;
+  - iframes sandboxed.
+- Python, PHP ou outro servidor HTTP estático.
 - Node.js para executar os testes.
 
-### Executar localmente
+Não abrir o projeto com `file://`. O WebOS usa módulos ES e precisa de uma
+origem HTTP.
 
-Na raiz do projeto, inicia um servidor HTTP:
+### Python
+
+Na raiz do repositório:
 
 ```bash
 python -m http.server 8000
 ```
 
-Ou, se tiveres PHP instalado:
+Abrir [http://localhost:8000](http://localhost:8000).
+
+### PHP
 
 ```bash
 php -S localhost:8000
 ```
 
-Abre [http://localhost:8000](http://localhost:8000). Não abras `index.html` com `file://`: o shell usa ES modules e carrega as aplicações em iframes.
+### VS Code
 
-> **Importante:** o carregador tenta primeiro ler `apps/registry.json`. Esse ficheiro permite que o WebOS funcione em Cloudflare Pages, onde a listagem de diretórios estática costuma falhar. Localmente, ainda pode recorrer à listagem HTTP da pasta `apps/` se o servidor expuser diretórios.
+Também é possível usar Five Server ou outra extensão de servidor local.
+Quando o Five Server estiver ativo, abrir a página pela mesma origem e porta
+do servidor, normalmente [http://localhost:5500](http://localhost:5500).
 
-## Idiomas
-
-Escolhe **Português** ou **English** em **Definições → Acessibilidade → Idioma**. A preferência é guardada e aplicada ao shell e às aplicações abertas. Datas e números usam a localidade correspondente (`pt-PT` ou `en-GB`). A cobertura de tradução está em evolução; texto sem tradução permanece no idioma original.
-
-## Atalhos
-
-| Atalho | Ação |
-| --- | --- |
-| `Alt+Q` | Alternar entre janelas abertas; mantém `Alt` e repete `Q`. `Shift` inverte a direção. |
-| `Alt+←` / `Alt+→` | Encaixar a janela ativa à esquerda ou à direita. |
-| `Alt+↑` / `Alt+↓` | Maximizar ou repor o tamanho da janela. |
-| `Esc` | Fechar menus e o alternador de janelas. |
-| `Ctrl+S` | Guardar em aplicações com suporte, como Bloco de Notas e Diagramas. |
-| `Tab` | Completar comandos no Terminal. |
-
-O browser reserva `Alt+Tab` ao sistema operativo anfitrião.
+Se o browser mostrar um erro CORS para
+`/fiveserver/status`, trata-se do script da extensão Five Server e não de uma
+chamada feita pelo WebOS. Nesse caso, usar a porta do Five Server ou desligar a
+extensão e utilizar o servidor Python/PHP.
 
 ## Testes
 
-Executa a partir da raiz do projeto:
+Executar a suíte completa a partir da raiz:
 
 ```bash
 node tests/validate-manifests.mjs
@@ -93,42 +108,120 @@ node tests/zombie-survival-settings.mjs
 node tests/zombie-survival-persistence.mjs
 ```
 
-Para verificar a sintaxe dos scripts JavaScript em PowerShell:
+Alguns testes opcionais podem ser ignorados quando o ambiente não tiver o
+loader específico necessário, como o teste TypeScript de Zombie Defense.
+
+Para verificar a sintaxe dos scripts JavaScript no PowerShell:
 
 ```powershell
-Get-ChildItem -Path . -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
+Get-ChildItem -Path . -Recurse -Filter *.js |
+  ForEach-Object { node --check $_.FullName }
+```
+
+## Estrutura do repositório
+
+```text
+index.html             Entrada principal do WebOS
+apps/                  Aplicações, manifests e registry.json
+assets/                Ícones, fontes e recursos partilhados
+docs/                  Documentação para desenvolvimento de apps
+system/js/             Shell, janelas, filesystem e serviços
+system/sdk/            SDK utilizado pelas aplicações sandboxed
+system/css/            Estilos do shell
+tests/                 Testes de manifests, shell, filesystem e apps
 ```
 
 ## Criar uma aplicação
 
-Adiciona uma pasta `apps/<id>/` com um `manifest.json` e os ficheiros da aplicação. O `id` do manifest tem de corresponder ao nome da pasta.
+1. Criar uma pasta `apps/<id>/`.
+2. Adicionar `manifest.json`, `index.html` e um ícone SVG.
+3. Adicionar o ID ao array de [`apps/registry.json`](apps/registry.json).
+4. Declarar apenas as permissões necessárias.
+5. Executar os testes de manifests e smoke.
 
-Cada manifest também declara `category` com um ID estável e os nomes em Português e inglês, por exemplo `"category": { "id": "games", "name": "Jogos", "nameEn": "Games" }`. Assim, a app é agrupada automaticamente no Menu Iniciar e em Aplicações.
+Exemplo mínimo de manifest:
 
-Quando publicares em Cloudflare Pages, atualiza também o ficheiro [`apps/registry.json`](apps/registry.json) com o `id` da nova app; esse registry é a fonte de verdade em produção.
+```json
+{
+  "id": "minha-app",
+  "name": "Minha App",
+  "version": "1.0.0",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "category": {
+    "id": "applications",
+    "name": "Aplicações",
+    "nameEn": "Applications"
+  },
+  "permissions": []
+}
+```
 
-As aplicações são isoladas em iframes sandbox. Inclui o SDK antes do código da app:
+No `index.html`, carregar o SDK como script clássico:
 
 ```html
 <script src="../../system/sdk/os-sdk.js"></script>
 ```
 
-Usa as APIs `window.os` em vez de aceder diretamente ao DOM do shell ou a `localStorage`. Declara no manifest apenas as permissões necessárias.
+Usar `window.os` para comunicar com o shell. Não aceder diretamente ao DOM do
+WebOS nem utilizar `localStorage` para dados da aplicação.
 
-O guia completo, incluindo manifests, permissões, filesystem e localização, está em [`docs/app-development.md`](docs/app-development.md).
+O guia completo está em
+[`docs/app-development.md`](docs/app-development.md).
 
-## Estrutura do projeto
+## Sandbox e segurança
 
-```text
-index.html          Entrada do WebOS
-apps/               Aplicações autónomas, manifests e registry.json
-assets/             Recursos partilhados
-docs/               Guias de desenvolvimento
-system/js/          Shell, janelas, filesystem e serviços
-system/sdk/         APIs para aplicações sandboxed
-tests/              Validação de manifests, smoke tests e i18n
-```
+As aplicações são carregadas em iframes sandboxed. Por defeito, o sandbox não
+inclui `allow-same-origin`, mantendo a aplicação isolada da origem do shell.
+
+`allowSameOrigin: true` só deve ser utilizado quando uma aplicação depender
+comprovadamente de módulos/workers locais, armazenamento próprio ou iframes
+aninhados. Esta exceção reduz o isolamento e deve ser evitada quando não for
+necessária.
+
+As permissões disponíveis incluem filesystem, notificações, clipboard,
+abertura de URLs externas, lançamento de aplicações e backup/restauro. O
+manifest deve declarar apenas as permissões que a aplicação realmente utiliza.
+
+## Dados e persistência
+
+- O filesystem virtual é guardado no IndexedDB do browser.
+- Os dados não são sincronizados entre browsers ou dispositivos.
+- O alojamento estático, incluindo Cloudflare Pages, não fornece disco remoto.
+- `os.storage` é privado para cada aplicação.
+- `os.settings` é reservado para definições globais do shell.
+- O Backup e Restauro não inclui credenciais, contas, auditoria, notificações
+  nem a Lixeira.
+
+## Atalhos
+
+| Atalho | Ação |
+| --- | --- |
+| `Alt+Q` | Alternar entre janelas abertas |
+| `Shift+Alt+Q` | Alternar na direção inversa |
+| `Alt+←` / `Alt+→` | Encaixar a janela à esquerda ou direita |
+| `Alt+↑` / `Alt+↓` | Maximizar ou restaurar a janela |
+| `Esc` | Fechar menus e o alternador |
+| `Ctrl+S` | Guardar em aplicações compatíveis |
+| `Tab` | Completar comandos no Terminal |
+
+O browser reserva `Alt+Tab` ao sistema operativo anfitrião.
+
+## Deploy
+
+O projeto é estático e pode ser publicado em Cloudflare Pages ou qualquer
+servidor HTTP estático. Antes do deploy:
+
+1. Confirmar que todas as aplicações estão listadas em
+   [`apps/registry.json`](apps/registry.json).
+2. Executar a suíte de testes.
+3. Confirmar que os caminhos dos manifests são relativos e válidos.
+4. Verificar que os recursos das aplicações estão dentro das respetivas
+   pastas.
 
 ## Licença
 
-Este repositório não contém atualmente um ficheiro de licença. Até ser adicionada uma licença, não assumas que o código pode ser reutilizado, redistribuído ou modificado fora dos direitos concedidos pela legislação aplicável.
+Este repositório não contém atualmente um ficheiro de licença. Até ser
+adicionada uma licença, não assumir que o código pode ser reutilizado,
+redistribuído ou modificado fora dos direitos concedidos pela legislação
+aplicável.
