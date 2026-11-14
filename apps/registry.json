@@ -21,14 +21,12 @@
   "snake",
   "task-manager",
   "terminal",
-  "tic-tac-toe",
   "wordwebos",
   "excelwebos",
   "zombie-survival",
   "diario",
   "ferramentas-dev",
   "meteo",
-  "kanban",
   "news-feed",
   "radio",
   "pdfwebos",
@@ -38,8 +36,6 @@
   "pacman",
   "tetris",
   "air-hockey",
-  "retro-ping-pong",
   "stick-hero",
-  "escape-road",
-  "geometry-dash"
+  "escape-road"
 ]
