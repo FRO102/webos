@@ -601,4 +601,5 @@ export function initDesktop(apps) {
       { label: 'Abrir Lixeira', action: () => launchApp('file-explorer', { path: '/.Trash' }) },
     ]);
   });
+  renderDesktopEntries();
 }

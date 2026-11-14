@@ -15,7 +15,8 @@ await mustContain('system/js/storage.js', ['webos-profile-backup', 'caminho inv�
 await mustContain('system/js/filesystem.js', ['export async function trash', 'export async function restore', 'export async function search', 'export async function exists', 'export async function copy']);
 await mustContain('system/js/filesystem.js', ['Não é possível mover a pasta pessoal para a lixeira.', 'Não é possível mover a pasta pessoal.']);
 await mustContain('system/js/filesystem.js', ["'/home/user/Desktop'", 'changed(to)']);
-await mustContain('system/js/desktop.js', ['list as listFiles', 'renderDesktopEntries', "path === desktopPath", 'data-filesystem-entry']);
+await mustContain('system/js/main.js', ['await initFS()', 'await ensureUserHome(getCurrentUser()?.id)']);
+await mustContain('system/js/desktop.js', ['list as listFiles', 'renderDesktopEntries();', "path === desktopPath", 'data-filesystem-entry']);
 await mustContain('system/js/desktop.js', ['const enableFolderDrop = (node, folderPath) => {', 'importFilesToDirectory(files, folderPath, event.dataTransfer)', 'excedem o limite']);
 await mustContain('system/js/desktop.js', ["const INTERNAL_PATH_TYPE = 'application/x-webos-path'", 'setPointerCapture(e.pointerId)', 'gridColumn', 'gridRow', "moveDroppedItem(internalPath, desktopPath, 'move')"]);
 await mustContain('system/js/filesystem.js', ['normalizeFsPath', 'fileContentSize', 'isBinaryFileContent']);

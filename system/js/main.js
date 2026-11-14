@@ -3,18 +3,20 @@ import { loadRegistry } from './app-loader.js';
 import { initDesktop } from './desktop.js';
 import { initTaskbar } from './taskbar.js';
 import { initStartMenu } from './start-menu.js';
-import { initFS } from './filesystem.js';
+import { initFS, ensureUserHome } from './filesystem.js';
 import { initSettings } from './settings.js';
 import { initNotifications } from './notifications.js';
 import { initSwitcher } from './switcher.js';
 import { runBoot } from './boot.js';
 import { logger } from './logger.js';
-import { initUsers } from './users.js';
+import { initUsers, getCurrentUser } from './users.js';
 import { initLocalization } from './i18n.js';
 
 async function init() {
   logger.info('Inicialização do WebOS iniciada');
-  await Promise.all([initFS(), initUsers(), initSettings()]);
+  await Promise.all([initUsers(), initSettings()]);
+  await initFS();
+  await ensureUserHome(getCurrentUser()?.id);
   initLocalization();
   await initNotifications();
   const apps = await loadRegistry();
